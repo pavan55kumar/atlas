@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react'
+import { ghostButton } from './styles'
 import { supabase } from './lib/supabase'
 
 function AIBrief({ userId }) {
   const [brief, setBrief] = useState('')
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    generateBrief()
-  }, [])
+  useEffect(() => { generateBrief() }, [])
 
   async function generateBrief() {
     setLoading(true)
@@ -33,28 +32,26 @@ Today's events: ${events?.map(e => e.title).join(', ') || 'none scheduled'}
           'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`
         },
         body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
+          model: 'openai/gpt-oss-20b',
           messages: [
-            {
-              role: 'system',
-              content: 'You are a concise personal assistant. Given the user\'s tasks, habits, and events for today, write a short, warm, 2-3 sentence daily brief. Mention what to prioritize. No markdown, no headers, just plain sentences.'
-            },
-            {
-              role: 'user',
-              content: summary
-            }
+            { role: 'system', content: 'You are a concise personal assistant. Given the user\'s tasks, habits, and events for today, write a short, warm, 2-3 sentence daily brief. Mention what to prioritize. No markdown, no headers, just plain sentences.' },
+            { role: 'user', content: summary }
           ],
           max_tokens: 150
         })
       })
-
       const data = await res.json()
-      const text = data.choices?.[0]?.message?.content
-      setBrief(text || 'Could not generate brief.')
-    } catch (err) {
-      setBrief('⚠️ Error generating brief: ' + err.message)
-    }
 
+      if (data.error) {
+        console.error('Groq error:', data.error)
+        setBrief("Your daily brief isn't available right now. Check your AI key in Settings.")
+      } else {
+        setBrief(data.choices?.[0]?.message?.content || "Nothing to report yet — add a task or habit to get started.")
+      }
+    } catch (err) {
+      console.error('AI Brief fetch failed:', err)
+      setBrief("Your daily brief isn't available right now — try again shortly.")
+    }
     setLoading(false)
   }
 
@@ -63,23 +60,10 @@ Today's events: ${events?.map(e => e.title).join(', ') || 'none scheduled'}
       {loading ? (
         <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Thinking...</p>
       ) : (
-        <p style={{ fontSize: '14px', lineHeight: '1.5' }}>{brief}</p>
+        <p style={{ fontSize: '15px', lineHeight: '1.6' }}>{brief}</p>
       )}
-      <button
-        onClick={generateBrief}
-        disabled={loading}
-        style={{
-          marginTop: '12px',
-          padding: '6px 12px',
-          borderRadius: '6px',
-          border: '1px solid var(--border)',
-          background: 'var(--surface)',
-          color: 'var(--text)',
-          cursor: 'pointer',
-          fontSize: '12px'
-        }}
-      >
-        🔄 Regenerate
+      <button onClick={generateBrief} disabled={loading} style={{ ...ghostButton, marginTop: '14px', fontSize: '12px', padding: '7px 14px' }}>
+        Regenerate
       </button>
     </div>
   )

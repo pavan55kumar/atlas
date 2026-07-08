@@ -17,11 +17,9 @@ function App() {
       setUser(data.session?.user ?? null)
       setCheckingSession(false)
     })
-
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
     })
-
     return () => listener.subscription.unsubscribe()
   }, [])
 
@@ -30,9 +28,10 @@ function App() {
   }
 
   if (checkingSession) return null
-  if (!user) return <Auth onLogin={setUser} />
 
-  return (
+  return !user ? (
+    <Auth onLogin={setUser} />
+  ) : (
     <Dashboard
       user={user}
       onLogout={handleLogout}

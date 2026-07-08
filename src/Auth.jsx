@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from './lib/supabase'
+import { inputStyle, primaryButton } from './styles'
 
 function Auth({ onLogin }) {
   const [isSignUp, setIsSignUp] = useState(false)
@@ -22,85 +23,48 @@ function Auth({ onLogin }) {
       if (error) setMessage('❌ ' + error.message)
       else onLogin(data.user)
     }
-
     setLoading(false)
   }
 
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '100vh'
-    }}>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
       <form onSubmit={handleSubmit} style={{
         background: 'var(--surface)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         padding: '40px',
-        borderRadius: '16px',
+        borderRadius: '20px',
         border: '1px solid var(--border)',
-        width: '320px'
+        boxShadow: 'var(--card-shadow)',
+        width: '340px'
       }}>
-        <h2 style={{ marginBottom: '20px' }}>
-          {isSignUp ? 'Create your Atlas account' : 'Welcome back'}
+        <p style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: 600, letterSpacing: '0.03em', marginBottom: '6px' }}>
+          ATLAS
+        </p>
+        <h2 className="font-display" style={{ marginBottom: '24px', fontSize: '28px', fontWeight: 400 }}>
+          {isSignUp ? 'Create your account' : 'Welcome back'}
         </h2>
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={inputStyle}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={inputStyle}
-        />
+        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required
+          style={{ ...inputStyle, width: '100%', marginBottom: '10px' }} />
+        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required
+          style={{ ...inputStyle, width: '100%', marginBottom: '16px' }} />
 
-        <button type="submit" disabled={loading} style={buttonStyle}>
+        <button type="submit" disabled={loading} style={{ ...primaryButton, width: '100%' }}>
           {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
         </button>
 
-        {message && <p style={{ marginTop: '12px', fontSize: '14px' }}>{message}</p>}
+        {message && <p style={{ marginTop: '12px', fontSize: '13px' }}>{message}</p>}
 
-        <p style={{ marginTop: '16px', fontSize: '14px', color: 'var(--text-muted)' }}>
+        <p style={{ marginTop: '18px', fontSize: '13px', color: 'var(--text-muted)' }}>
           {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-          <span
-            onClick={() => setIsSignUp(!isSignUp)}
-            style={{ color: 'var(--accent)', cursor: 'pointer' }}
-          >
+          <span onClick={() => setIsSignUp(!isSignUp)} style={{ color: 'var(--accent)', cursor: 'pointer', fontWeight: 500 }}>
             {isSignUp ? 'Sign In' : 'Sign Up'}
           </span>
         </p>
       </form>
     </div>
   )
-}
-
-const inputStyle = {
-  width: '100%',
-  padding: '10px',
-  marginBottom: '12px',
-  borderRadius: '8px',
-  border: '1px solid var(--border)',
-  background: 'var(--bg)',
-  color: 'var(--text)',
-  fontSize: '14px'
-}
-
-const buttonStyle = {
-  width: '100%',
-  padding: '10px',
-  borderRadius: '8px',
-  border: 'none',
-  background: 'var(--accent)',
-  color: '#fff',
-  cursor: 'pointer',
-  fontSize: '14px'
 }
 
 export default Auth

@@ -1,21 +1,20 @@
 import { useEffect, useState } from 'react'
+import { CheckCircle2 } from 'lucide-react'
 import { supabase } from './lib/supabase'
+import { inputStyle, primaryButton, rowStyle, deleteX } from './styles'
 
 function Tasks({ userId }) {
   const [tasks, setTasks] = useState([])
   const [title, setTitle] = useState('')
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchTasks()
-  }, [])
+  useEffect(() => { fetchTasks() }, [])
 
   async function fetchTasks() {
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
       .order('created_at', { ascending: false })
-
     if (!error) setTasks(data)
     setLoading(false)
   }
@@ -23,15 +22,10 @@ function Tasks({ userId }) {
   async function addTask(e) {
     e.preventDefault()
     if (!title.trim()) return
-
     const { error } = await supabase
       .from('tasks')
       .insert([{ title, user_id: userId, priority: 'medium', progress: 0 }])
-
-    if (!error) {
-      setTitle('')
-      fetchTasks()
-    }
+    if (!error) { setTitle(''); fetchTasks() }
   }
 
   async function toggleDone(task) {
@@ -47,47 +41,24 @@ function Tasks({ userId }) {
 
   return (
     <div>
-      <form onSubmit={addTask} style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+      <form onSubmit={addTask} style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Add a task..."
-          style={{
-            flex: 1,
-            padding: '8px',
-            borderRadius: '6px',
-            border: '1px solid var(--border)',
-            background: 'var(--bg)',
-            color: 'var(--text)',
-            fontSize: '13px'
-          }}
+          style={{ ...inputStyle, flex: 1 }}
         />
-        <button type="submit" style={{
-          padding: '8px 12px',
-          borderRadius: '6px',
-          border: 'none',
-          background: 'var(--accent)',
-          color: '#fff',
-          cursor: 'pointer',
-          fontSize: '13px'
-        }}>
-          Add
-        </button>
+        <button type="submit" style={primaryButton}>Add</button>
       </form>
 
       {loading ? (
         <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Loading...</p>
       ) : tasks.length === 0 ? (
-        <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No tasks yet</p>
+        <div className="empty-state"><CheckCircle2 size={28} /><span>Nothing on your list — add your first task above</span></div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {tasks.map((task) => (
-            <div key={task.id} style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: '13px'
-            }}>
+            <div key={task.id} style={rowStyle}>
               <span
                 onClick={() => toggleDone(task)}
                 style={{
@@ -98,12 +69,7 @@ function Tasks({ userId }) {
               >
                 {task.title}
               </span>
-              <span
-                onClick={() => deleteTask(task.id)}
-                style={{ cursor: 'pointer', color: 'var(--text-muted)' }}
-              >
-                ✕
-              </span>
+              <span onClick={() => deleteTask(task.id)} style={deleteX}>✕</span>
             </div>
           ))}
         </div>
