@@ -113,10 +113,10 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
           {page === 'study-planner' && <PageCard><StudyPlanner userId={user.id} /></PageCard>}
           {page === 'ai' && <PageCard><AIChat userId={user.id} /></PageCard>}
           {page === 'settings' && (
-            <PageCard>
-              <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Coming soon.</p>
-            </PageCard>
-          )}
+  <PageCard>
+    <Settings user={user} theme={theme} onToggleTheme={onToggleTheme} />
+  </PageCard>
+)}
         </div>
 
         {searchOpen && (
