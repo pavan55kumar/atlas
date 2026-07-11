@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+
 import { Sun, Moon, LogOut, Search, Menu } from 'lucide-react'
 import Sidebar from './Sidebar'
 import Overview from './Overview'
@@ -15,11 +17,12 @@ import Subjects from './Subjects'
 import AttendanceTracker from './AttendanceTracker'
 import AssignmentManager from './AssignmentManager'
 import CGPAPlanner from './CGPAPlanner'
-import GradePredictor from './GradePredictor'
+import GradeScheme from './GradeScheme'
 import StudyPlanner from './StudyPlanner'
 import AIChat from './AIChat'
 import SearchModal from './SearchModal'
 import Settings from './Settings'
+
 
 const titles = {
   tasks: 'Tasks', habits: 'Habits', goals: 'Goals', calendar: 'Calendar',
@@ -71,12 +74,31 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
                 <Menu size={16} />
               </button>
              <div style={{ minWidth: 0 }}>
-  <p style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase' }}>
-    {dateStr}
-  </p>
-  <h1 className="dash-header-title" style={{ fontWeight: 600, letterSpacing: '-0.02em' }}>
+  <motion.div
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4 }}
+    style={{
+      display: 'inline-flex', alignItems: 'center', gap: '6px',
+      padding: '5px 12px', borderRadius: '999px',
+      border: '1px solid var(--border)', background: 'var(--surface-2)',
+      marginBottom: '12px'
+    }}
+  >
+    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
+    <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.04em', color: 'var(--text-muted)' }}>
+      {dateStr}
+    </span>
+  </motion.div>
+  <motion.h1
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5, delay: 0.08 }}
+    className="dash-header-title"
+    style={{ fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.05 }}
+  >
     {page === 'overview' ? greeting + ', ' + displayName : titles[page]}
-  </h1>
+  </motion.h1>
 </div>
             </div>
 
@@ -109,7 +131,7 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
           {page === 'attendance' && <PageCard><AttendanceTracker userId={user.id} /></PageCard>}
           {page === 'assignments' && <PageCard><AssignmentManager userId={user.id} /></PageCard>}
           {page === 'cgpa' && <PageCard><CGPAPlanner userId={user.id} /></PageCard>}
-          {page === 'grade-predictor' && <PageCard><GradePredictor /></PageCard>}
+          {page === 'grade-predictor' && <PageCard><GradeScheme userId={user.id} /></PageCard>}
           {page === 'study-planner' && <PageCard><StudyPlanner userId={user.id} /></PageCard>}
           {page === 'ai' && <PageCard><AIChat userId={user.id} /></PageCard>}
           {page === 'settings' && (
@@ -126,15 +148,15 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
 
       <style>{`
         .mobile-menu-btn { display: none; }
-        .dash-header-pad { padding: 40px 48px 28px; }
-        .dash-content-pad { padding: 0 48px 48px; }
-        .dash-header-title { font-size: 26px; }
-        @media (max-width: 768px) {
-          .mobile-menu-btn { display: flex !important; }
-          .dash-header-pad { padding: 20px 16px 16px; }
-          .dash-content-pad { padding: 0 16px 32px; }
-          .dash-header-title { font-size: 19px; }
-        }
+.dash-header-pad { padding: 44px 48px 32px; }
+.dash-content-pad { padding: 0 48px 48px; }
+.dash-header-title { font-size: 34px; font-family: 'Space Grotesk', 'Inter', sans-serif; }
+@media (max-width: 768px) {
+  .mobile-menu-btn { display: flex !important; }
+  .dash-header-pad { padding: 20px 16px 16px; }
+  .dash-content-pad { padding: 0 16px 32px; }
+  .dash-header-title { font-size: 24px; }
+}
       `}</style>
     </div>
   )
