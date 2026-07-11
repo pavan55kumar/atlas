@@ -20,7 +20,6 @@ import StudyPlanner from './StudyPlanner'
 import AIChat from './AIChat'
 import SearchModal from './SearchModal'
 import Settings from './Settings'
-import { color } from 'framer-motion'
 
 const titles = {
   tasks: 'Tasks', habits: 'Habits', goals: 'Goals', calendar: 'Calendar',
@@ -72,48 +71,12 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
                 <Menu size={16} />
               </button>
              <div style={{ minWidth: 0 }}>
- <div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px"
-  }}
->
-
-  <span
-    style={{
-      fontSize: 13,
-      color: "var(--text-muted)",
-      fontWeight: 500
-    }}
-  >
-    {greeting}
-  </span>
-
-  <h1
-    style={{
-      fontSize: 54,
-      fontWeight: 700,
-      lineHeight: 1,
-      letterSpacing: "-0.05em",
-      margin: 0
-    }}
-  >
-    {page === "overview"
-      ? `Welcome back, ${displayName}`
-      : titles[page]}
-  </h1>
-
-  <span
-    style={{
-      fontSize: 16,
-      color: "var(--text-muted)"
-    }}
-  >
+  <p style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase' }}>
     {dateStr}
-  </span>
-
-</div>
+  </p>
+  <h1 className="dash-header-title" style={{ fontWeight: 600, letterSpacing: '-0.02em' }}>
+    {page === 'overview' ? greeting + ', ' + displayName : titles[page]}
+  </h1>
 </div>
             </div>
 
@@ -170,13 +133,7 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
           .mobile-menu-btn { display: flex !important; }
           .dash-header-pad { padding: 20px 16px 16px; }
           .dash-content-pad { padding: 0 16px 32px; }
-          .dash-header-title{
-font-size:36px;
-line-height:1.05;
-letter-spacing:-0.05em;
-font-weight:700;
-max-width:260px;
-}
+          .dash-header-title { font-size: 19px; }
         }
       `}</style>
     </div>
@@ -188,26 +145,19 @@ function PageCard({ children }) {
 }
 
 const headerWrap = {
-  position: 'relative',
-  overflow: 'visible',
-  background: 'transparent',
-  paddingBottom: '8px'
+  backgroundImage: 'radial-gradient(circle at 15% 0%, rgba(108,108,240,0.06), transparent 55%)'
 }
 
 const iconButton = {
-  width: 46,
-  height: 46,
-  borderRadius: 16,
- background: "rgb(255, 255, 255)",
-  border: "1px solid rgba(255,255,255,.05)",
-  backdropFilter: "blur(20px)",
-  WebkitBackdropFilter: "blur(20px)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
-transition: ".25s"
-
+  width: '38px',
+  height: '38px',
+  borderRadius: '10px',
+  border: '1px solid var(--border)',
+  background: 'var(--surface)',
+  color: 'var(--text)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
 }
 
 const mobileMenuButtonStyle = {
