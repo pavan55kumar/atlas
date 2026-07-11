@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Home, CheckCircle2, Flame, Target, Calendar, Sparkles, BarChart3, Settings, FileText, Timer, ListOrdered,Wallet } from 'lucide-react'
+import { Home, CheckCircle2, Flame, Target, Calendar, Sparkles, BarChart3, Settings, FileText, Timer,
+   ListOrdered, Wallet, GraduationCap,CalendarCheck,ClipboardList ,TrendingUp,BookOpen} from 'lucide-react'
 const navItems = [
   { key: 'overview', label: 'Overview', icon: Home },
   { key: 'tasks', label: 'Tasks', icon: CheckCircle2 },
@@ -13,6 +14,14 @@ const navItems = [
   { key: 'settings', label: 'Settings', icon: Settings },
   { key: 'notes', label: 'Notes', icon: FileText },
   { key: 'expenses', label: 'Expenses', icon: Wallet },
+  { key: 'subjects', label: 'Subjects', icon: GraduationCap },
+  { key: 'attendance', label: 'Attendance', icon: CalendarCheck },
+  { key: 'assignments', label: 'Assignments', icon: ClipboardList },
+  { key: 'cgpa', label: 'CGPA Planner', icon: TrendingUp },
+  { key: 'grade-predictor', label: 'Grade Predictor', icon: Sparkles },
+  { key: 'study-planner', label: 'Study Planner', icon: BookOpen },
+
+
 ]
 
 function Sidebar({ page, onNavigate }) {

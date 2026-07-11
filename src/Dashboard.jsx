@@ -15,6 +15,14 @@ import FocusMode from './FocusMode'
 import AIChat from './AIChat'
 import AISchedule from './AISchedule'
 import Expenses from './Expenses'
+import Subjects from './Subjects'
+import AttendanceTracker from './AttendanceTracker'
+import AssignmentManager from './AssignmentManager'
+import CGPAPlanner from './CGPAPlanner'
+import GradePredictor from './GradePredictor'
+import StudyPlanner from './StudyPlanner'
+
+
 
 const titles = {
   tasks: 'Tasks', habits: 'Habits', goals: 'Goals', calendar: 'Calendar',
@@ -84,6 +92,12 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
 {page === 'ai' && <PageCard><AIChat userId={user.id} /></PageCard>}
 {page === 'schedule-ai' && <PageCard><AISchedule /></PageCard>}
 {page === 'expenses' && <PageCard><Expenses userId={user.id} /></PageCard>}
+{page === 'subjects' && <PageCard><Subjects userId={user.id} /></PageCard>}
+{page === 'attendance' && <PageCard><AttendanceTracker userId={user.id} /></PageCard>}
+{page === 'assignments' && <PageCard><AssignmentManager userId={user.id} /></PageCard>}
+{page === 'cgpa' && <PageCard><CGPAPlanner userId={user.id} /></PageCard>}
+{page === 'grade-predictor' && <PageCard><GradePredictor /></PageCard>}
+{page === 'study-planner' && <PageCard><StudyPlanner userId={user.id} /></PageCard>}
 {page === 'settings' && (
   <PageCard>
     <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Coming soon.</p>
