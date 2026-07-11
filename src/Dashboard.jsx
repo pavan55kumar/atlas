@@ -170,7 +170,13 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
           .mobile-menu-btn { display: flex !important; }
           .dash-header-pad { padding: 20px 16px 16px; }
           .dash-content-pad { padding: 0 16px 32px; }
-          .dash-header-title { font-size: 19px; }
+          .dash-header-title{
+font-size:36px;
+line-height:1.05;
+letter-spacing:-0.05em;
+font-weight:700;
+max-width:260px;
+}
         }
       `}</style>
     </div>
