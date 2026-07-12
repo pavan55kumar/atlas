@@ -103,7 +103,6 @@ function Expenses({ userId }) {
   const categoryList = Object.entries(byCategory).sort(function (a, b) { return b[1] - a[1] })
   const topCategory = categoryList.length > 0 ? categoryList[0] : null
 
-  // Derived trend data — last 7 days of income/expense/balance
   const dayKeys = []
   for (let i = 6; i >= 0; i--) {
     const d = new Date()
@@ -124,7 +123,6 @@ function Expenses({ userId }) {
     })
   })()
 
-  // Week over week
   const prevWeekKeys = []
   for (let i = 13; i >= 7; i--) {
     const d = new Date()
@@ -174,7 +172,6 @@ function Expenses({ userId }) {
 
   return (
     <div className="exp-page">
-      {/* Hero */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="exp-hero">
         <p className="exp-hero-eyebrow">{monthLabel} · Financial Overview</p>
         <h2 className="exp-hero-balance">
@@ -186,7 +183,6 @@ function Expenses({ userId }) {
         </p>
       </motion.div>
 
-      {/* KPI row */}
       <div className="exp-kpi-grid">
         <TiltCard><KpiCard icon={Wallet} color="#7C5CFF" label="Balance" value={balance} trend={balanceTrend} delay={0} /></TiltCard>
         <TiltCard><KpiCard icon={TrendingUp} color="#34D399" label="Income" value={income} trend={incomeTrend} delay={0.05} /></TiltCard>
@@ -209,7 +205,6 @@ function Expenses({ userId }) {
         </TiltCard>
       </div>
 
-      {/* Insights */}
       {insights.length > 0 && (
         <div className="exp-insights">
           {insights.map(function (ins, i) {
@@ -224,7 +219,6 @@ function Expenses({ userId }) {
         </div>
       )}
 
-      {/* Quick add panel */}
       <motion.form
         onSubmit={addEntry}
         initial={{ opacity: 0, y: 10 }}
@@ -285,7 +279,6 @@ function Expenses({ userId }) {
         </motion.button>
       </motion.form>
 
-      {/* Category breakdown */}
       {categoryList.length > 0 && (
         <div className="card exp-category-breakdown">
           <p className="exp-section-title">Spending by category</p>
@@ -320,7 +313,6 @@ function Expenses({ userId }) {
         </div>
       )}
 
-      {/* Transactions */}
       <div className="card exp-transactions">
         <p className="exp-section-title">Recent Transactions</p>
         {loading ? (
