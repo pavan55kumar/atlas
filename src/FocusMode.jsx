@@ -112,7 +112,11 @@ function FocusMode() {
         >
           <div className="focus-ring-glow" style={{ background: modeAccent, opacity: running ? 0.35 : 0.18 }} />
 
-          <svg width="280" height="280" viewBox="0 0 280 280" style={{ transform: 'rotate(-90deg)' }}>
+          <svg
+    width="100%"
+    height="100%"
+    viewBox="0 0 280 280"
+    preserveAspectRatio="xMidYMid meet" style={{ transform: 'rotate(-90deg)' }}>
             <circle cx="140" cy="140" r="126" fill="none" stroke="var(--border)" strokeWidth="3" opacity="0.5" />
             <circle cx="140" cy="140" r="126" fill="none" stroke={modeAccent} strokeWidth="3" opacity="0.15" strokeDasharray="1 7" />
             <circle
@@ -121,22 +125,25 @@ function FocusMode() {
               strokeDasharray={2 * Math.PI * 118}
               strokeDashoffset={2 * Math.PI * 118 * (1 - progress)}
               strokeLinecap="round"
-              style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.4s ease', filter: 'drop-shadow(0 0 8px ' + modeAccent + ')' }}
+              style={{ transition: 'stroke-dashoffset .85s cubic-bezier(.22,1,.36,1)', filter: 'drop-shadow(0 0 8px ' + modeAccent + ')' }}
             />
           </svg>
 
           <div className="focus-timer-center">
             <AnimatePresence mode="wait">
               <motion.span
-                key={mins + ':' + secs}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.2 }}
-                className="focus-time-text"
-              >
-                {mins}:{secs}
-              </motion.span>
+  className="focus-time-text"
+  animate={{
+    scale: running ? [1, 1.01, 1] : 1
+  }}
+  transition={{
+    duration: 1,
+    ease: "easeInOut",
+    repeat: running ? Infinity : 0
+  }}
+>
+  {mins}:{secs}
+</motion.span>
             </AnimatePresence>
             <span className="focus-mode-label" style={{ color: modeAccent }}>{mode.label}</span>
             <span className="focus-quote">{quoteRef.current}</span>
@@ -217,7 +224,15 @@ function FocusMode() {
         }
         .focus-switch-indicator { position: absolute; inset: 0; border-radius: 999px; z-index: 0; }
 
-        .focus-timer-wrap { position: relative; width: 280px; height: 280px; margin-bottom: 36px; }
+        .focus-timer-wrap{
+    position:relative;
+    width:min(280px,85vw);
+    aspect-ratio:1;
+    margin:0 auto 36px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
         .focus-ring-glow {
           position: absolute; inset: 20px; border-radius: 50%; filter: blur(40px);
           transition: opacity 0.4s ease, background 0.5s ease; pointer-events: none;
