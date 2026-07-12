@@ -109,7 +109,13 @@ function Notes({ userId }) {
   return (
     <div>
       <form onSubmit={addNote} style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div
+  style={{
+    display: 'flex',
+    gap: '8px',
+    flexWrap: 'wrap'
+  }}
+>
           <input
             value={title}
             onChange={function (e) { setTitle(e.target.value) }}
