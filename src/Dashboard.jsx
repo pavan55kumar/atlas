@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion ,AnimatePresence  } from 'framer-motion'
 
 import { Sun, Moon, LogOut, Search, Menu } from 'lucide-react'
 import Sidebar from './Sidebar'
@@ -117,29 +117,38 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
         </div>
 
         <div className="dash-content-pad">
-          {page === 'overview' && <Overview userId={user.id} onNavigate={setPage} />}
-          {page === 'tasks' && <PageCard><Tasks userId={user.id} /></PageCard>}
-          {page === 'habits' && <PageCard><Habits userId={user.id} /></PageCard>}
-          {page === 'goals' && <PageCard><Goals userId={user.id} /></PageCard>}
-          {page === 'notes' && <PageCard><Notes userId={user.id} /></PageCard>}
-          {page === 'calendar' && <PageCard><CalendarWidget userId={user.id} /></PageCard>}
-          {page === 'analytics' && <PageCard><Analytics userId={user.id} /></PageCard>}
-          {page === 'focus' && <PageCard><FocusMode /></PageCard>}
-          {page === 'schedule-ai' && <PageCard><AISchedule /></PageCard>}
-          {page === 'expenses' && <PageCard><Expenses userId={user.id} /></PageCard>}
-          {page === 'subjects' && <PageCard><Subjects userId={user.id} /></PageCard>}
-          {page === 'attendance' && <PageCard><AttendanceTracker userId={user.id} /></PageCard>}
-          {page === 'assignments' && <PageCard><AssignmentManager userId={user.id} /></PageCard>}
-          {page === 'cgpa' && <PageCard><CGPAPlanner userId={user.id} /></PageCard>}
-          {page === 'grade-predictor' && <PageCard><GradeScheme userId={user.id} /></PageCard>}
-          {page === 'study-planner' && <PageCard><StudyPlanner userId={user.id} /></PageCard>}
-          {page === 'ai' && <PageCard><AIChat userId={user.id} /></PageCard>}
-          {page === 'settings' && (
-  <PageCard>
-    <Settings user={user} theme={theme} onToggleTheme={onToggleTheme} />
-  </PageCard>
-)}
-        </div>
+  <AnimatePresence mode="wait">
+    <motion.div
+      key={page}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {page === 'overview' && <Overview userId={user.id} onNavigate={setPage} />}
+      {page === 'tasks' && <PageCard><Tasks userId={user.id} /></PageCard>}
+      {page === 'habits' && <PageCard><Habits userId={user.id} /></PageCard>}
+      {page === 'goals' && <PageCard><Goals userId={user.id} /></PageCard>}
+      {page === 'notes' && <PageCard><Notes userId={user.id} /></PageCard>}
+      {page === 'calendar' && <PageCard><CalendarWidget userId={user.id} /></PageCard>}
+      {page === 'analytics' && <PageCard><Analytics userId={user.id} /></PageCard>}
+      {page === 'focus' && <PageCard><FocusMode /></PageCard>}
+      {page === 'schedule-ai' && <PageCard><AISchedule /></PageCard>}
+      {page === 'expenses' && <PageCard><Expenses userId={user.id} /></PageCard>}
+      {page === 'subjects' && <PageCard><Subjects userId={user.id} /></PageCard>}
+      {page === 'attendance' && <PageCard><AttendanceTracker userId={user.id} /></PageCard>}
+      {page === 'assignments' && <PageCard><AssignmentManager userId={user.id} /></PageCard>}
+      {page === 'cgpa' && <PageCard><CGPAPlanner userId={user.id} /></PageCard>}
+      {page === 'study-planner' && <PageCard><StudyPlanner userId={user.id} /></PageCard>}
+      {page === 'ai' && <PageCard><AIChat userId={user.id} /></PageCard>}
+      {page === 'settings' && (
+        <PageCard>
+          <Settings user={user} theme={theme} onToggleTheme={onToggleTheme} />
+        </PageCard>
+      )}
+    </motion.div>
+  </AnimatePresence>
+</div>
 
         {searchOpen && (
           <SearchModal userId={user.id} onNavigate={setPage} onClose={function () { setSearchOpen(false) }} />

@@ -6,6 +6,7 @@ import AIBrief from './AIBrief'
 import ProgressRing from './ProgressRing'
 import Sparkline from './Sparkline'
 import TiltCard from './TiltCard'
+import { SkeletonKpiRow } from './Skeleton'
 
 const ease = [0.22, 1, 0.36, 1]
 const fadeUp = function (delay) {
@@ -59,7 +60,7 @@ function Overview({ userId, onNavigate }) {
     })
   }
 
-  if (!stats) return <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Loading...</p>
+  if (!stats) return <SkeletonKpiRow />
 
   const habitPct = stats.habitCount > 0 ? Math.round((stats.doneToday / stats.habitCount) * 100) : 0
 

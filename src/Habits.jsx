@@ -1,15 +1,98 @@
-import { useEffect, useState } from 'react'
-import { Flame } from 'lucide-react'
+import { useEffect, useState, useRef } from 'react'
+import { motion, AnimatePresence, animate } from 'framer-motion'
+import {
+  Flame, Target, Brain, Zap, Award, Sparkles, TrendingUp, CircleCheck,
+  CalendarDays, Rocket, Star, Heart, Apple, Coffee, BookOpen, Moon, Sun,
+  Timer, Medal, MoreVertical, Trash2
+} from 'lucide-react'
 import { supabase } from './lib/supabase'
-import { inputStyle, primaryButton, deleteX } from './styles'
+import ProgressRing from './ProgressRing'
+import Sparkline from './Sparkline'
+
+const ICONS = [Flame, Target, Brain, Zap, Award, Sparkles, TrendingUp, CircleCheck, CalendarDays, Rocket, Star, Heart, Apple, Coffee, BookOpen, Moon, Sun, Timer, Medal]
+const PALETTE = ['#7C5CFF', '#F0876C', '#6CC7F0', '#8CF06C', '#FDBA74', '#F87171', '#34D399', '#60A5FA']
+
+function hashOf(input) {
+  const str = String(input)
+  let h = 0
+  for (let i = 0; i < str.length; i++) {
+    h = (h * 31 + str.charCodeAt(i)) >>> 0
+  }
+  return h
+}
+
+function badgeFor(streak) {
+  if (streak >= 30) return { label: 'Master', icon: Medal }
+  if (streak >= 14) return { label: 'Strong', icon: Rocket }
+  if (streak >= 7) return { label: 'On Fire', icon: Flame }
+  if (streak >= 3) return { label: 'Building', icon: Sparkles }
+  return null
+}
+
+function formatLastCompleted(dateStr, today) {
+  if (!dateStr) return 'Never'
+  if (dateStr === today) return 'Today'
+  const y = new Date(today)
+  y.setDate(y.getDate() - 1)
+  const yesterday = y.toISOString().split('T')[0]
+  if (dateStr === yesterday) return 'Yesterday'
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function CountUp({ value, style }) {
+  const [display, setDisplay] = useState(0)
+  const prevRef = useRef(0)
+
+  useEffect(function () {
+    const controls = animate(prevRef.current, value, {
+      duration: 0.6,
+      ease: [0.22, 1, 0.36, 1],
+      onUpdate: function (v) { setDisplay(Math.round(v)) }
+    })
+    prevRef.current = value
+    return function () { controls.stop() }
+  }, [value])
+
+  return <span style={style}>{display}</span>
+}
+
+function Confetti() {
+  const dots = Array.from({ length: 14 })
+  return (
+    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible' }}>
+      {dots.map(function (_, i) {
+        const angle = (i / dots.length) * Math.PI * 2
+        const dist = 40 + Math.random() * 30
+        const x = Math.cos(angle) * dist
+        const y = Math.sin(angle) * dist
+        const color = PALETTE[i % PALETTE.length]
+        return (
+          <motion.span
+            key={i}
+            initial={{ opacity: 1, x: 0, y: 0, scale: 0 }}
+            animate={{ opacity: 0, x: x, y: y, scale: 1 }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
+            style={{
+              position: 'absolute', top: '50%', left: '50%',
+              width: '6px', height: '6px', borderRadius: '2px',
+              background: color
+            }}
+          />
+        )
+      })}
+    </div>
+  )
+}
 
 function Habits({ userId }) {
   const [habits, setHabits] = useState([])
-  const [logs, setLogs] = useState({}) // { habit_id: Set of 'YYYY-MM-DD' }
+  const [logs, setLogs] = useState({})
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(true)
+  const [menuOpenId, setMenuOpenId] = useState(null)
+  const [celebrateId, setCelebrateId] = useState(null)
 
-  useEffect(() => { fetchHabits() }, [])
+  useEffect(function () { fetchHabits() }, [])
 
   async function fetchHabits() {
     const { data: habitsData, error } = await supabase
@@ -23,7 +106,7 @@ function Habits({ userId }) {
       .select('habit_id, completed_date')
 
     const map = {}
-    ;(logsData || []).forEach(l => {
+    ;(logsData || []).forEach(function (l) {
       if (!map[l.habit_id]) map[l.habit_id] = new Set()
       map[l.habit_id].add(l.completed_date)
     })
@@ -51,10 +134,14 @@ function Habits({ userId }) {
     await supabase.from('habit_logs')
       .insert([{ habit_id: habit.id, user_id: userId, completed_date: today }])
 
+    setCelebrateId(habit.id)
+    setTimeout(function () { setCelebrateId(null) }, 1100)
+
     fetchHabits()
   }
 
   async function deleteHabit(id) {
+    setMenuOpenId(null)
     await supabase.from('habits').delete().eq('id', id)
     await supabase.from('habit_logs').delete().eq('habit_id', id)
     fetchHabits()
@@ -63,15 +150,15 @@ function Habits({ userId }) {
   const today = new Date().toISOString().split('T')[0]
 
   return (
-    <div>
-      <form onSubmit={addHabit} style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+    <div className="habits-page">
+      <form onSubmit={addHabit} className="habits-add-form">
         <input
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={function (e) { setName(e.target.value) }}
           placeholder="Add a habit..."
-          style={{ ...inputStyle, flex: 1 }}
+          className="habits-input"
         />
-        <button type="submit" style={primaryButton}>Add</button>
+        <button type="submit" className="habits-add-btn">Add</button>
       </form>
 
       {loading ? (
@@ -79,37 +166,209 @@ function Habits({ userId }) {
       ) : habits.length === 0 ? (
         <div className="empty-state"><Flame size={28} /><span>No habits tracked yet</span></div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          {habits.map((habit) => {
-            const doneToday = habit.last_completed === today
-            const habitLogs = logs[habit.id] || new Set()
-            return (
-              <div key={habit.id} style={{ background: 'var(--surface-2)', borderRadius: '12px', padding: '14px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                  <span
-                    onClick={() => markDoneToday(habit)}
+        <motion.div
+          className="habits-grid"
+          initial="hidden"
+          animate="show"
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
+        >
+          <AnimatePresence>
+            {habits.map(function (habit) {
+              const doneToday = habit.last_completed === today
+              const habitLogs = logs[habit.id] || new Set()
+              const iconIndex = hashOf(habit.id) % ICONS.length
+              const Icon = ICONS[iconIndex]
+              const accent = PALETTE[iconIndex % PALETTE.length]
+
+              let completedLast30 = 0
+              const sparklineData = []
+              for (let i = 29; i >= 0; i--) {
+                const d = new Date()
+                d.setDate(d.getDate() - i)
+                const key = d.toISOString().split('T')[0]
+                const done = habitLogs.has(key)
+                if (done) completedLast30++
+                if (i < 7) sparklineData.push(done ? 1 : 0)
+              }
+              const completionPct = Math.round((completedLast30 / 30) * 100)
+              const xp = habit.streak * 10
+              const badge = badgeFor(habit.streak)
+              const BadgeIcon = badge ? badge.icon : null
+
+              return (
+                <motion.div
+                  key={habit.id}
+                  layout
+                  variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
+                  exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                  whileHover={{ y: -6, rotate: -0.4 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+                  className="habit-card"
+                  style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.12), 0 0 0 1px var(--border)' }}
+                >
+                  <div className="habit-card-glow" style={{ background: accent }} />
+
+                  <div className="habit-card-top">
+                    <div className="habit-icon-chip" style={{ background: accent }}>
+                      <Icon size={18} color="#fff" />
+                    </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <p className="habit-name">{habit.name}</p>
+                      <span className="habit-tag">Daily habit</span>
+                    </div>
+
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        className="habit-menu-btn"
+                        onClick={function () { setMenuOpenId(menuOpenId === habit.id ? null : habit.id) }}
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+                      {menuOpenId === habit.id && (
+                        <div className="habit-menu">
+                          <button className="habit-menu-item" onClick={function () { deleteHabit(habit.id) }}>
+                            <Trash2 size={13} /> Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="habit-card-mid">
+                    <div style={{ position: 'relative', width: '64px', height: '64px', flexShrink: 0 }}>
+                      <ProgressRing value={completionPct} size={64} strokeWidth={5} color={accent} />
+                      <div className="habit-ring-label">
+                        <CountUp value={completionPct} style={{ fontSize: '13px', fontWeight: 700 }} />
+                        <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>%</span>
+                      </div>
+                      {celebrateId === habit.id && <Confetti />}
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="habit-stat-row">
+                        <span className="habit-stat-label">Streak</span>
+                        <span className="habit-stat-value">
+                          <CountUp value={habit.streak} /> <Flame size={12} color={accent} style={{ verticalAlign: '-1px' }} />
+                        </span>
+                      </div>
+                      <div className="habit-stat-row">
+                        <span className="habit-stat-label">XP</span>
+                        <span className="habit-stat-value"><CountUp value={xp} /></span>
+                      </div>
+                      <div className="habit-stat-row">
+                        <span className="habit-stat-label">Last done</span>
+                        <span className="habit-stat-value" style={{ fontSize: '11px' }}>{formatLastCompleted(habit.last_completed, today)}</span>
+                      </div>
+                    </div>
+
+                    <Sparkline data={sparklineData} width={56} height={30} color={accent} />
+                  </div>
+
+                  {badge && (
+                    <div className="habit-badge" style={{ borderColor: accent, color: accent }}>
+                      <BadgeIcon size={11} />
+                      {badge.label}
+                    </div>
+                  )}
+
+                  <div className="habit-heatmap-wrap">
+                    <Heatmap completedDates={habitLogs} accent={accent} />
+                  </div>
+
+                  <motion.button
+                    onClick={function () { markDoneToday(habit) }}
+                    whileTap={{ scale: 0.95 }}
+                    disabled={doneToday}
+                    className="habit-complete-btn"
                     style={{
-                      cursor: doneToday ? 'default' : 'pointer',
-                      fontSize: '13px',
-                      color: doneToday ? 'var(--accent)' : 'var(--text)'
+                      background: doneToday ? 'var(--surface-2)' : accent,
+                      color: doneToday ? 'var(--text-muted)' : '#fff',
+                      cursor: doneToday ? 'default' : 'pointer'
                     }}
                   >
-                    {doneToday ? '✅' : '⬜'} {habit.name} — 🔥 {habit.streak}
-                  </span>
-                  <span onClick={() => deleteHabit(habit.id)} style={deleteX}>✕</span>
-                </div>
-                <Heatmap completedDates={habitLogs} />
-              </div>
-            )
-          })}
-        </div>
+                    <CircleCheck size={14} />
+                    {doneToday ? 'Completed today' : 'Mark done'}
+                  </motion.button>
+                </motion.div>
+              )
+            })}
+          </AnimatePresence>
+        </motion.div>
       )}
+
+      <style>{`
+        .habits-page { position: relative; }
+        .habits-add-form { display: flex; gap: 8px; margin-bottom: 24px; }
+        .habits-input {
+          flex: 1; padding: 10px 12px; border-radius: 10px;
+          border: 1px solid var(--border); background: var(--surface-2);
+          color: var(--text); font-size: 13px; outline: none;
+        }
+        .habits-add-btn {
+          padding: 10px 18px; border-radius: 10px; border: none;
+          background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+          color: #fff; font-size: 13px; font-weight: 600;
+        }
+        .habits-grid {
+          display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 18px;
+        }
+        .habit-card {
+          position: relative; background: var(--surface); border-radius: 26px;
+          padding: 20px; overflow: hidden; backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+        }
+        .habit-card-glow {
+          position: absolute; top: -40px; right: -40px; width: 140px; height: 140px;
+          border-radius: 50%; filter: blur(50px); opacity: 0.18; pointer-events: none;
+        }
+        .habit-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; position: relative; z-index: 1; }
+        .habit-icon-chip {
+          width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .habit-name { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .habit-tag { font-size: 10.5px; color: var(--text-muted); }
+        .habit-menu-btn {
+          width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border);
+          background: var(--surface-2); color: var(--text-muted);
+          display: flex; align-items: center; justify-content: center;
+        }
+        .habit-menu {
+          position: absolute; right: 0; top: 34px; background: var(--surface-2);
+          border: 1px solid var(--border); border-radius: 10px; padding: 4px;
+          z-index: 20; min-width: 110px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+        .habit-menu-item {
+          display: flex; align-items: center; gap: 6px; width: 100%;
+          padding: 8px 10px; border-radius: 7px; border: none; background: transparent;
+          color: #F87171; font-size: 12.5px; text-align: left;
+        }
+        .habit-menu-item:hover { background: var(--surface); }
+        .habit-card-mid { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; position: relative; z-index: 1; }
+        .habit-ring-label {
+          position: absolute; inset: 0; display: flex; flex-direction: column;
+          align-items: center; justify-content: center; line-height: 1;
+        }
+        .habit-stat-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+        .habit-stat-label { color: var(--text-muted); }
+        .habit-stat-value { font-weight: 600; }
+        .habit-badge {
+          display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600;
+          border: 1px solid; padding: 3px 9px; border-radius: 999px; margin-bottom: 12px;
+        }
+        .habit-heatmap-wrap { margin-bottom: 14px; }
+        .habit-complete-btn {
+          width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
+          padding: 10px; border-radius: 12px; border: none; font-size: 12.5px; font-weight: 600;
+        }
+      `}</style>
     </div>
   )
 }
 
-function Heatmap({ completedDates }) {
-  // Build last 14 weeks (98 days) grid, 7 rows (days) x 14 cols (weeks)
+function Heatmap({ completedDates, accent }) {
   const totalDays = 98
   const cells = []
   const today = new Date()
@@ -121,7 +380,6 @@ function Heatmap({ completedDates }) {
     cells.push({ date: key, done: completedDates.has(key) })
   }
 
-  // Group into columns of 7 (weeks), reading top-to-bottom then left-to-right
   const weeks = []
   for (let i = 0; i < cells.length; i += 7) {
     weeks.push(cells.slice(i, i + 7))
@@ -129,23 +387,27 @@ function Heatmap({ completedDates }) {
 
   return (
     <div style={{ display: 'flex', gap: '3px', overflowX: 'auto', paddingBottom: '2px' }}>
-      {weeks.map((week, wi) => (
-        <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-          {week.map((cell, ci) => (
-            <div
-              key={ci}
-              title={cell.date}
-              style={{
-                width: '10px',
-                height: '10px',
-                borderRadius: '2px',
-                background: cell.done ? 'var(--accent)' : 'var(--border)',
-                opacity: cell.done ? 1 : 0.5
-              }}
-            />
-          ))}
-        </div>
-      ))}
+      {weeks.map(function (week, wi) {
+        return (
+          <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+            {week.map(function (cell, ci) {
+              return (
+                <div
+                  key={ci}
+                  title={cell.date}
+                  style={{
+                    width: '9px',
+                    height: '9px',
+                    borderRadius: '2px',
+                    background: cell.done ? accent : 'var(--border)',
+                    opacity: cell.done ? 1 : 0.5
+                  }}
+                />
+              )
+            })}
+          </div>
+        )
+      })}
     </div>
   )
 }
