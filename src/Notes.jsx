@@ -120,13 +120,16 @@ function Notes({ userId }) {
             value={title}
             onChange={function (e) { setTitle(e.target.value) }}
             placeholder="Note title..."
-            style={Object.assign({}, inputStyle, { flex: 2 })}
+            style={Object.assign({}, inputStyle, { flex: '1 1 320px',
+    minWidth: 0 })}
           />
           <input
             value={tag}
             onChange={function (e) { setTag(e.target.value) }}
             placeholder="Tag (optional)"
-            style={Object.assign({}, inputStyle, { flex: 1 })}
+            style={Object.assign({}, inputStyle, { flex: '1 1 180px',
+    minWidth: 0
+ })}
           />
         </div>
         <textarea
