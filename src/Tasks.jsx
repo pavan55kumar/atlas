@@ -54,6 +54,7 @@ const styleSheet = `
     --checkbox-border: rgba(15, 23, 42, 0.2);
   }
 
+  /* Structural Page Shell */
   .tasks-wrapper {
     font-family: var(--tasks-font);
     color: var(--text-primary);
@@ -62,7 +63,7 @@ const styleSheet = `
     position: relative;
     padding: 24px 20px;
     box-sizing: border-box;
-    overflow: visible !important;
+    overflow: visible !important; /* Prevents layout clipping of carousel cards */
   }
 
   .aurora-blur-sphere {
@@ -78,7 +79,7 @@ const styleSheet = `
   .sphere-secondary { bottom: 10%; right: -10%; width: 400px; height: 400px; background: var(--aurora-secondary); }
   .sphere-tertiary { top: 40%; left: 40%; width: 350px; height: 350px; background: var(--aurora-tertiary); }
 
-  /* Premium Minimalist Header section */
+  /* 1. Header Area */
   .workspace-header-section {
     display: flex;
     justify-content: space-between;
@@ -143,13 +144,13 @@ const styleSheet = `
     white-space: nowrap;
   }
 
-  /* Standalone Workspace Intro Card */
+  /* 2. Workspace Hero Card */
   .workspace-hero-card {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: 20px;
     padding: 24px 32px;
-    margin-bottom: 28px; /* High-end separation spacing */
+    margin-bottom: 32px; /* Generous vertical separation from sibling carousel */
     box-shadow: var(--card-shadow);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -162,19 +163,19 @@ const styleSheet = `
   .hero-info-area h1 { font-size: 28px; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; color: var(--text-primary); }
   .hero-info-area p { font-size: 13px; color: var(--text-secondary); margin: 0; font-weight: 500; line-height: 1.4; }
 
-  /* Transparent Carousel container */
+  /* 3. Independent Floating Statistics Carousel */
   .stats-carousel-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
-    margin-bottom: 28px; /* Clean layout break */
+    margin-bottom: 32px; /* Distinct visual break from bottom interactive cards */
     z-index: 10;
     position: relative;
-    background: transparent !important;
+    background: transparent !important; /* Removed container panel background entirely */
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
-    overflow: visible !important;
+    overflow: visible !important; /* Prevents edge clipping of active cards */
   }
 
   .kpi-card-glass {
@@ -216,7 +217,7 @@ const styleSheet = `
   .kpi-desc-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; }
   .kpi-desc { font-size: 11px; color: var(--text-tertiary); font-weight: 500; max-width: 65%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  /* Add Task Section Card */
+  /* 4. Add Task Section Card */
   .task-form-card {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
@@ -297,7 +298,7 @@ const styleSheet = `
   .priority-btn.active.medium { background: rgba(124, 58, 237, 0.12); border-color: #7c3aed; color: #a78bfa; }
   .priority-btn.active.low { background: rgba(16, 185, 129, 0.12); border-color: #10b981; color: #34d399; }
 
-  /* Filters */
+  /* 5. Filter Tabs Area */
   .filter-tabs-wrapper {
     position: relative;
     display: flex;
@@ -375,7 +376,7 @@ const styleSheet = `
     flex-shrink: 0;
   }
 
-  /* List Grid */
+  /* 6. Tasks List Grid */
   .tasks-list-grid { display: grid; grid-template-columns: 1fr; gap: 10px; z-index: 10; position: relative; }
 
   .task-quest-card {
@@ -496,7 +497,7 @@ const styleSheet = `
 
   .btn-delete-quest:hover { background: rgba(239, 68, 68, 0.08); color: #f87171; }
 
-  /* Empty State */
+  /* Empty State Frame */
   .empty-quest-state {
     text-align: center;
     padding: 48px 16px;
@@ -523,7 +524,7 @@ const styleSheet = `
   .empty-quest-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
   .empty-quest-subtitle { font-size: 13px; color: var(--text-secondary); max-width: 320px; margin: 0 auto; line-height: 1.5; }
 
-  /* Responsive / Mobile overrides */
+  /* Mobile Device Breakpoints */
   @media (max-width: 768px) {
     .tasks-wrapper {
       width: 100% !important;
@@ -539,14 +540,14 @@ const styleSheet = `
 
     .workspace-hero-card {
       padding: 18px 20px !important;
-      margin-bottom: 24px !important;
+      margin-bottom: 28px !important; /* Visual space separation */
       border-radius: 16px !important;
     }
 
     .hero-info-area h1 { font-size: 22px !important; }
     .hero-info-area p { font-size: 12px !important; }
 
-    /* Floating premium swipe carousel, with overflow visible */
+    /* Independent Horizontal swipe carousel configuration */
     .stats-carousel-grid {
       display: flex !important;
       overflow-x: auto !important;
@@ -556,8 +557,8 @@ const styleSheet = `
       padding: 4px 16px !important;
       margin-left: -16px !important;
       margin-right: -16px !important;
-      margin-bottom: 24px !important;
-      width: calc(100% + 32px) !important;
+      margin-bottom: 28px !important; /* Standard spacing break */
+      width: calc(100% + 32px) !important; /* Bleeds container edge-to-edge on mobile display */
       -webkit-overflow-scrolling: touch !important;
       box-sizing: border-box !important;
     }
@@ -565,9 +566,9 @@ const styleSheet = `
     .stats-carousel-grid::-webkit-scrollbar { display: none !important; }
 
     .kpi-card-glass {
-      flex: 0 0 calc(93% - 12px) !important; /* 93% card width leaves exactly 7% peeking as visual swipe cue */
+      flex: 0 0 calc(92% - 12px) !important; /* 92% card width leaves exactly 8% of the next card peeking */
       scroll-snap-align: start !important;
-      min-height: 108px !important;
+      min-height: 104px !important;
       padding: 16px !important;
       border-radius: 14px !important;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
@@ -624,7 +625,7 @@ const styleSheet = `
     .filter-tab-label { max-width: 100%; }
     .tab-count-badge { font-size: 9px !important; padding: 1px 4px !important; margin-left: 3px !important; }
 
-    /* Vertical stacked mobile task layout */
+    /* Vertical stacked task view styling */
     .task-quest-card {
       flex-direction: column !important;
       align-items: stretch !important;
@@ -672,7 +673,7 @@ function Tasks({ userId }) {
     handleResize()
     window.addEventListener('resize', handleResize)
 
-    // Prevent page scale zoom behavior on touch devices
+    // Setup viewport scale behaviors on touch screens
     const meta = document.querySelector('meta[name="viewport"]')
     if (meta) {
       meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
@@ -750,7 +751,7 @@ function Tasks({ userId }) {
       <div className="aurora-blur-sphere sphere-primary" style={{ top: '10%', left: '5%' }} />
       <div className="aurora-blur-sphere sphere-secondary" style={{ bottom: '20%', right: '5%', background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0) 70%)' }} />
 
-      {/* 1. Page Header */}
+      {/* 1. Header Area */}
       <div className="workspace-header-section">
         <div className="header-brand-label">
           <div className="header-brand-dot" />
@@ -775,7 +776,7 @@ function Tasks({ userId }) {
         </div>
       </motion.div>
 
-      {/* 3. Statistics Carousel Container */}
+      {/* 3. Statistics Carousel Container (Sibling layout section) */}
       <div className="stats-carousel-grid">
         <SummaryCard
           label="Active Tasks"
@@ -925,7 +926,7 @@ function Tasks({ userId }) {
         </button>
       </div>
 
-      {/* 6. Task List */}
+      {/* 6. Tasks List */}
       {loading ? (
         <p style={{ color: 'var(--text-secondary)', fontSize: '13px', textAlign: 'center' }}>Loading tasks...</p>
       ) : filteredTasks.length === 0 ? (
