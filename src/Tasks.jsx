@@ -29,17 +29,18 @@ const styleSheet = `
     --aurora-secondary: rgba(236, 72, 153, 0.08);
     --aurora-tertiary: rgba(59, 130, 246, 0.08);
     --sparkline-color: #8b5cf6;
+    --checkbox-border: rgba(255, 255, 255, 0.2);
   }
 
   body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
     --canvas-bg: #f8fafc;
-    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-bg: rgba(255, 255, 255, 0.75);
     --glass-border: rgba(15, 23, 42, 0.06);
     --glass-border-glow: linear-gradient(135deg, rgba(92, 71, 245, 0.15) 0%, rgba(224, 83, 93, 0.15) 100%);
     --text-primary: #1e1b4b;
     --text-secondary: #475569;
     --text-tertiary: #94a3b8;
-    --input-bg: rgba(241, 245, 249, 0.75);
+    --input-bg: rgba(241, 245, 249, 0.85);
     --input-border: rgba(15, 23, 42, 0.08);
     --input-focus-border: #6366f1;
     --input-focus-glow: rgba(99, 102, 241, 0.15);
@@ -50,6 +51,7 @@ const styleSheet = `
     --aurora-secondary: #dce5ff;
     --aurora-tertiary: #eedcff;
     --sparkline-color: #6366f1;
+    --checkbox-border: rgba(15, 23, 42, 0.2);
   }
 
   .tasks-wrapper {
@@ -58,7 +60,7 @@ const styleSheet = `
     max-width: 1100px;
     margin: 0 auto;
     position: relative;
-    padding: 20px 0;
+    padding: 24px 20px;
     box-sizing: border-box;
     overflow-x: hidden;
   }
@@ -79,9 +81,9 @@ const styleSheet = `
   .subjects-hero-header {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: 24px;
-    padding: 32px 40px;
-    margin-bottom: 32px;
+    border-radius: 20px;
+    padding: 24px 32px;
+    margin-bottom: 24px;
     box-shadow: var(--card-shadow);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -94,9 +96,9 @@ const styleSheet = `
     gap: 16px;
   }
 
-  .hero-info-area h1 { font-size: 32px; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; color: var(--text-primary); }
-  .hero-info-area p { font-size: 14px; color: var(--text-secondary); margin: 0; font-weight: 500; }
-  .hero-meta-badges { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .hero-info-area h1 { font-size: 28px; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; color: var(--text-primary); }
+  .hero-info-area p { font-size: 13px; color: var(--text-secondary); margin: 0; font-weight: 500; line-height: 1.4; }
+  .hero-meta-badges { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
   .semester-pill {
     background: rgba(139, 92, 246, 0.1);
@@ -111,6 +113,16 @@ const styleSheet = `
     white-space: nowrap;
   }
 
+  body.light-theme .semester-pill,
+  body.light .semester-pill,
+  .light-theme .semester-pill,
+  .light .semester-pill,
+  [data-theme="light"] .semester-pill {
+    background: rgba(99, 102, 241, 0.08);
+    border-color: rgba(99, 102, 241, 0.15);
+    color: #6366f1;
+  }
+
   .sgpa-badge-glowing {
     background: linear-gradient(135deg, #ffeaa7 0%, #e1b12c 100%);
     color: #0c0b11;
@@ -118,7 +130,7 @@ const styleSheet = `
     font-weight: 800;
     padding: 6px 16px;
     border-radius: 100px;
-    box-shadow: 0 4px 12px rgba(225, 177, 44, 0.3);
+    box-shadow: 0 4px 12px rgba(225, 177, 44, 0.25);
     white-space: nowrap;
   }
 
@@ -126,7 +138,7 @@ const styleSheet = `
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
     z-index: 10;
     position: relative;
   }
@@ -134,33 +146,33 @@ const styleSheet = `
   .kpi-card-glass {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    padding: 20px;
+    border-radius: 16px;
+    padding: 18px;
     box-shadow: var(--card-shadow);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 120px;
+    min-height: 110px;
     position: relative;
     overflow: hidden;
     box-sizing: border-box;
   }
 
-  .kpi-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .kpi-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; }
+  .kpi-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .kpi-label { font-size: 10px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; }
   .kpi-icon-wrapper { color: var(--text-secondary); opacity: 0.8; }
-  .kpi-main-metric { font-size: 28px; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 6px; }
+  .kpi-main-metric { font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 6px; }
   .kpi-desc-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; }
-  .kpi-desc { font-size: 11px; color: var(--text-tertiary); font-weight: 500; max-width: 60%; }
+  .kpi-desc { font-size: 11px; color: var(--text-tertiary); font-weight: 500; max-width: 65%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .task-form-card {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: 24px;
-    padding: 24px;
-    margin-bottom: 32px;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 24px;
     box-shadow: var(--card-shadow);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -169,60 +181,62 @@ const styleSheet = `
     box-sizing: border-box;
   }
 
-  .input-group { display: flex; gap: 12px; align-items: center; width: 100%; box-sizing: border-box; }
+  .input-group { display: flex; gap: 10px; align-items: center; width: 100%; box-sizing: border-box; }
 
   .task-input {
     flex: 1;
     min-width: 0;
     background: var(--input-bg);
     border: 1px solid var(--input-border);
-    border-radius: 14px;
-    padding: 14px 18px;
+    border-radius: 12px;
+    padding: 12px 16px;
     color: var(--text-primary);
     font-size: 14px;
     font-weight: 500;
     box-sizing: border-box;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
+    height: 48px;
   }
 
-  .task-input::placeholder { color: var(--text-secondary); opacity: 0.6; }
+  .task-input::placeholder { color: var(--text-secondary); opacity: 0.5; }
   .task-input:focus { outline: none; border-color: var(--input-focus-border); background: var(--input-bg); box-shadow: 0 0 0 3px var(--input-focus-glow); }
 
   .btn-add {
     background: var(--btn-primary-bg);
     color: #ffffff;
     border: none;
-    border-radius: 14px;
-    padding: 14px 24px;
+    border-radius: 12px;
+    padding: 12px 20px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 6px 16px var(--btn-primary-glow);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px var(--btn-primary-glow);
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
     white-space: nowrap;
+    height: 48px;
   }
 
-  .btn-add:hover { transform: translateY(-1px); box-shadow: 0 8px 22px var(--btn-primary-glow); }
+  .btn-add:hover { transform: translateY(-1px); box-shadow: 0 6px 18px var(--btn-primary-glow); }
 
   .priority-options {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 14px;
+    gap: 8px;
+    margin-top: 12px;
   }
 
   .priority-btn {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--glass-border);
     color: var(--text-secondary);
     font-size: 12px;
     font-weight: 600;
-    padding: 6px 14px;
+    padding: 6px 12px;
     border-radius: 100px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -240,8 +254,8 @@ const styleSheet = `
     background: var(--input-bg);
     border: 1px solid var(--glass-border);
     padding: 4px;
-    border-radius: 14px;
-    margin: 24px 0;
+    border-radius: 12px;
+    margin: 20px 0;
     z-index: 10;
     width: max-content;
     max-width: 100%;
@@ -256,8 +270,8 @@ const styleSheet = `
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    padding: 8px 20px;
-    border-radius: 10px;
+    padding: 8px 16px;
+    border-radius: 8px;
     transition: color 0.2s ease;
     outline: none;
     z-index: 1;
@@ -285,7 +299,7 @@ const styleSheet = `
     left: 2px;
     right: 2px;
     background: rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
+    border-radius: 6px;
     z-index: -1;
   }
 
@@ -310,37 +324,46 @@ const styleSheet = `
     flex-shrink: 0;
   }
 
-  .tasks-list-grid { display: grid; grid-template-columns: 1fr; gap: 12px; z-index: 10; position: relative; }
+  .tasks-list-grid { display: grid; grid-template-columns: 1fr; gap: 10px; z-index: 10; position: relative; }
 
   .task-quest-card {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: 16px;
-    padding: 16px 20px;
+    border-radius: 14px;
+    padding: 14px 18px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: var(--card-shadow);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     box-sizing: border-box;
   }
 
-  .task-quest-card:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.1); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35); }
+  .task-quest-card:hover { transform: translateY(-1px); border-color: rgba(255, 255, 255, 0.08); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); }
 
-  .task-quest-card.high-p { border-left: 4px solid #ef4444; }
-  .task-quest-card.medium-p { border-left: 4px solid #7c3aed; }
-  .task-quest-card.low-p { border-left: 4px solid #10b981; }
+  .task-quest-card.high-p { 
+    border-left: 3px solid #ef4444; 
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.02) 0%, var(--glass-bg) 100%);
+  }
+  .task-quest-card.medium-p { 
+    border-left: 3px solid #7c3aed; 
+    background: linear-gradient(90deg, rgba(124, 58, 237, 0.02) 0%, var(--glass-bg) 100%);
+  }
+  .task-quest-card.low-p { 
+    border-left: 3px solid #10b981; 
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.02) 0%, var(--glass-bg) 100%);
+  }
 
-  .checkbox-wrapper { display: flex; align-items: center; gap: 16px; cursor: pointer; flex: 1; min-width: 0; }
+  .checkbox-wrapper { display: flex; align-items: center; gap: 14px; cursor: pointer; flex: 1; min-width: 0; }
 
   .custom-checkbox-node {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    border: 2px solid var(--checkbox-border);
+    border: 1.5px solid var(--checkbox-border);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -348,13 +371,32 @@ const styleSheet = `
     flex-shrink: 0;
   }
 
-  .checkbox-wrapper:hover .custom-checkbox-node { border-color: #5c47f5; }
-  .custom-checkbox-node.checked { background-color: #5c47f5; border-color: #5c47f5; box-shadow: 0 0 10px rgba(92, 71, 245, 0.4); }
-  .custom-checkbox-node svg { color: #ffffff; opacity: 0; transition: opacity 0.2s ease; }
+  .checkbox-wrapper:hover .custom-checkbox-node { border-color: #8b5cf6; }
+  .custom-checkbox-node.checked { background-color: #8b5cf6; border-color: #8b5cf6; box-shadow: 0 0 10px rgba(139, 92, 246, 0.3); }
+  
+  body.light-theme .checkbox-wrapper:hover .custom-checkbox-node,
+  body.light .checkbox-wrapper:hover .custom-checkbox-node,
+  .light-theme .checkbox-wrapper:hover .custom-checkbox-node,
+  .light .checkbox-wrapper:hover .custom-checkbox-node,
+  [data-theme="light"] .checkbox-wrapper:hover .custom-checkbox-node {
+    border-color: #6366f1;
+  }
+  
+  body.light-theme .custom-checkbox-node.checked,
+  body.light .custom-checkbox-node.checked,
+  .light-theme .custom-checkbox-node.checked,
+  .light .custom-checkbox-node.checked,
+  [data-theme="light"] .custom-checkbox-node.checked {
+    background-color: #6366f1;
+    border-color: #6366f1;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+  }
+
+  .custom-checkbox-node svg { color: #ffffff; opacity: 0; transition: opacity 0.15s ease; }
   .custom-checkbox-node.checked svg { opacity: 1; }
 
   .task-quest-title {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--text-primary);
     transition: all 0.2s ease;
@@ -364,27 +406,27 @@ const styleSheet = `
     min-width: 0;
   }
 
-  .task-quest-title.completed { text-decoration: line-through; color: var(--text-secondary); opacity: 0.6; }
+  .task-quest-title.completed { text-decoration: line-through; color: var(--text-secondary); opacity: 0.55; }
 
-  .card-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .card-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
   .quest-priority-badge {
     font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.05em;
     padding: 4px 10px;
     border-radius: 100px;
     cursor: pointer;
     user-select: none;
-    transition: transform 0.2s;
+    transition: transform 0.2s ease;
     white-space: nowrap;
   }
 
-  .quest-priority-badge:hover { transform: scale(1.05); }
-  .quest-priority-badge.badge-high { background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
-  .quest-priority-badge.badge-medium { background: rgba(124, 58, 237, 0.12); color: #a78bfa; border: 1px solid rgba(124, 58, 237, 0.2); }
-  .quest-priority-badge.badge-low { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
+  .quest-priority-badge:hover { transform: scale(1.03); }
+  .quest-priority-badge.badge-high { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.15); }
+  .quest-priority-badge.badge-medium { background: rgba(124, 58, 237, 0.12); color: #a78bfa; border: 1px solid rgba(124, 58, 237, 0.15); }
+  .quest-priority-badge.badge-low { background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.15); }
 
   .btn-delete-quest {
     background: none;
@@ -404,29 +446,29 @@ const styleSheet = `
 
   .empty-quest-state {
     text-align: center;
-    padding: 60px 20px;
-    border-radius: 28px;
-    border: 1.5px dashed var(--glass-border);
+    padding: 48px 16px;
+    border-radius: 20px;
+    border: 1px dashed var(--glass-border);
     background: var(--glass-bg);
     backdrop-filter: blur(20px);
     z-index: 10;
     position: relative;
-    margin-top: 24px !important;
-    margin-bottom: 24px !important;
+    margin-top: 16px !important;
+    margin-bottom: 16px !important;
     box-sizing: border-box;
   }
 
-  .empty-state-vector-frame { width: 280px; max-width: 100%; height: 180px; margin: 0 auto 24px auto; }
+  .empty-state-vector-frame { width: 240px; max-width: 100%; height: 140px; margin: 0 auto 16px auto; }
 
   .empty-svg-sky { fill: var(--input-bg); }
-  .empty-svg-accent { fill: #5c47f5; opacity: 0.15; }
+  .empty-svg-accent { fill: #8b5cf6; opacity: 0.1; }
   .empty-svg-terrain-back { fill: var(--glass-bg); opacity: 0.8; }
   .empty-svg-terrain-front { fill: var(--glass-bg); }
-  .empty-svg-silhouette { fill: var(--text-primary); opacity: 0.9; }
-  .empty-svg-stroke { stroke: var(--text-primary); opacity: 0.9; }
+  .empty-svg-silhouette { fill: var(--text-primary); opacity: 0.85; }
+  .empty-svg-stroke { stroke: var(--text-primary); opacity: 0.85; }
 
-  .empty-quest-title { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
-  .empty-quest-subtitle { font-size: 14px; color: var(--text-secondary); max-width: 340px; margin: 0 auto; line-height: 1.5; }
+  .empty-quest-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+  .empty-quest-subtitle { font-size: 13px; color: var(--text-secondary); max-width: 320px; margin: 0 auto; line-height: 1.5; }
 
   @media (max-width: 768px) {
     .tasks-wrapper {
@@ -438,84 +480,118 @@ const styleSheet = `
     }
 
     .subjects-hero-header {
-      padding: 20px !important;
+      padding: 16px 20px !important;
       flex-direction: column !important;
       align-items: flex-start !important;
+      margin-bottom: 16px !important;
+      border-radius: 16px !important;
+      gap: 12px !important;
     }
 
-    .hero-info-area h1 { font-size: 24px !important; }
+    .hero-info-area h1 { font-size: 22px !important; }
+    .hero-info-area p { font-size: 12px !important; }
 
     .stats-carousel-grid {
       display: flex !important;
       overflow-x: auto !important;
       scroll-snap-type: x mandatory !important;
       gap: 12px !important;
-      padding: 4px !important;
-      margin-bottom: 24px !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
+      padding: 4px 16px !important;
+      margin-left: -16px !important;
+      margin-right: -16px !important;
+      margin-bottom: 20px !important;
+      width: calc(100% + 32px) !important;
       -webkit-overflow-scrolling: touch !important;
+      box-sizing: border-box !important;
     }
 
     .stats-carousel-grid::-webkit-scrollbar { display: none !important; }
 
     .kpi-card-glass {
-      flex: 0 0 78% !important;
-      scroll-snap-align: start !important;
-      min-height: 94px !important;
-      padding: 14px !important;
+      flex: 0 0 85% !important; /* 85% width lets the next card peek out for premium swipe cue */
+      scroll-snap-align: center !important;
+      min-height: 100px !important;
+      padding: 16px !important;
       border-radius: 14px !important;
       box-sizing: border-box !important;
     }
 
-    .kpi-main-metric { font-size: 22px !important; margin-bottom: 2px !important; }
+    .kpi-main-metric { font-size: 24px !important; margin-bottom: 2px !important; }
     .kpi-desc { font-size: 10px !important; }
-    .golden-trophy-badge { display: none !important; }
+    .golden-trophy-badge { right: 8px !important; bottom: 8px !important; width: 24px !important; height: 24px !important; }
 
-    .tasks-list-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+    .tasks-list-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
 
-    .task-form-card { padding: 16px !important; border-radius: 16px !important; margin-bottom: 24px !important; }
+    .task-form-card { padding: 16px !important; border-radius: 16px !important; margin-bottom: 20px !important; }
 
-    .input-group { flex-direction: column !important; align-items: stretch !important; gap: 12px !important; }
-    .task-input { width: 100% !important; }
-    .btn-add { width: 100% !important; justify-content: center !important; }
+    .input-group { flex-direction: column !important; align-items: stretch !important; gap: 10px !important; }
+    .task-input { width: 100% !important; height: 44px !important; }
+    .btn-add { width: 100% !important; justify-content: center !important; height: 44px !important; }
 
-    .priority-options { flex-wrap: wrap !important; gap: 8px !important; }
-    .priority-btn { flex: 0 0 auto !important; }
+    .priority-options { 
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      flex-wrap: nowrap !important;
+      gap: 6px !important; 
+      margin-top: 12px !important;
+    }
+    
+    .priority-options > span { display: none !important; } /* Hide label to save row space */
+
+    .priority-btn { 
+      flex: 1 !important; 
+      text-align: center !important;
+      padding: 8px 0 !important;
+      font-size: 11px !important;
+      min-height: 36px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: 8px !important;
+    }
 
     .filter-tabs-wrapper {
       display: flex !important;
       width: 100% !important;
       max-width: 100% !important;
       gap: 2px !important;
-      padding: 4px !important;
-      margin: 24px 0 !important;
-      border-radius: 12px !important;
+      padding: 3px !important;
+      margin: 16px 0 !important;
+      border-radius: 10px !important;
       box-sizing: border-box !important;
     }
 
-    .filter-tab { flex: 1 !important; padding: 8px 4px !important; font-size: 11px !important; justify-content: center !important; min-width: 0 !important; }
+    .filter-tab { flex: 1 !important; padding: 8px 2px !important; font-size: 11px !important; justify-content: center !important; min-width: 0 !important; min-height: 36px !important; }
     .filter-tab-label { max-width: 100%; }
-    .tab-count-badge { display: none !important; }
+    .tab-count-badge { font-size: 9px !important; padding: 1px 4px !important; margin-left: 3px !important; }
 
-    /* Stack task cards vertically instead of cramming title + badge + delete on one line */
+    /* Vertical stack layout for task cards to prevent horizontal squeeze on smaller device screens */
     .task-quest-card {
       flex-direction: column !important;
       align-items: stretch !important;
       gap: 12px !important;
-      padding: 16px !important;
-      border-radius: 14px !important;
+      padding: 14px 16px !important;
+      border-radius: 12px !important;
       min-height: auto !important;
     }
 
-    .checkbox-wrapper { width: 100% !important; }
-    .task-quest-title { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
+    .checkbox-wrapper { width: 100% !important; align-items: flex-start !important; }
+    .custom-checkbox-node { margin-top: 1px !important; width: 20px !important; height: 20px !important; }
+    .task-quest-title { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; font-size: 14px !important; line-height: 1.4 !important; }
 
     .card-actions {
       width: 100% !important;
       justify-content: space-between !important;
-      padding-left: 36px !important;
+      padding-left: 34px !important; /* Align interactive metrics with card layout */
       box-sizing: border-box !important;
+    }
+    
+    .btn-delete-quest {
+      width: 36px !important;
+      height: 36px !important;
+      margin: -6px -6px -6px 0 !important; /* Expands interactive touch alignment targets */
     }
   }
 
@@ -538,7 +614,21 @@ function Tasks({ userId }) {
     const handleResize = () => setIsMobile(window.innerWidth <= 768)
     handleResize()
     window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+
+    // Prevent page pinch-to-zoom scaling behavior on mobile devices
+    const meta = document.querySelector('meta[name="viewport"]')
+    if (meta) {
+      meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
+    } else {
+      const newMeta = document.createElement('meta')
+      newMeta.name = 'viewport'
+      newMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+      document.head.appendChild(newMeta)
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
   }, [])
 
   async function fetchTasks() {
@@ -598,14 +688,14 @@ function Tasks({ userId }) {
   const completionRate = totalTasksCount > 0 ? Math.round((completedCount / totalTasksCount) * 100) : 0
 
   return (
-    <div className="tasks-wrapper">
+    <div className="tasks-wrapper" style={{ touchAction: 'pan-y' }}>
       <style dangerouslySetInnerHTML={{ __html: styleSheet }} />
       <div className="aurora-blur-sphere sphere-primary" style={{ top: '10%', left: '5%' }} />
       <div className="aurora-blur-sphere sphere-secondary" style={{ bottom: '20%', right: '5%', background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0) 70%)' }} />
 
       <motion.div
         className="subjects-hero-header"
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 100, damping: 15 }}
       >
@@ -623,16 +713,16 @@ function Tasks({ userId }) {
         <SummaryCard
           label="Active Tasks"
           value={activeCount}
-          icon={<ListTodo size={16} />}
-          desc={`${completedCount} tasks accomplished`}
+          icon={<ListTodo size={15} />}
+          desc={`${completedCount} accomplished`}
           sparklinePath="M0,15 C10,12 20,18 30,5 C40,2 50,14 60,8"
         />
 
         <SummaryCard
           label="Completed"
           value={completedCount}
-          icon={<CheckCircle2 size={16} />}
-          desc={`${activeCount} objectives remaining`}
+          icon={<CheckCircle2 size={15} />}
+          desc={`${activeCount} remaining`}
           sparklinePath="M0,8 C10,14 20,5 30,12 C40,16 50,2 60,10"
         />
 
@@ -642,21 +732,21 @@ function Tasks({ userId }) {
             hidden: { opacity: 0, y: 15 },
             visible: { opacity: 1, y: 0, transition: { type: 'spring' } }
           }}
-          whileHover={{ y: -4, transition: { duration: 0.2 } }}
+          whileHover={!isMobile ? { y: -3, transition: { duration: 0.2 } } : {}}
         >
           <div className="kpi-header-row">
             <span className="kpi-label">Completion Rate</span>
             <span className="kpi-icon-wrapper" style={{ color: '#e1b12c' }}>
-              <TrendingUp size={16} />
+              <TrendingUp size={15} />
             </span>
           </div>
           <div className="kpi-main-metric" style={{ color: '#e1b12c' }}>
             {completionRate}%
           </div>
           <div className="kpi-desc-row">
-            <span className="kpi-desc">Based on total logged tasks.</span>
-            <div className="golden-trophy-badge" style={{ position: 'absolute', width: '28px', height: '28px', bottom: '12px', right: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #ffeaa7 0%, #e1b12c 100%)', boxShadow: '0 4px 12px rgba(225, 177, 44, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Sparkles size={14} color="#0c0b11" strokeWidth={2.5} />
+            <span className="kpi-desc">Overall metrics.</span>
+            <div className="golden-trophy-badge" style={{ position: 'absolute', width: '26px', height: '26px', bottom: '12px', right: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #ffeaa7 0%, #e1b12c 100%)', boxShadow: '0 4px 10px rgba(225, 177, 44, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Sparkles size={12} color="#0c0b11" strokeWidth={2.5} />
             </div>
           </div>
         </motion.div>
@@ -664,15 +754,15 @@ function Tasks({ userId }) {
         <SummaryCard
           label="Total Objectives"
           value={totalTasksCount}
-          icon={<Target size={16} />}
-          desc="Overall task logs on list"
+          icon={<Target size={15} />}
+          desc="Overall logged tasks"
           sparklinePath="M0,18 C10,15 20,10 30,10 C40,10 50,3 60,3"
         />
       </div>
 
       <motion.div
         className="task-form-card"
-        initial={{ opacity: 0, y: 15 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 80 }}
       >
@@ -820,15 +910,15 @@ function Tasks({ userId }) {
                 key={task.id}
                 className={`task-quest-card ${task.priority}-p`}
                 layout
-                initial={{ opacity: 0, y: 12, scale: 0.96 }}
+                initial={{ opacity: 0, y: 10, scale: 0.97 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                exit={{ opacity: 0, scale: 0.96 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 25 }}
                 whileHover={!isMobile ? { y: -2, transition: { duration: 0.2 } } : {}}
               >
                 <div className="checkbox-wrapper" onClick={() => toggleDone(task)}>
                   <div className={`custom-checkbox-node ${task.progress === 100 ? 'checked' : ''}`}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                   </div>
@@ -847,7 +937,7 @@ function Tasks({ userId }) {
                   </span>
 
                   <button onClick={() => deleteTask(task.id)} className="btn-delete-quest" title="Delete Task">
-                    <Trash2 size={15} />
+                    <Trash2 size={14} />
                   </button>
                 </div>
 
@@ -868,7 +958,7 @@ function SummaryCard({ label, value, icon, desc, sparklinePath }) {
         hidden: { opacity: 0, y: 15 },
         visible: { opacity: 1, y: 0, transition: { type: 'spring' } }
       }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      whileHover={{ y: -3, transition: { duration: 0.2 } }}
     >
       <div className="kpi-header-row">
         <span className="kpi-label">{label}</span>
@@ -878,7 +968,7 @@ function SummaryCard({ label, value, icon, desc, sparklinePath }) {
       <div className="kpi-desc-row">
         <span className="kpi-desc">{desc}</span>
         <svg width="60" height="20" viewBox="0 0 60 20" fill="none" style={{ opacity: 0.7 }}>
-          <path d={sparklinePath} stroke="var(--sparkline-color)" strokeWidth="2" strokeLinecap="round" />
+          <path d={sparklinePath} stroke="var(--sparkline-color)" strokeWidth="1.75" strokeLinecap="round" />
         </svg>
       </div>
     </motion.div>
