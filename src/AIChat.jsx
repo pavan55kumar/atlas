@@ -8,7 +8,7 @@ import { supabase } from './lib/supabase'
 
 // Premium Handcrafted Theme Adaptive Glassmorphic Stylesheet
 const styleSheet = `
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap');
   
   :root {
     --atlas-font: 'Plus Jakarta Sans', -apple-system, sans-serif;
@@ -36,7 +36,7 @@ const styleSheet = `
     --aurora-secondary: rgba(236, 72, 153, 0.08);
   }
 
-  /* Light Theme Handcrafted Glassmorphism (Apple Settings & Notion style) */
+  /* Light Theme Handcrafted Glassmorphism */
   body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
     --canvas-bg: #f8fafc;
     --glass-bg: rgba(255, 255, 255, 0.7);
@@ -64,7 +64,8 @@ const styleSheet = `
     max-width: 1200px;
     margin: 0 auto;
     position: relative;
-    padding: 10px 0;
+    padding: 10px 12px;
+    box-sizing: border-box;
   }
 
   /* --- Glowing Backdrop Aurora Spheres --- */
@@ -99,7 +100,7 @@ const styleSheet = `
     border: 1px solid var(--glass-border);
     border-radius: 24px;
     padding: 24px 32px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     box-shadow: var(--card-shadow);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -167,14 +168,15 @@ const styleSheet = `
     gap: 10px;
     overflow-x: auto;
     padding-bottom: 8px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     z-index: 10;
     position: relative;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
   }
 
   .suggestions-carousel::-webkit-scrollbar {
-    display: none;
+    display: none; /* Chrome, Safari, Opera */
   }
 
   .suggestion-pill-card {
@@ -214,7 +216,7 @@ const styleSheet = `
   .chat-workspace-pane {
     display: flex;
     flex-direction: column;
-    height: 500px;
+    height: 580px;
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: 28px;
@@ -274,7 +276,7 @@ const styleSheet = `
     border-bottom-left-radius: 4px;
   }
 
-  /* --- Glowing AI Pulse Orb Empty State (inspired by mockup center) --- */
+  /* --- Glowing AI Pulse Orb Empty State --- */
   .empty-chat-orb-state {
     display: flex;
     flex-direction: column;
@@ -282,14 +284,14 @@ const styleSheet = `
     justify-content: center;
     flex: 1;
     text-align: center;
-    padding: 40px;
+    padding: 20px;
   }
 
   .pulse-orb-outer {
     position: relative;
     width: 90px;
     height: 90px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -324,7 +326,7 @@ const styleSheet = `
 
   /* --- Action Dock & Pill Inputs --- */
   .input-dock-layer {
-    padding: 16px 24px 20px 24px;
+    padding: 16px 20px;
     border-top: 1px solid var(--glass-border);
     background: rgba(14, 13, 22, 0.15);
     display: flex;
@@ -332,31 +334,31 @@ const styleSheet = `
     gap: 12px;
   }
 
-  .quick-action-dock {
+  /* Context chip linking displays */
+  .linked-context-chips-row {
     display: flex;
-    gap: 8px;
     align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .linked-context-chips {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     flex-wrap: wrap;
   }
 
-  .dock-badge {
+  .context-mini-badge {
     font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 4px 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    background: rgba(255, 255, 255, 0.03);
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--glass-border);
     color: var(--text-secondary);
-    transition: all 0.2s;
-  }
-
-  .dock-badge:hover {
-    background: rgba(139, 92, 246, 0.1);
-    color: #a78bfa;
-    border-color: rgba(139, 92, 246, 0.2);
+    padding: 3px 10px;
+    border-radius: 8px;
+    flex-shrink: 0;
   }
 
   /* Capsule floating input bar */
@@ -367,9 +369,11 @@ const styleSheet = `
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     border-radius: 100px;
-    padding: 6px 8px 6px 18px;
-    gap: 12px;
+    padding: 6px 6px 6px 18px;
+    gap: 10px;
     transition: all 0.25s;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .capsule-input-bar.focused-glow {
@@ -379,6 +383,7 @@ const styleSheet = `
 
   .capsule-field {
     flex: 1;
+    min-width: 0; /* Prevents text overflow cutting off layout elements */
     background: none;
     border: none;
     color: var(--text-primary);
@@ -404,6 +409,7 @@ const styleSheet = `
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
+    flex-shrink: 0; /* Prevents compression on small screens */
   }
 
   .btn-dock-mic.active-listening {
@@ -425,6 +431,7 @@ const styleSheet = `
     cursor: pointer;
     box-shadow: 0 4px 12px var(--btn-primary-glow);
     transition: transform 0.15s;
+    flex-shrink: 0; /* Prevents compression on small screens */
   }
 
   .btn-dock-send:hover {
@@ -439,6 +446,7 @@ const styleSheet = `
   .voice-switch-container {
     display: flex;
     justify-content: flex-end;
+    flex-shrink: 0;
   }
 
   .voice-toggle-pill {
@@ -455,6 +463,7 @@ const styleSheet = `
     cursor: pointer;
     user-select: none;
     transition: all 0.2s;
+    flex-shrink: 0;
   }
 
   .voice-toggle-pill.active {
@@ -514,25 +523,6 @@ const styleSheet = `
     color: var(--text-primary);
   }
 
-  /* Context chip linking displays */
-  .linked-context-chips {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-top: 8px;
-  }
-
-  .context-mini-badge {
-    font-size: 10px;
-    font-weight: 600;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--glass-border);
-    color: var(--text-secondary);
-    padding: 2px 8px;
-    border-radius: 6px;
-  }
-
   /* Typing loader animation */
   .typing-loader {
     display: flex;
@@ -560,10 +550,17 @@ const styleSheet = `
   /* --- Mobile Layout Scaling overrides --- */
   @media (max-width: 900px) {
     .ai-hero-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 20px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      border-radius: 18px;
+    }
+
+    .hero-info h1 {
+      font-size: 22px;
+    }
+
+    .hero-info p {
+      font-size: 12px;
     }
 
     .ai-split-workspace {
@@ -575,20 +572,29 @@ const styleSheet = `
     }
 
     .chat-workspace-pane {
-      height: 480px;
+      /* Dynamic height calculation to utilize vertical mobile screen space and prevent vertical squishing */
+      height: calc(100vh - 280px);
+      min-height: 500px;
+      max-height: 720px;
+      border-radius: 24px;
+    }
+
+    .chat-messages-container {
+      padding: 18px;
     }
 
     .msg-bubble {
-      max-width: 82%;
+      max-width: 85%;
+    }
+
+    .input-dock-layer {
+      padding: 12px 16px 16px 16px;
     }
   }
 
-  @media (max-width: 375px) {
-    .chat-workspace-pane {
-      height: 420px;
-    }
-    .capsule-input-bar {
-      padding-left: 12px;
+  @media (max-width: 480px) {
+    .hero-status-pills {
+      margin-top: 8px;
     }
   }
 `;
@@ -857,7 +863,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
           <div className="input-dock-layer">
             
             {/* Quick context chip display (Tasks, Calendar, Habits connected indices) */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+            <div className="linked-context-chips-row">
               <div className="linked-context-chips">
                 <span className="context-mini-badge" style={{ borderColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }}>● Linked Tasks</span>
                 <span className="context-mini-badge" style={{ borderColor: 'rgba(139, 92, 246, 0.2)', color: '#a78bfa' }}>● Calendar</span>
