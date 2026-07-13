@@ -13,45 +13,52 @@ const styleSheet = `
   :root {
     --atlas-font: 'Plus Jakarta Sans', -apple-system, sans-serif;
     
-    /* Dark Theme hand-crafted colors (Reference 1 & 2) */
-    --glass-bg: rgba(14, 13, 22, 0.45);
+    /* Handcrafted Dark Theme Colors (Reference Image 1: Deep Indigo/Crimson Fusion) */
+    --canvas-bg: #090810;
+    --glass-bg: rgba(18, 16, 30, 0.65);
     --glass-border: rgba(255, 255, 255, 0.05);
-    --glass-border-glow: rgba(124, 58, 237, 0.15);
-    --glass-glow-radial: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, rgba(99, 102, 241, 0) 70%);
+    --glass-border-glow: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(236, 72, 153, 0.3) 100%);
     --text-primary: #ffffff;
     --text-secondary: #94a3b8;
     --text-tertiary: #64748b;
-    --input-bg: rgba(22, 21, 34, 0.6);
-    --input-border: rgba(255, 255, 255, 0.08);
-    --input-focus-border: #7c3aed;
-    --input-focus-glow: rgba(124, 58, 237, 0.25);
-    --accent-purple: #7c3aed;
-    --accent-emerald: #10b981;
-    --btn-primary-bg: linear-gradient(135deg, #7c3aed 0%, #5c47f5 100%);
-    --btn-primary-glow: rgba(92, 71, 245, 0.4);
-    --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.05);
-    --accent-coral: #ef4444;
-    --accent-amber: #f59e0b;
-    --sparkline-color: #8b5cf6;
+    --input-bg: rgba(26, 23, 44, 0.6);
+    --input-border: rgba(255, 255, 255, 0.06);
+    --input-focus-border: #8b5cf6;
+    --input-focus-glow: rgba(139, 92, 246, 0.25);
+    
+    /* Gradients matching your dark mockup */
+    --btn-primary-bg: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    --btn-primary-glow: rgba(139, 92, 246, 0.4);
+    --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    
+    /* Ambient sphere tints */
+    --aurora-primary: rgba(139, 92, 246, 0.12);
+    --aurora-secondary: rgba(236, 72, 153, 0.08);
+    --aurora-tertiary: rgba(59, 130, 246, 0.08);
   }
 
-  /* Flawless light theme adaptation (Apple Settings & Notion style) */
+  /* Handcrafted Light Theme Colors (Reference Image 2: Soft Pastel Mesh Gradient UI) */
   body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
-    --glass-bg: rgba(255, 255, 255, 0.65);
-    --glass-border: rgba(15, 23, 42, 0.08);
-    --glass-border-glow: rgba(92, 71, 245, 0.12);
-    --glass-glow-radial: radial-gradient(circle, rgba(92, 71, 245, 0.08) 0%, rgba(92, 71, 245, 0) 70%);
-    --text-primary: #0f172a;
+    --canvas-bg: #f8fafc;
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(15, 23, 42, 0.06);
+    --glass-border-glow: linear-gradient(135deg, rgba(92, 71, 245, 0.15) 0%, rgba(224, 83, 93, 0.15) 100%);
+    --text-primary: #1e1b4b;
     --text-secondary: #475569;
     --text-tertiary: #94a3b8;
-    --input-bg: #f8fafc;
-    --input-border: rgba(15, 23, 42, 0.1);
-    --input-focus-border: #5c47f5;
-    --input-focus-glow: rgba(92, 71, 245, 0.15);
-    --btn-primary-bg: linear-gradient(135deg, #5c47f5 0%, #7c3aed 100%);
-    --btn-primary-glow: rgba(92, 71, 245, 0.2);
-    --card-shadow: 0 12px 30px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-    --sparkline-color: #5c47f5;
+    --input-bg: rgba(241, 245, 249, 0.75);
+    --input-border: rgba(15, 23, 42, 0.08);
+    --input-focus-border: #6366f1;
+    --input-focus-glow: rgba(99, 102, 241, 0.15);
+    
+    --btn-primary-bg: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    --btn-primary-glow: rgba(99, 102, 241, 0.2);
+    --card-shadow: 0 15px 35px rgba(31, 38, 135, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    
+    /* Light Theme soft pastel gradients */
+    --aurora-primary: #ffe3d8; /* Peach sphere */
+    --aurora-secondary: #dce5ff; /* Soft periwinkle sphere */
+    --aurora-tertiary: #eedcff; /* Pale lavender sphere */
   }
 
   .subjects-wrapper {
@@ -61,22 +68,43 @@ const styleSheet = `
     margin: 0 auto;
     position: relative;
     padding: 20px 0;
-    transition: color 0.3s ease;
   }
 
-  /* --- Elegant Ambient Glowing Background Grains --- */
+  /* --- Glowing Backdrop Aurora Spheres --- */
   .aurora-blur-sphere {
     position: absolute;
-    width: 350px;
-    height: 350px;
-    background: radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, rgba(124, 58, 237, 0) 70%);
     border-radius: 50%;
-    filter: blur(80px);
+    filter: blur(90px);
     pointer-events: none;
     z-index: 0;
+    transition: background 0.5s ease;
   }
 
-  /* --- Hero Header Styles --- */
+  .sphere-primary {
+    top: 5%;
+    left: -10%;
+    width: 450px;
+    height: 450px;
+    background: var(--aurora-primary);
+  }
+
+  .sphere-secondary {
+    bottom: 10%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: var(--aurora-secondary);
+  }
+
+  .sphere-tertiary {
+    top: 40%;
+    left: 40%;
+    width: 350px;
+    height: 350px;
+    background: var(--aurora-tertiary);
+  }
+
+  /* --- Hero Header --- */
   .subjects-hero-header {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
@@ -84,8 +112,8 @@ const styleSheet = `
     padding: 32px 40px;
     margin-bottom: 32px;
     box-shadow: var(--card-shadow);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -98,9 +126,7 @@ const styleSheet = `
     font-weight: 800;
     margin: 0 0 6px 0;
     letter-spacing: -0.02em;
-    background: linear-gradient(135deg, var(--text-primary) 30%, var(--text-secondary) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--text-primary);
   }
 
   .hero-info-area p {
@@ -117,9 +143,9 @@ const styleSheet = `
   }
 
   .semester-pill {
-    background: rgba(124, 58, 237, 0.1);
-    border: 1px solid rgba(124, 58, 237, 0.15);
-    color: var(--accent-purple);
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.15);
+    color: #8b5cf6;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.05em;
@@ -138,7 +164,7 @@ const styleSheet = `
     box-shadow: 0 4px 12px rgba(225, 177, 44, 0.3);
   }
 
-  /* --- KPI Summary Carousel & Grid --- */
+  /* --- KPI Summary Grid --- */
   .stats-carousel-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -154,8 +180,8 @@ const styleSheet = `
     border-radius: 20px;
     padding: 20px;
     box-shadow: var(--card-shadow);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -205,7 +231,7 @@ const styleSheet = `
     max-width: 60%;
   }
 
-  /* --- Input Form Section --- */
+  /* --- Subject Creation Section --- */
   .subject-form-panel {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
@@ -213,8 +239,8 @@ const styleSheet = `
     padding: 24px;
     margin-bottom: 32px;
     box-shadow: var(--card-shadow);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     z-index: 10;
     position: relative;
   }
@@ -288,7 +314,7 @@ const styleSheet = `
     box-shadow: 0 8px 22px var(--btn-primary-glow);
   }
 
-  /* --- Subject Display Grid (Desktop/Laptop) --- */
+  /* --- Subject Display Grid --- */
   .subjects-dashboard-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -303,37 +329,20 @@ const styleSheet = `
     border-radius: 24px;
     padding: 24px;
     box-shadow: var(--card-shadow);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     min-height: 220px;
     position: relative;
-    overflow: hidden;
+    overflow: visible; /* Prevents custom dropdown menu list clipping */
     transition: border-color 0.3s ease;
   }
 
   .premium-subject-card:hover {
-    border-color: var(--glass-border-glow);
-  }
-
-  .premium-card-radial-glow {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 250px;
-    height: 250px;
-    background: var(--glass-glow-radial);
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    z-index: 1;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  .premium-subject-card:hover .premium-card-radial-glow {
-    opacity: 1;
+    border-image: var(--glass-border-glow) 1;
+    border-radius: 24px; /* Fixes standard browser border-image radius clipping */
   }
 
   .card-top-header {
@@ -353,7 +362,7 @@ const styleSheet = `
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--accent-purple);
+    color: #8b5cf6;
   }
 
   .academic-completetion-chip {
@@ -418,17 +427,24 @@ const styleSheet = `
     position: relative;
   }
 
-  /* Interaction and Custom Select Grade Point options */
   .card-grades-tray {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    z-index: 2;
+    z-index: 20;
     position: relative;
   }
 
-  .interactive-grade-picker {
+  /* --- Gorgeous Custom Dropdown (Select-list replacement) --- */
+  .custom-dropdown-container {
+    position: relative;
+    width: 120px;
+    z-index: 30;
+  }
+
+  .dropdown-trigger-btn {
+    width: 100%;
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     border-radius: 10px;
@@ -436,15 +452,75 @@ const styleSheet = `
     color: var(--input-text);
     font-size: 13px;
     font-weight: 700;
-    text-align: center;
-    width: 90px;
-    outline: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
     transition: all 0.2s ease;
+    box-sizing: border-box;
+    outline: none;
   }
 
-  .interactive-grade-picker:focus {
+  .dropdown-trigger-btn:focus {
     border-color: var(--input-focus-border);
     box-shadow: 0 0 0 3px var(--input-focus-glow);
+  }
+
+  .dropdown-chevron {
+    color: var(--text-secondary);
+    transition: transform 0.25s ease;
+  }
+
+  .dropdown-chevron.open {
+    transform: rotate(180deg);
+  }
+
+  .dropdown-options-list {
+    position: absolute;
+    bottom: calc(100% + 8px); /* Pop upward to prevent container edge clipping */
+    left: 0;
+    width: 100%;
+    background: var(--glass-bg);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 6px;
+    margin: 0;
+    list-style: none;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    box-sizing: border-box;
+    z-index: 100;
+  }
+
+  .dropdown-option-item {
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .dropdown-option-item:hover {
+    background: var(--input-bg);
+    color: var(--text-primary);
+  }
+
+  .dropdown-option-item.selected {
+    background: var(--btn-primary-bg);
+    color: #ffffff;
+  }
+
+  .dropdown-click-outside-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 90;
+    background: transparent;
   }
 
   .btn-destroy-subject {
@@ -465,14 +541,14 @@ const styleSheet = `
     color: var(--accent-coral);
   }
 
-  /* --- Award Winning Empty State representation --- */
+  /* --- Empty State --- */
   .dashboard-empty-state {
     text-align: center;
     padding: 60px 20px;
     border-radius: 28px;
     border: 1.5px dashed var(--glass-border);
     background: var(--glass-bg);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(20px);
     z-index: 10;
     position: relative;
   }
@@ -493,10 +569,9 @@ const styleSheet = `
   }
 
   /* =========================================================================
-     MOBILE DIRECTIVE LAYOUT - HANDCRAFTED NATIVE IOS/ANDROID USER EXPERIENCE
+     MOBILE SECURE RENDERING - ZERO LAG COMPACT FLOW
      ========================================================================= */
   @media (max-width: 768px) {
-    /* Hide desktop structure components */
     .stats-carousel-grid {
       display: flex;
       overflow-x: auto;
@@ -508,7 +583,7 @@ const styleSheet = `
     }
     
     .stats-carousel-grid::-webkit-scrollbar {
-      display: none; /* Hide default scrollbar for carousel snap */
+      display: none;
     }
 
     .kpi-card-glass {
@@ -517,88 +592,56 @@ const styleSheet = `
     }
 
     .subjects-dashboard-grid {
-      display: none; /* Desktop Grid is completely replaced on Mobile viewports */
-    }
-
-    /* Mobile Accordion Elements */
-    .mobile-accordion-list-container {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 10;
-      position: relative;
-    }
-
-    .mobile-subject-accordion-item {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: 18px;
-      box-shadow: var(--card-shadow);
-      backdrop-filter: blur(10px);
-      overflow: hidden;
-    }
-
-    .mobile-accordion-closed-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px;
-      cursor: pointer;
-    }
-
-    .mobile-row-left {
-      display: flex;
-      align-items: center;
+      grid-template-columns: 1fr;
       gap: 12px;
     }
 
-    .mobile-accordion-icon {
+    .premium-subject-card {
+      min-height: auto;
+      padding: 16px;
+      gap: 12px;
+      border-radius: 18px;
+    }
+
+    .card-top-header {
+      align-items: center;
+    }
+
+    .academic-brand-icon {
       width: 36px;
       height: 36px;
-      background: var(--input-bg);
-      border: 1px solid var(--glass-border);
       border-radius: 10px;
-      display: flex;
-      align-items: center;
+    }
+
+    .card-text-body {
+      margin: 4px 0;
+    }
+
+    .card-subject-name {
+      font-size: 16px;
+    }
+
+    .card-subject-meta {
+      font-size: 11px;
+    }
+
+    .card-divider-line {
+      margin-bottom: 12px;
+    }
+
+    .subject-form {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+    
+    .subject-input {
+      width: 100% !important;
+    }
+
+    .btn-subject-add {
+      width: 100% !important;
       justify-content: center;
-      color: var(--accent-purple);
-    }
-
-    .mobile-subject-name {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 2px;
-    }
-
-    .mobile-subject-credits {
-      font-size: 11px;
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
-
-    .mobile-row-right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .mobile-accordion-grade-chip {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 6px;
-      background: var(--input-bg);
-    }
-
-    .mobile-accordion-chevron {
-      color: var(--text-tertiary);
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Mobile Form Drawer style container */
-    .subject-form-panel {
-      padding: 16px;
     }
 
     .mobile-add-subject-form-trigger {
@@ -616,24 +659,8 @@ const styleSheet = `
       gap: 8px;
       box-shadow: 0 4px 12px var(--btn-primary-glow);
     }
-
-    .subject-form {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 12px;
-    }
-    
-    .subject-input {
-      width: 100% !important;
-    }
-
-    .btn-subject-add {
-      width: 100% !important;
-      justify-content: center;
-    }
   }
 
-  /* Medium Desktop scaling support */
   @media (min-width: 769px) and (max-width: 1024px) {
     .subjects-dashboard-grid {
       grid-template-columns: repeat(2, 1fr);
@@ -654,9 +681,8 @@ function Subjects({ userId }) {
   const [faculty, setFaculty] = useState('')
   const [loading, setLoading] = useState(true)
 
-  // Layout states for reactive and mobile features
+  // Layout states for reactive features
   const [isMobile, setIsMobile] = useState(false)
-  const [expandedSubjectId, setExpandedSubjectId] = useState(null)
   const [isAddFormExpanded, setIsAddFormExpanded] = useState(false)
 
   useEffect(() => {
@@ -686,7 +712,7 @@ function Subjects({ userId }) {
       setName('')
       setCredits('')
       setFaculty('')
-      setIsAddFormExpanded(false) // Automatically collapses form upon addition
+      setIsAddFormExpanded(false) // Automatically collapses mobile drawer upon addition
       fetchSubjects() 
     }
   }
@@ -700,10 +726,6 @@ function Subjects({ userId }) {
   async function deleteSubject(id) {
     await supabase.from('subjects').delete().eq('id', id)
     fetchSubjects()
-  }
-
-  const toggleExpand = (id) => {
-    setExpandedSubjectId(expandedSubjectId === id ? null : id)
   }
 
   // Precomputed statistics
@@ -723,8 +745,9 @@ function Subjects({ userId }) {
   return (
     <div className="subjects-wrapper">
       <style dangerouslySetInnerHTML={{ __html: styleSheet }} />
-      <div className="aurora-blur-sphere" style={{ top: '10%', left: '5%' }} />
-      <div className="aurora-blur-sphere" style={{ bottom: '20%', right: '5%', background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0) 70%)' }} />
+      <div className="aurora-blur-sphere sphere-primary" />
+      <div className="aurora-blur-sphere sphere-secondary" />
+      <div className="aurora-blur-sphere sphere-tertiary" />
 
       {/* --- Page Hero Header --- */}
       <motion.div 
@@ -913,7 +936,7 @@ function Subjects({ userId }) {
         )}
       </AnimatePresence>
 
-      {/* --- Main Subjects Display Module --- */}
+      {/* --- Main Subjects Display Module (Grid layout) --- */}
       {loading ? (
         <p style={{ color: 'var(--text-secondary)', fontSize: '13px', textAlign: 'center' }}>Loading subjects...</p>
       ) : subjects.length === 0 ? (
@@ -926,8 +949,7 @@ function Subjects({ userId }) {
           </p>
         </div>
 
-      ) : !isMobile ? (
-        /* Desktop/Tablet: 3-column structured grid */
+      ) : (
         <motion.div 
           className="subjects-dashboard-grid"
           initial="hidden"
@@ -947,10 +969,10 @@ function Subjects({ userId }) {
                 key={s.id} 
                 className="premium-subject-card"
                 variants={{
-                  hidden: { opacity: 0, y: 20, scale: 0.95 },
-                  visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 80 } }
+                  hidden: { opacity: 0, y: 15, scale: 0.97 },
+                  visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 90 } }
                 }}
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                whileHover={!isMobile ? { y: -4, transition: { duration: 0.2 } } : {}}
               >
                 <div className="premium-card-radial-glow" />
                 
@@ -978,16 +1000,11 @@ function Subjects({ userId }) {
 
                 <div className="card-divider-line" />
 
+                {/* Grade Evaluation Custom Dropdown Selector */}
                 <div className="card-grades-tray">
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="10"
-                    placeholder="Grade Point"
-                    defaultValue={s.grade_point ?? ''}
-                    onBlur={(e) => updateGrade(s, e.target.value)}
-                    className="interactive-grade-picker"
+                  <CustomGradeDropdown 
+                    value={s.grade_point} 
+                    onChange={(val) => updateGrade(s, val)} 
                   />
                   
                   <button onClick={() => deleteSubject(s.id)} className="btn-destroy-subject" title="Delete Course">
@@ -998,97 +1015,68 @@ function Subjects({ userId }) {
             );
           })}
         </motion.div>
-      ) : (
-        /* Mobile: Expandable native iOS/Android styled accordion system */
-        <div className="mobile-accordion-list-container">
-          <AnimatePresence mode="wait">
-            {subjects.map((s) => {
-              const isExpanded = expandedSubjectId === s.id;
-              const isGraded = s.grade_point !== null && s.grade_point !== undefined;
-              return (
-                <motion.div 
-                  key={s.id}
-                  className="mobile-subject-accordion-item"
-                  layout
-                >
-                  {/* Closed header view */}
-                  <div 
-                    className="mobile-accordion-closed-row"
-                    onClick={() => toggleExpand(s.id)}
-                  >
-                    <div className="mobile-row-left">
-                      <div className="mobile-accordion-icon">
-                        <Library size={16} />
-                      </div>
-                      <div>
-                        <div className="mobile-subject-name">{s.name}</div>
-                        <div className="mobile-subject-credits">{s.credits} Credits</div>
-                      </div>
-                    </div>
-                    
-                    <div className="mobile-row-right">
-                      <span className="mobile-accordion-grade-chip" style={{ color: isGraded ? 'var(--accent-emerald)' : 'var(--accent-amber)' }}>
-                        {isGraded ? `GP: ${s.grade_point}` : 'Active'}
-                      </span>
-                      <ChevronDown 
-                        size={16} 
-                        className="mobile-accordion-chevron"
-                        style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Smooth Expanded detail panel view */}
-                  <AnimatePresence initial={false}>
-                    {isExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ type: 'spring', stiffness: 200, damping: 24 }}
-                      >
-                        <div style={{ padding: '0 16px 16px 16px', borderTop: '1px solid var(--glass-border)', marginTop: '-4px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '14px 0' }}>
-                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                              {s.faculty ? `Faculty: ${s.faculty}` : 'No faculty allocated'}
-                            </div>
-                            <span className={isGraded ? "academic-completetion-chip" : "academic-pending-chip"}>
-                              {isGraded ? "Graded" : "Active"}
-                            </span>
-                          </div>
-
-                          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '12px' }}>
-                            <input
-                              type="number"
-                              step="0.1"
-                              min="0"
-                              max="10"
-                              placeholder="Grade Pt"
-                              defaultValue={s.grade_point ?? ''}
-                              onBlur={(e) => updateGrade(s, e.target.value)}
-                              className="interactive-grade-picker"
-                              style={{ flex: 1, padding: '12px' }}
-                            />
-                            <button 
-                              onClick={() => deleteSubject(s.id)} 
-                              className="btn-destroy-subject"
-                              style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '12px' }}
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
       )}
     </div>
   )
+}
+
+/* Custom animated glass dropdown selection module to replace OS-native select overlays */
+function CustomGradeDropdown({ value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const grades = [
+    { label: 'Grade', val: '' },
+    { label: '10.0 (O)', val: '10' },
+    { label: '9.0 (A+)', val: '9' },
+    { label: '8.0 (A)', val: '8' },
+    { label: '7.0 (B+)', val: '7' },
+    { label: '6.0 (B)', val: '6' },
+    { label: '5.0 (C)', val: '5' },
+    { label: '0.0 (F)', val: '0' }
+  ];
+
+  const currentLabel = grades.find(g => g.val === (value?.toString() || ''))?.label || 'Grade';
+
+  return (
+    <div className="custom-dropdown-container">
+      <button 
+        type="button" 
+        className="dropdown-trigger-btn"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span>{currentLabel}</span>
+        <ChevronDown size={14} className={`dropdown-chevron ${isOpen ? 'open' : ''}`} />
+      </button>
+      
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <div className="dropdown-click-outside-overlay" onClick={() => setIsOpen(false)} />
+            
+            <motion.ul 
+              className="dropdown-options-list"
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            >
+              {grades.map((g) => (
+                <li 
+                  key={g.val} 
+                  className={`dropdown-option-item ${value?.toString() === g.val ? 'selected' : ''}`}
+                  onClick={() => {
+                    onChange(g.val);
+                    setIsOpen(false);
+                  }}
+                >
+                  {g.label}
+                </li>
+              ))}
+            </motion.ul>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 function SummaryCard({ label, value, icon, desc, sparklinePath }) {

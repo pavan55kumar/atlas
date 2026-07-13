@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from './lib/supabase'
 import { inputStyle, primaryButton } from './styles' // Kept for import compatibility
 
-// Custom CSS stylesheet matching your dashboard styling perfectly
+// Custom CSS stylesheet matching your dashboard styling perfectly (Optimized for Mobile Vertical Stacking)
 const styleSheet = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
   
@@ -413,33 +413,74 @@ const styleSheet = `
     border: 1px solid rgba(16, 185, 129, 0.2);
   }
 
-  /* Responsive styling to scale illustration components & stack gracefully */
+  /* =========================================================================
+     MOBILE SECURE RENDERING - VERTICAL STACKING UX (NO DISPLAY NONE)
+     ========================================================================= */
   @media (max-width: 950px) {
     .auth-container {
       padding: 16px;
     }
+    
     .auth-card {
+      flex-direction: column; /* Stacks column layers vertically */
       width: 100%;
-      max-width: 460px;
+      max-width: 480px;
       height: auto;
       min-height: auto;
       border: 1px solid rgba(255, 255, 255, 0.08);
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      border-radius: 24px;
     }
+    
     .auth-illustration-column {
-      display: none; /* Collapses illustration column completely on smaller tablets and mobile layout */
+      order: 1; /* Illustration sits beautifully on top as a dashboard banner */
+      height: 380px;
+      flex: none;
+      padding: 24px;
+      margin: 8px;
+      border-radius: 18px;
+      border-left: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     }
+
+    .hero-interactive-canvas {
+      min-height: 220px;
+      margin: 16px 0;
+    }
+    
     .auth-form-column {
-      padding: 40px 24px;
+      order: 2; /* Form details sit cleanly on the bottom half */
+      padding: 32px 20px;
+      flex: none;
+    }
+
+    .glowing-bg-orb {
+      width: 250px;
+      height: 250px;
+    }
+
+    /* Scaling floating elements on mobile to align proportionally */
+    .floating-glass-card {
+      padding: 6px 10px;
+    }
+
+    .floating-glass-card span {
+      font-size: 9px !important;
     }
   }
 
   @media (max-width: 375px) {
     .auth-form-column {
-      padding: 32px 16px;
+      padding: 28px 16px;
     }
     .social-btn {
       width: 58px;
+    }
+    .auth-illustration-column {
+      height: 340px;
+    }
+    .hero-interactive-canvas {
+      min-height: 190px;
     }
   }
 `;
@@ -474,7 +515,95 @@ function Auth({ onLogin }) {
       <style dangerouslySetInnerHTML={{ __html: styleSheet }} />
       <div className="auth-card">
         
-        {/* Left Side: Auth Form */}
+        {/* Top (on Mobile) / Right (on Laptop): Visual Illustration Banner */}
+        <div className="auth-illustration-column">
+          <div className="glowing-bg-orb" />
+          
+          <div style={{ zIndex: 2 }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#ffffff', margin: '0 0 4px 0' }}>
+              Designed to optimize your life
+            </h3>
+            <p style={{ fontSize: '13px', color: '#8e8c9d', margin: 0 }}>
+              The unified center for habits, tasks, and productivity.
+            </p>
+          </div>
+
+          <div className="hero-interactive-canvas">
+            <div className="grid-overlay" />
+            <div className="coordinate-line-left" />
+            <div className="coordinate-line-right" />
+
+            <div className="ai-core-ring" />
+            <div className="ai-core-center" />
+
+            <svg style={{ position: 'absolute', bottom: '0', left: '0', width: '100%', height: '140px', pointerEvents: 'none' }} viewBox="0 0 300 100" preserveAspectRatio="none">
+              <path 
+                className="metric-chart-path"
+                d="M-10,90 Q30,50 70,75 T150,25 T230,60 T310,10" 
+                fill="none" 
+                stroke="url(#purpleGrad)" 
+                strokeWidth="2.5" 
+                strokeLinecap="round"
+              />
+              <path 
+                d="M-10,90 Q30,50 70,75 T150,25 T230,60 T310,10 L310,100 L-10,100 Z" 
+                fill="url(#chartAreaGrad)" 
+                opacity="0.15"
+              />
+              <defs>
+                <linearGradient id="purpleGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#5c47f5" />
+                  <stop offset="50%" stopColor="#7c3aed" />
+                  <stop offset="100%" stopColor="#38bdf8" />
+                </linearGradient>
+                <linearGradient id="chartAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#7c3aed" />
+                  <stop offset="100%" stopColor="#0e0c15" />
+                </linearGradient>
+              </defs>
+            </svg>
+
+            <div className="floating-glass-card card-habit">
+              <span className="status-circle-pulse" style={{ backgroundColor: '#ff7a59', boxShadow: '0 0 8px #ff7a59' }} />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff' }}>Habit Streak</span>
+                <span style={{ fontSize: '10px', color: '#ff7a59', fontWeight: 700 }}>Streak: 5 Days 🔥</span>
+              </div>
+            </div>
+
+            <div className="floating-glass-card card-academics">
+              <span className="status-circle-pulse" style={{ backgroundColor: '#a78bfa', boxShadow: '0 0 8px #a78bfa' }} />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff' }}>Academic Plan</span>
+                <span style={{ fontSize: '10px', color: '#a78bfa', fontWeight: 600 }}>Active Study: 90%</span>
+              </div>
+            </div>
+
+            <div className="floating-glass-card card-focus">
+              <span className="status-circle-pulse" />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff' }}>Focus Engine</span>
+                <span style={{ fontSize: '10px', color: '#34d399', fontWeight: 600 }}>Mode Active</span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '11px', color: '#5d5b70', fontWeight: 600, letterSpacing: '0.06em' }}>
+              ATLAS AI SYSTEM
+            </span>
+            <div className="carousel-controls">
+              <button className="carousel-btn" style={{ borderColor: 'rgba(255,255,255,0.1)' }} type="button">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              </button>
+              <button className="carousel-btn" style={{ borderColor: 'rgba(255,255,255,0.1)' }} type="button">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom (on Mobile) / Left (on Laptop): Auth Form */}
         <div className="auth-form-column">
           <p style={{ fontSize: '11px', color: '#5c47f5', fontWeight: 700, letterSpacing: '0.12em', margin: '0 0 6px 0', textTransform: 'uppercase' }}>
             ATLAS AI
@@ -548,7 +677,6 @@ function Auth({ onLogin }) {
           </div>
 
           <div className="social-container">
-            {/* Google */}
             <button type="button" className="social-btn">
               <svg width="20" height="20" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -557,13 +685,11 @@ function Auth({ onLogin }) {
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
               </svg>
             </button>
-            {/* Apple */}
             <button type="button" className="social-btn">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="#ffffff">
                 <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-.96.04-2.13.64-2.82 1.45-.6.69-1.12 1.83-.98 2.94 1.07.08 2.15-.52 2.81-1.33z" />
               </svg>
             </button>
-            {/* Facebook */}
             <button type="button" className="social-btn">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2">
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
@@ -577,105 +703,6 @@ function Auth({ onLogin }) {
               {isSignUp ? 'Sign In' : 'Sign Up'}
             </span>
           </p>
-        </div>
-
-        {/* Right Side: Interactive Dashboard Art Frame */}
-        <div className="auth-illustration-column">
-          <div className="glowing-bg-orb" />
-          
-          <div style={{ zIndex: 2 }}>
-            <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#ffffff', margin: '0 0 4px 0' }}>
-              Designed to optimize your life
-            </h3>
-            <p style={{ fontSize: '13px', color: '#8e8c9d', margin: 0 }}>
-              The unified center for habits, tasks, and productivity.
-            </p>
-          </div>
-
-          {/* Programmatic Interactive Canvas (Replacing simple dashed placeholder) */}
-          <div className="hero-interactive-canvas">
-            {/* Dynamic CSS coordinate grid background overlay */}
-            <div className="grid-overlay" />
-            <div className="coordinate-line-left" />
-            <div className="coordinate-line-right" />
-
-            {/* Orbit paths & Pulsing AI central brain representing your core scheduling machine */}
-            <div className="ai-core-ring" />
-            <div className="ai-core-center" />
-
-            {/* Neon Chart wave overlay - dynamically rendering custom activity progress path */}
-            <svg style={{ position: 'absolute', bottom: '0', left: '0', width: '100%', height: '140px', pointerEvents: 'none' }} viewBox="0 0 300 100" preserveAspectRatio="none">
-              <path 
-                className="metric-chart-path"
-                d="M-10,90 Q30,50 70,75 T150,25 T230,60 T310,10" 
-                fill="none" 
-                stroke="url(#purpleGrad)" 
-                strokeWidth="2.5" 
-                strokeLinecap="round"
-              />
-              <path 
-                d="M-10,90 Q30,50 70,75 T150,25 T230,60 T310,10 L310,100 L-10,100 Z" 
-                fill="url(#chartAreaGrad)" 
-                opacity="0.15"
-              />
-              <defs>
-                <linearGradient id="purpleGrad" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#5c47f5" />
-                  <stop offset="50%" stopColor="#7c3aed" />
-                  <stop offset="100%" stopColor="#38bdf8" />
-                </linearGradient>
-                <linearGradient id="chartAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#7c3aed" />
-                  <stop offset="100%" stopColor="#0e0c15" />
-                </linearGradient>
-              </defs>
-            </svg>
-
-            {/* Interactive floating glassmorphic dashboard element overlays representing app modules */}
-            
-            {/* Habit tracking module */}
-            <div className="floating-glass-card card-habit">
-              <span className="status-circle-pulse" style={{ backgroundColor: '#ff7a59', boxShadow: '0 0 8px #ff7a59' }} />
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff' }}>Habit Streak</span>
-                <span style={{ fontSize: '10px', color: '#ff7a59', fontWeight: 700 }}>Streak: 5 Days 🔥</span>
-              </div>
-            </div>
-
-            {/* AI Academic Schedule module */}
-            <div className="floating-glass-card card-academics">
-              <span className="status-circle-pulse" style={{ backgroundColor: '#a78bfa', boxShadow: '0 0 8px #a78bfa' }} />
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff' }}>Academic Plan</span>
-                <span style={{ fontSize: '10px', color: '#a78bfa', fontWeight: 600 }}>Active Study: 90%</span>
-              </div>
-            </div>
-
-            {/* Task Manager module */}
-            <div className="floating-glass-card card-focus">
-              <span className="status-circle-pulse" />
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff' }}>Focus Engine</span>
-                <span style={{ fontSize: '10px', color: '#34d399', fontWeight: 600 }}>Mode Active</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer controls & Branding */}
-          <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '11px', color: '#5d5b70', fontWeight: 600, letterSpacing: '0.06em' }}>
-              ATLAS AI SYSTEM
-            </span>
-            <div className="carousel-controls">
-              <button className="carousel-btn" style={{ borderColor: 'rgba(255,255,255,0.1)' }} type="button">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-              </button>
-              <button className="carousel-btn" style={{ borderColor: 'rgba(255,255,255,0.1)' }} type="button">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              </button>
-            </div>
-          </div>
-
         </div>
 
       </div>
