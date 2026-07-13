@@ -30,7 +30,6 @@ const styleSheet = `
     --aurora-tertiary: rgba(59, 130, 246, 0.08);
     --sparkline-color: #8b5cf6;
     --checkbox-border: rgba(255, 255, 255, 0.2);
-    --focus-ring: rgba(139, 92, 246, 0.45);
   }
 
   body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
@@ -53,7 +52,6 @@ const styleSheet = `
     --aurora-tertiary: #eedcff;
     --sparkline-color: #6366f1;
     --checkbox-border: rgba(15, 23, 42, 0.2);
-    --focus-ring: rgba(99, 102, 241, 0.35);
   }
 
   /* Structural Page Shell & Spacing Overrides */
@@ -63,26 +61,18 @@ const styleSheet = `
     max-width: 1100px;
     margin: 0 auto;
     position: relative;
-    padding: 12px 16px 32px 16px;
+    padding: 24px 20px;
     box-sizing: border-box;
     overflow: visible !important;
   }
 
-  /*
-    Dynamic Neutralizer: strip any ancestor "card" chrome so this page never
-    sits inside someone else's rounded rectangle. Uses a descendant :has()
-    (not a direct-child combinator) so it reaches every ancestor level, not
-    just the immediate parent, since host apps may nest several wrapper divs.
-  */
-  div:has(.tasks-wrapper),
-  section:has(.tasks-wrapper),
-  article:has(.tasks-wrapper),
-  main:has(.tasks-wrapper),
-  aside:has(.tasks-wrapper),
-  li:has(.tasks-wrapper) {
+  /* Dynamic Neutralizer to force any outer parent card wrapper component to disappear */
+  div:has(> .tasks-wrapper),
+  section:has(> .tasks-wrapper),
+  article:has(> .tasks-wrapper),
+  main:has(> .tasks-wrapper) {
     background: transparent !important;
     background-color: transparent !important;
-    background-image: none !important;
     border: none !important;
     border-color: transparent !important;
     box-shadow: none !important;
@@ -92,33 +82,11 @@ const styleSheet = `
   /* Interaction and tap resets */
   * {
     -webkit-tap-highlight-color: transparent !important;
-    tap-highlight-color: transparent !important;
   }
 
   *:focus {
     outline: none !important;
-  }
-
-  /* Custom purple focus glow (keyboard/tap) instead of the browser default blue */
-  button:focus-visible,
-  a:focus-visible,
-  .task-input:focus-visible,
-  .checkbox-wrapper:focus-visible .custom-checkbox-node,
-  .filter-tab:focus-visible,
-  .priority-btn:focus-visible,
-  .btn-add:focus-visible,
-  .quest-priority-badge:focus-visible,
-  .btn-delete-quest:focus-visible {
-    outline: none !important;
-    box-shadow: 0 0 0 3px var(--focus-ring) !important;
-    transition: box-shadow 0.15s ease, transform 0.15s ease;
-  }
-
-  button:active,
-  .quest-priority-badge:active,
-  .filter-tab:active,
-  .priority-btn:active {
-    transform: scale(0.97);
+    box-shadow: none !important;
   }
 
   .aurora-blur-sphere {
@@ -139,7 +107,7 @@ const styleSheet = `
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: 20px;
-    padding: 22px 28px;
+    padding: 24px 32px;
     margin-bottom: 28px !important; /* Visual vertical section gap */
     box-shadow: var(--card-shadow);
     backdrop-filter: blur(20px);
@@ -443,14 +411,11 @@ const styleSheet = `
     position: relative;
     display: flex;
     gap: 4px;
-    background: var(--glass-bg);
+    background: var(--input-bg);
     border: 1px solid var(--glass-border);
     padding: 4px;
     border-radius: 12px;
-    margin: 0 0 28px 0 !important; /* Unified visual spacing */
-    box-shadow: var(--card-shadow);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    margin: 20px 0 28px 0 !important; /* Unified visual spacing */
     z-index: 10;
     width: max-content;
     max-width: 100%;
@@ -672,12 +637,12 @@ const styleSheet = `
       max-width: 100% !important;
       overflow-x: hidden !important;
       box-sizing: border-box !important;
-      padding: 10px 14px 24px 14px !important; /* Lighter, more modern density */
+      padding: 12px 16px !important; /* Compact design style */
     }
 
     .subjects-hero-header {
-      padding: 18px !important;
-      margin-bottom: 20px !important; /* Visual spacing alignment */
+      padding: 20px !important;
+      margin-bottom: 24px !important; /* Visual spacing alignment */
       border-radius: 16px !important;
     }
 
@@ -705,11 +670,11 @@ const styleSheet = `
       overflow-y: visible !important;
       scroll-snap-type: x mandatory !important;
       gap: 12px !important;
-      padding: 4px 14px !important;
-      margin-left: -14px !important;
-      margin-right: -14px !important;
+      padding: 4px 16px !important;
+      margin-left: -16px !important;
+      margin-right: -16px !important;
       margin-bottom: 12px !important; /* Target spacing for indicator dots positioning */
-      width: calc(100% + 28px) !important; /* Bleeds container edge-to-edge on mobile display */
+      width: calc(100% + 32px) !important; /* Bleeds container edge-to-edge on mobile display */
       -webkit-overflow-scrolling: touch !important;
       box-sizing: border-box !important;
     }
@@ -735,7 +700,7 @@ const styleSheet = `
 
     .tasks-list-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
 
-    .task-form-card { padding: 16px !important; border-radius: 16px !important; margin-bottom: 20px !important; }
+    .task-form-card { padding: 16px !important; border-radius: 16px !important; margin-bottom: 24px !important; }
 
     .input-group { flex-direction: column !important; align-items: stretch !important; gap: 10px !important; }
     .task-input { width: 100% !important; height: 44px !important; }
@@ -771,7 +736,7 @@ const styleSheet = `
       max-width: 100% !important;
       gap: 2px !important;
       padding: 3px !important;
-      margin: 0 0 20px 0 !important;
+      margin: 20px 0 24px 0 !important;
       border-radius: 10px !important;
       box-sizing: border-box !important;
     }
@@ -828,8 +793,7 @@ function Tasks({ userId }) {
     handleResize()
     window.addEventListener('resize', handleResize)
 
-    // Configure the viewport so pinch-zoom is disabled while all touch
-    // interactions (scroll, tap, swipe) keep working normally.
+    // Setup viewport scale behaviors on touch screens
     const meta = document.querySelector('meta[name="viewport"]')
     if (meta) {
       meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
@@ -840,27 +804,16 @@ function Tasks({ userId }) {
       document.head.appendChild(newMeta)
     }
 
-    // Programmatically strip any parent wrapper card chrome (background,
-    // border, shadow, padding) so this page never renders nested inside a
-    // host-app card. Walk up several ancestor levels rather than just one,
-    // since host layouts commonly nest more than a single wrapper div
-    // (e.g. page shell > route container > card > this component).
+    // Programmatically locate and strip any parent wrapper card borders/backgrounds
     const wrapper = document.querySelector('.tasks-wrapper')
-    if (wrapper) {
-      let node = wrapper.parentElement
-      let depth = 0
-      const MAX_ANCESTOR_DEPTH = 8
-      while (node && node !== document.body && depth < MAX_ANCESTOR_DEPTH) {
-        node.style.background = 'transparent'
-        node.style.backgroundColor = 'transparent'
-        node.style.backgroundImage = 'none'
-        node.style.border = 'none'
-        node.style.borderColor = 'transparent'
-        node.style.boxShadow = 'none'
-        node.style.padding = '0'
-        node = node.parentElement
-        depth += 1
-      }
+    if (wrapper && wrapper.parentElement) {
+      const parent = wrapper.parentElement
+      parent.style.background = 'transparent'
+      parent.style.backgroundColor = 'transparent'
+      parent.style.border = 'none'
+      parent.style.borderColor = 'transparent'
+      parent.style.boxShadow = 'none'
+      parent.style.padding = '0'
     }
 
     return () => {
@@ -1068,7 +1021,7 @@ function Tasks({ userId }) {
         </form>
       </motion.div>
 
-      {/* 4. Filter Tabs (now an independent floating card, not touching the list) */}
+      {/* 4. Filter Tabs */}
       <div className="filter-tabs-wrapper">
         <button
           className={`filter-tab ${currentFilter === 'all' ? 'active' : ''}`}
