@@ -341,7 +341,7 @@ const styleSheet = `
     color: #34d399;
   }
 
-  /* --- Segmented Filter Navigation (Responsive Flex Grid) --- */
+  /* --- Segmented Filter Navigation --- */
   .filter-tabs-wrapper {
     position: relative;
     display: flex;
@@ -350,7 +350,7 @@ const styleSheet = `
     border: 1px solid var(--glass-border);
     padding: 4px;
     border-radius: 14px;
-    margin: 24px 0; /* Ensures consistent 24px space from creation card */
+    margin: 24px 0;
     z-index: 10;
     width: max-content;
     box-sizing: border-box;
@@ -372,7 +372,6 @@ const styleSheet = `
     display: flex;
     align-items: center;
     gap: 6px;
-    box-sizing: border-box;
   }
 
   .filter-tab:hover {
@@ -385,15 +384,21 @@ const styleSheet = `
 
   .active-tab-indicator {
     position: absolute;
-    top: 4px;
-    bottom: 4px;
-    left: 4px;
-    right: 4px;
-    background: var(--glass-bg);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 0;
+    top: 2px;
+    bottom: 2px;
+    left: 2px;
+    right: 2px;
+    background: rgba(255, 255, 255, 0.08); /* High contrast indicator */
+    border-radius: 8px;
+    z-index: -1; /* behind button content text */
+  }
+
+  body.light-theme .active-tab-indicator,
+  body.light .active-tab-indicator,
+  .light-theme .active-tab-indicator,
+  .light .active-tab-indicator,
+  [data-theme="light"] .active-tab-indicator {
+    background: rgba(15, 23, 42, 0.08);
   }
 
   .tab-count-badge {
@@ -567,6 +572,8 @@ const styleSheet = `
     backdrop-filter: blur(20px);
     z-index: 10;
     position: relative;
+    margin-top: 24px !important;
+    margin-bottom: 24px !important;
   }
 
   .empty-state-vector-frame {
@@ -752,7 +759,7 @@ function Tasks({ userId }) {
   async function addTask(e) {
     e.preventDefault()
     if (!title.trim()) return
-    const { error } = await supabase
+    const { error = null } = await supabase
       .from('tasks')
       .insert([{ title, user_id: userId, priority, progress: 0 }])
     if (!error) { 
