@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
 
-// Premium Theme Adaptive Glassmorphic Stylesheet
+// Premium Theme Adaptive Glassmorphic Stylesheet (Optimized for ultra-compact mobile UX)
 const styleSheet = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
   
@@ -569,37 +569,73 @@ const styleSheet = `
   }
 
   /* =========================================================================
-     MOBILE SECURE RENDERING - ZERO LAG COMPACT FLOW
+     MOBILE SECURE RENDERING - ZERO LAG COMPACT NATIVE STREAM
      ========================================================================= */
   @media (max-width: 768px) {
+    /* Compact 60% smaller hero banner to prioritize main content list */
+    .subjects-hero-header {
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      border-radius: 16px;
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .subjects-hero-header h1 {
+      font-size: 20px !important;
+    }
+
+    .subjects-hero-header p {
+      display: none; /* Collapses decorative long text */
+    }
+
+    /* Snapping horizontal swipeable carousel for statistics */
     .stats-carousel-grid {
       display: flex;
       overflow-x: auto;
       scroll-snap-type: x mandatory;
-      gap: 12px;
-      padding-bottom: 12px;
-      margin-bottom: 24px;
+      gap: 10px;
+      padding-bottom: 4px;
+      margin-bottom: 16px;
       -webkit-overflow-scrolling: touch;
     }
     
     .stats-carousel-grid::-webkit-scrollbar {
-      display: none;
+      display: none; /* Hide scrollbar tracking */
     }
 
     .kpi-card-glass {
-      flex: 0 0 82%;
+      flex: 0 0 70%; /* Reveals subsequent metrics slightly on right edge to suggest swiping */
       scroll-snap-align: start;
+      min-height: 94px;
+      padding: 14px;
+      border-radius: 14px;
     }
 
+    .kpi-main-metric {
+      font-size: 20px !important;
+      margin-bottom: 2px;
+    }
+
+    .kpi-desc {
+      font-size: 10px !important;
+    }
+
+    .golden-trophy-badge {
+      display: none !important; /* Hides decorative heavy icon inside carousel block */
+    }
+
+    /* Compact 1-column responsive cards (ZERO expansion/dropdown lag) */
     .subjects-dashboard-grid {
       grid-template-columns: 1fr;
-      gap: 12px;
+      gap: 10px; /* Reduced margin gaps to maximize vertical density */
     }
 
     .premium-subject-card {
       min-height: auto;
-      padding: 16px;
-      gap: 12px;
+      padding: 14px 16px; /* Optimized layout footprint */
+      gap: 10px;
       border-radius: 18px;
     }
 
@@ -618,15 +654,22 @@ const styleSheet = `
     }
 
     .card-subject-name {
-      font-size: 16px;
+      font-size: 16px !important;
     }
 
     .card-subject-meta {
-      font-size: 11px;
+      font-size: 11px !important;
     }
 
     .card-divider-line {
-      margin-bottom: 12px;
+      margin-bottom: 10px;
+    }
+
+    /* Floating Expandable Subject Form Panel */
+    .subject-form-panel {
+      padding: 16px;
+      margin-bottom: 16px;
+      border-radius: 16px;
     }
 
     .subject-form {
@@ -647,7 +690,7 @@ const styleSheet = `
     .mobile-add-subject-form-trigger {
       background: var(--btn-primary-bg);
       border-radius: 14px;
-      padding: 14px;
+      padding: 12px;
       text-align: center;
       color: #ffffff;
       font-weight: 700;
@@ -657,6 +700,7 @@ const styleSheet = `
       align-items: center;
       justify-content: center;
       gap: 8px;
+      margin-bottom: 16px;
       box-shadow: 0 4px 12px var(--btn-primary-glow);
     }
   }
@@ -875,7 +919,7 @@ function Subjects({ userId }) {
           </motion.div>
         ) : (
           /* Mobile Add Subject Form Trigger Card */
-          <div style={{ marginBottom: '24px', zIndex: 10, position: 'relative' }}>
+          <div style={{ marginBottom: '16px', zIndex: 10, position: 'relative' }}>
             {!isAddFormExpanded ? (
               <motion.div 
                 className="mobile-add-subject-form-trigger"
