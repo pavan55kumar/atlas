@@ -569,7 +569,7 @@ const styleSheet = `
   }
 
   /* =========================================================================
-     MOBILE SECURE RENDERING - ZERO LAG COMPACT NATIVE STREAM
+     MOBILE SECURE RENDERING - ZERO LAG COMPACT NATIVE ACCORDION
      ========================================================================= */
   @media (max-width: 768px) {
     /* Compact 60% smaller hero banner to prioritize main content list */
@@ -626,43 +626,126 @@ const styleSheet = `
       display: none !important; /* Hides decorative heavy icon inside carousel block */
     }
 
-    /* Compact 1-column responsive cards (ZERO expansion/dropdown lag) */
+    /* Hide Desktop Grid on Mobile Viewports */
     .subjects-dashboard-grid {
-      grid-template-columns: 1fr;
-      gap: 10px; /* Reduced margin gaps to maximize vertical density */
+      display: none;
     }
 
-    .premium-subject-card {
-      min-height: auto;
-      padding: 14px 16px; /* Optimized layout footprint */
-      gap: 10px;
-      border-radius: 18px;
+    /* Mobile Accordion Container styling */
+    .mobile-accordion-list-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px; /* Compact gap */
+      z-index: 10;
+      position: relative;
     }
 
-    .card-top-header {
+    .mobile-subject-accordion-item {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .mobile-subject-accordion-item.is-active {
+      border-left: 3px solid #7c3aed;
+    }
+
+    .mobile-subject-accordion-item.is-graded {
+      border-left: 3px solid #10b981;
+    }
+
+    /* Reduced height mobile closed state (~72px height) */
+    .mobile-accordion-closed-row {
+      display: flex;
+      justify-content: space-between;
       align-items: center;
+      padding: 16px;
+      min-height: 72px;
+      cursor: pointer;
+      user-select: none;
+      box-sizing: border-box;
     }
 
-    .academic-brand-icon {
+    .mobile-row-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .mobile-accordion-icon {
       width: 36px;
       height: 36px;
+      background: var(--input-bg);
+      border: 1px solid var(--glass-border);
       border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8b5cf6;
+      flex-shrink: 0;
     }
 
-    .card-text-body {
-      margin: 4px 0;
+    .mobile-subject-info-block {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      gap: 2px;
     }
 
-    .card-subject-name {
-      font-size: 16px !important;
+    .mobile-subject-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .card-subject-meta {
-      font-size: 11px !important;
+    .mobile-subject-meta-inline {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .card-divider-line {
-      margin-bottom: 10px;
+    .mobile-row-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .mobile-chevron-chevron {
+      color: var(--text-tertiary);
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .mobile-chevron-chevron.is-open {
+      transform: rotate(180deg);
+    }
+
+    /* Mobile Accordion Expanded Drawer body */
+    .mobile-accordion-drawer-body {
+      padding: 0 16px 16px 16px;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .mobile-drawer-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 14px;
     }
 
     /* Floating Expandable Subject Form Panel */
@@ -725,8 +808,9 @@ function Subjects({ userId }) {
   const [faculty, setFaculty] = useState('')
   const [loading, setLoading] = useState(true)
 
-  // Layout states for reactive features
+  // Layout states for reactive and mobile features
   const [isMobile, setIsMobile] = useState(false)
+  const [expandedSubjectId, setExpandedSubjectId] = useState(null)
   const [isAddFormExpanded, setIsAddFormExpanded] = useState(false)
 
   useEffect(() => {
@@ -770,6 +854,10 @@ function Subjects({ userId }) {
   async function deleteSubject(id) {
     await supabase.from('subjects').delete().eq('id', id)
     fetchSubjects()
+  }
+
+  const handleToggleExpand = (id) => {
+    setExpandedSubjectId(prevId => prevId === id ? null : id)
   }
 
   // Precomputed statistics
@@ -980,7 +1068,7 @@ function Subjects({ userId }) {
         )}
       </AnimatePresence>
 
-      {/* --- Main Subjects Display Module (Grid layout) --- */}
+      {/* --- Main Subjects Display Module --- */}
       {loading ? (
         <p style={{ color: 'var(--text-secondary)', fontSize: '13px', textAlign: 'center' }}>Loading subjects...</p>
       ) : subjects.length === 0 ? (
@@ -993,7 +1081,8 @@ function Subjects({ userId }) {
           </p>
         </div>
 
-      ) : (
+      ) : !isMobile ? (
+        /* Desktop/Tablet: 3-column structured grid */
         <motion.div 
           className="subjects-dashboard-grid"
           initial="hidden"
@@ -1013,8 +1102,8 @@ function Subjects({ userId }) {
                 key={s.id} 
                 className="premium-subject-card"
                 variants={{
-                  hidden: { opacity: 0, y: 15, scale: 0.97 },
-                  visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 90 } }
+                  hidden: { opacity: 0, y: 20, scale: 0.95 },
+                  visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 80 } }
                 }}
                 whileHover={!isMobile ? { y: -4, transition: { duration: 0.2 } } : {}}
               >
@@ -1059,6 +1148,72 @@ function Subjects({ userId }) {
             );
           })}
         </motion.div>
+      ) : (
+        /* Mobile: Handcrafted Expandable Native iOS Accordion Stream (ZERO LAG) */
+        <div className="mobile-accordion-list-container">
+          {subjects.map((s) => {
+            const isExpanded = expandedSubjectId === s.id;
+            const isGraded = s.grade_point !== null && s.grade_point !== undefined;
+            return (
+              <div 
+                key={s.id}
+                className={`mobile-subject-accordion-item ${isExpanded ? 'is-active' : ''} ${isGraded ? 'is-graded' : ''}`}
+              >
+                {/* Closed compact row header (~72px) */}
+                <div 
+                  className="mobile-accordion-closed-row"
+                  onClick={() => handleToggleExpand(s.id)}
+                >
+                  <div className="mobile-row-left">
+                    <div className="mobile-accordion-icon">
+                      <Library size={16} />
+                    </div>
+                    <div className="mobile-subject-info-block">
+                      <h4 className="mobile-subject-name">{s.name}</h4>
+                      <div className="mobile-subject-meta-inline">
+                        {s.credits} Credits {s.faculty ? `· ${s.faculty}` : ''}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mobile-row-right">
+                    <span className={isGraded ? "academic-completetion-chip" : "academic-pending-chip"}>
+                      {isGraded ? `GP: ${s.grade_point}` : 'Active'}
+                    </span>
+                    <ChevronDown 
+                      size={16} 
+                      className={`mobile-chevron-chevron ${isExpanded ? 'is-open' : ''}`}
+                    />
+                  </div>
+                </div>
+
+                {/* Smooth 250ms Height Expansion Drawer */}
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }} // Spring-less hardware accelerated easing
+                    >
+                      <div className="mobile-accordion-drawer-body">
+                        <div className="mobile-drawer-controls">
+                          <CustomGradeDropdown 
+                            value={s.grade_point} 
+                            onChange={(val) => updateGrade(s, val)} 
+                          />
+                          <button onClick={() => deleteSubject(s.id)} className="btn-destroy-subject" title="Delete Course">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   )
