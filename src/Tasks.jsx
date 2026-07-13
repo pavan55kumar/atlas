@@ -1,19 +1,16 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
+import {
   CheckCircle2, Plus, Trash2, ShieldAlert, Sparkles, SlidersHorizontal,
   Circle, Clock3, Flame, Target, Zap, ListTodo, AlarmClock, CalendarDays, Flag, TrendingUp, Award
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
 
-// Premium Theme Adaptive Glassmorphic Stylesheet (Linear & Arc inspired)
 const styleSheet = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
   
   :root {
     --tasks-font: 'Plus Jakarta Sans', -apple-system, sans-serif;
-    
-    /* Handcrafted Dark Theme Colors (Linear/Arc style) */
     --canvas-bg: #090810;
     --glass-bg: rgba(18, 16, 30, 0.65);
     --glass-border: rgba(255, 255, 255, 0.05);
@@ -25,20 +22,15 @@ const styleSheet = `
     --input-border: rgba(255, 255, 255, 0.06);
     --input-focus-border: #8b5cf6;
     --input-focus-glow: rgba(139, 92, 246, 0.25);
-    
-    /* Gradients matching your dark mockup */
     --btn-primary-bg: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
     --btn-primary-glow: rgba(139, 92, 246, 0.4);
     --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    
-    /* Ambient sphere tints */
     --aurora-primary: rgba(139, 92, 246, 0.12);
     --aurora-secondary: rgba(236, 72, 153, 0.08);
     --aurora-tertiary: rgba(59, 130, 246, 0.08);
     --sparkline-color: #8b5cf6;
   }
 
-  /* Handcrafted Light Theme Colors (Apple Settings / Notion style) */
   body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
     --canvas-bg: #f8fafc;
     --glass-bg: rgba(255, 255, 255, 0.7);
@@ -51,15 +43,12 @@ const styleSheet = `
     --input-border: rgba(15, 23, 42, 0.08);
     --input-focus-border: #6366f1;
     --input-focus-glow: rgba(99, 102, 241, 0.15);
-    
     --btn-primary-bg: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
     --btn-primary-glow: rgba(99, 102, 241, 0.2);
     --card-shadow: 0 15px 35px rgba(31, 38, 135, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-    
-    /* Light Theme soft pastel gradients */
-    --aurora-primary: #ffe3d8; /* Peach sphere */
-    --aurora-secondary: #dce5ff; /* Soft periwinkle sphere */
-    --aurora-tertiary: #eedcff; /* Pale lavender sphere */
+    --aurora-primary: #ffe3d8;
+    --aurora-secondary: #dce5ff;
+    --aurora-tertiary: #eedcff;
     --sparkline-color: #6366f1;
   }
 
@@ -71,9 +60,9 @@ const styleSheet = `
     position: relative;
     padding: 20px 0;
     box-sizing: border-box;
+    overflow-x: hidden;
   }
 
-  /* --- Glowing Backdrop Aurora Spheres --- */
   .aurora-blur-sphere {
     position: absolute;
     border-radius: 50%;
@@ -83,31 +72,10 @@ const styleSheet = `
     transition: background 0.5s ease;
   }
 
-  .sphere-primary {
-    top: 5%;
-    left: -10%;
-    width: 450px;
-    height: 450px;
-    background: var(--aurora-primary);
-  }
+  .sphere-primary { top: 5%; left: -10%; width: 450px; height: 450px; background: var(--aurora-primary); }
+  .sphere-secondary { bottom: 10%; right: -10%; width: 400px; height: 400px; background: var(--aurora-secondary); }
+  .sphere-tertiary { top: 40%; left: 40%; width: 350px; height: 350px; background: var(--aurora-tertiary); }
 
-  .sphere-secondary {
-    bottom: 10%;
-    right: -10%;
-    width: 400px;
-    height: 400px;
-    background: var(--aurora-secondary);
-  }
-
-  .sphere-tertiary {
-    top: 40%;
-    left: 40%;
-    width: 350px;
-    height: 350px;
-    background: var(--aurora-tertiary);
-  }
-
-  /* --- Hero Header --- */
   .subjects-hero-header {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
@@ -122,28 +90,13 @@ const styleSheet = `
     align-items: center;
     position: relative;
     z-index: 10;
+    flex-wrap: wrap;
+    gap: 16px;
   }
 
-  .hero-info-area h1 {
-    font-size: 32px;
-    font-weight: 800;
-    margin: 0 0 6px 0;
-    letter-spacing: -0.02em;
-    color: var(--text-primary);
-  }
-
-  .hero-info-area p {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin: 0;
-    font-weight: 500;
-  }
-
-  .hero-meta-badges {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+  .hero-info-area h1 { font-size: 32px; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; color: var(--text-primary); }
+  .hero-info-area p { font-size: 14px; color: var(--text-secondary); margin: 0; font-weight: 500; }
+  .hero-meta-badges { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 
   .semester-pill {
     background: rgba(139, 92, 246, 0.1);
@@ -155,6 +108,7 @@ const styleSheet = `
     text-transform: uppercase;
     padding: 6px 14px;
     border-radius: 100px;
+    white-space: nowrap;
   }
 
   .sgpa-badge-glowing {
@@ -165,9 +119,9 @@ const styleSheet = `
     padding: 6px 16px;
     border-radius: 100px;
     box-shadow: 0 4px 12px rgba(225, 177, 44, 0.3);
+    white-space: nowrap;
   }
 
-  /* --- KPI Summary Grid --- */
   .stats-carousel-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -191,50 +145,16 @@ const styleSheet = `
     min-height: 120px;
     position: relative;
     overflow: hidden;
+    box-sizing: border-box;
   }
 
-  .kpi-header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-  }
+  .kpi-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .kpi-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; }
+  .kpi-icon-wrapper { color: var(--text-secondary); opacity: 0.8; }
+  .kpi-main-metric { font-size: 28px; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 6px; }
+  .kpi-desc-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; }
+  .kpi-desc { font-size: 11px; color: var(--text-tertiary); font-weight: 500; max-width: 60%; }
 
-  .kpi-label {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  .kpi-icon-wrapper {
-    color: var(--text-secondary);
-    opacity: 0.8;
-  }
-
-  .kpi-main-metric {
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--text-primary);
-    line-height: 1;
-    margin-bottom: 6px;
-  }
-
-  .kpi-desc-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-  }
-
-  .kpi-desc {
-    font-size: 11px;
-    color: var(--text-tertiary);
-    font-weight: 500;
-    max-width: 60%;
-  }
-
-  /* --- Task Creation Section --- */
   .task-form-card {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
@@ -246,17 +166,14 @@ const styleSheet = `
     -webkit-backdrop-filter: blur(20px);
     z-index: 10;
     position: relative;
+    box-sizing: border-box;
   }
 
-  .input-group {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    width: 100%;
-  }
+  .input-group { display: flex; gap: 12px; align-items: center; width: 100%; box-sizing: border-box; }
 
   .task-input {
     flex: 1;
+    min-width: 0;
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     border-radius: 14px;
@@ -268,17 +185,8 @@ const styleSheet = `
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .task-input::placeholder {
-    color: var(--text-secondary);
-    opacity: 0.6;
-  }
-
-  .task-input:focus {
-    outline: none;
-    border-color: var(--input-focus-border);
-    background: var(--input-bg);
-    box-shadow: 0 0 0 3px var(--input-focus-glow);
-  }
+  .task-input::placeholder { color: var(--text-secondary); opacity: 0.6; }
+  .task-input:focus { outline: none; border-color: var(--input-focus-border); background: var(--input-bg); box-shadow: 0 0 0 3px var(--input-focus-glow); }
 
   .btn-add {
     background: var(--btn-primary-bg);
@@ -298,15 +206,12 @@ const styleSheet = `
     white-space: nowrap;
   }
 
-  .btn-add:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 22px var(--btn-primary-glow);
-  }
+  .btn-add:hover { transform: translateY(-1px); box-shadow: 0 8px 22px var(--btn-primary-glow); }
 
-  /* Selector options */
   .priority-options {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 10px;
     margin-top: 14px;
   }
@@ -321,27 +226,13 @@ const styleSheet = `
     border-radius: 100px;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
   }
 
-  .priority-btn.active.high {
-    background: rgba(239, 68, 68, 0.12);
-    border-color: #ef4444;
-    color: #f87171;
-  }
+  .priority-btn.active.high { background: rgba(239, 68, 68, 0.12); border-color: #ef4444; color: #f87171; }
+  .priority-btn.active.medium { background: rgba(124, 58, 237, 0.12); border-color: #7c3aed; color: #a78bfa; }
+  .priority-btn.active.low { background: rgba(16, 185, 129, 0.12); border-color: #10b981; color: #34d399; }
 
-  .priority-btn.active.medium {
-    background: rgba(124, 58, 237, 0.12);
-    border-color: #7c3aed;
-    color: #a78bfa;
-  }
-
-  .priority-btn.active.low {
-    background: rgba(16, 185, 129, 0.12);
-    border-color: #10b981;
-    color: #34d399;
-  }
-
-  /* --- Segmented Filter Navigation --- */
   .filter-tabs-wrapper {
     position: relative;
     display: flex;
@@ -353,6 +244,7 @@ const styleSheet = `
     margin: 24px 0;
     z-index: 10;
     width: max-content;
+    max-width: 100%;
     box-sizing: border-box;
   }
 
@@ -372,14 +264,18 @@ const styleSheet = `
     display: flex;
     align-items: center;
     gap: 6px;
+    min-width: 0;
   }
 
-  .filter-tab:hover {
-    color: var(--text-primary);
-  }
+  .filter-tab:hover { color: var(--text-primary); }
+  .filter-tab.active { color: var(--text-primary); }
 
-  .filter-tab.active {
-    color: var(--text-primary);
+  .filter-tab-label {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .active-tab-indicator {
@@ -388,9 +284,9 @@ const styleSheet = `
     bottom: 2px;
     left: 2px;
     right: 2px;
-    background: rgba(255, 255, 255, 0.08); /* High contrast indicator */
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 8px;
-    z-index: -1; /* behind button content text */
+    z-index: -1;
   }
 
   body.light-theme .active-tab-indicator,
@@ -402,6 +298,8 @@ const styleSheet = `
   }
 
   .tab-count-badge {
+    position: relative;
+    z-index: 1;
     font-size: 10px;
     font-weight: 700;
     background: rgba(255, 255, 255, 0.08);
@@ -409,16 +307,10 @@ const styleSheet = `
     padding: 1px 6px;
     border-radius: 6px;
     margin-left: 2px;
+    flex-shrink: 0;
   }
 
-  /* --- Subject Display Grid --- */
-  .tasks-list-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-    z-index: 10;
-    position: relative;
-  }
+  .tasks-list-grid { display: grid; grid-template-columns: 1fr; gap: 12px; z-index: 10; position: relative; }
 
   .task-quest-card {
     background: var(--glass-bg);
@@ -428,31 +320,21 @@ const styleSheet = `
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: var(--card-shadow);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    box-sizing: border-box;
   }
 
-  .task-quest-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
-  }
+  .task-quest-card:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.1); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35); }
 
   .task-quest-card.high-p { border-left: 4px solid #ef4444; }
   .task-quest-card.medium-p { border-left: 4px solid #7c3aed; }
   .task-quest-card.low-p { border-left: 4px solid #10b981; }
 
-  /* Premium Custom Checkbox node */
-  .checkbox-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    cursor: pointer;
-    flex: 1;
-    min-width: 0;
-  }
+  .checkbox-wrapper { display: flex; align-items: center; gap: 16px; cursor: pointer; flex: 1; min-width: 0; }
 
   .custom-checkbox-node {
     width: 20px;
@@ -466,25 +348,10 @@ const styleSheet = `
     flex-shrink: 0;
   }
 
-  .checkbox-wrapper:hover .custom-checkbox-node {
-    border-color: #5c47f5;
-  }
-
-  .custom-checkbox-node.checked {
-    background-color: #5c47f5;
-    border-color: #5c47f5;
-    box-shadow: 0 0 10px rgba(92, 71, 245, 0.4);
-  }
-
-  .custom-checkbox-node svg {
-    color: #ffffff;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  .custom-checkbox-node.checked svg {
-    opacity: 1;
-  }
+  .checkbox-wrapper:hover .custom-checkbox-node { border-color: #5c47f5; }
+  .custom-checkbox-node.checked { background-color: #5c47f5; border-color: #5c47f5; box-shadow: 0 0 10px rgba(92, 71, 245, 0.4); }
+  .custom-checkbox-node svg { color: #ffffff; opacity: 0; transition: opacity 0.2s ease; }
+  .custom-checkbox-node.checked svg { opacity: 1; }
 
   .task-quest-title {
     font-size: 15px;
@@ -494,21 +361,12 @@ const styleSheet = `
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
   }
 
-  .task-quest-title.completed {
-    text-decoration: line-through;
-    color: var(--text-secondary);
-    opacity: 0.6;
-  }
+  .task-quest-title.completed { text-decoration: line-through; color: var(--text-secondary); opacity: 0.6; }
 
-  /* Action Buttons */
-  .card-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-shrink: 0;
-  }
+  .card-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 
   .quest-priority-badge {
     font-size: 10px;
@@ -520,29 +378,13 @@ const styleSheet = `
     cursor: pointer;
     user-select: none;
     transition: transform 0.2s;
+    white-space: nowrap;
   }
 
-  .quest-priority-badge:hover {
-    transform: scale(1.05);
-  }
-
-  .quest-priority-badge.badge-high {
-    background: rgba(239, 68, 68, 0.12);
-    color: #f87171;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-  }
-
-  .quest-priority-badge.badge-medium {
-    background: rgba(124, 58, 237, 0.12);
-    color: #a78bfa;
-    border: 1px solid rgba(124, 58, 237, 0.2);
-  }
-
-  .quest-priority-badge.badge-low {
-    background: rgba(16, 185, 129, 0.12);
-    color: #34d399;
-    border: 1px solid rgba(16, 185, 129, 0.2);
-  }
+  .quest-priority-badge:hover { transform: scale(1.05); }
+  .quest-priority-badge.badge-high { background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+  .quest-priority-badge.badge-medium { background: rgba(124, 58, 237, 0.12); color: #a78bfa; border: 1px solid rgba(124, 58, 237, 0.2); }
+  .quest-priority-badge.badge-low { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
 
   .btn-delete-quest {
     background: none;
@@ -555,14 +397,11 @@ const styleSheet = `
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
   }
 
-  .btn-delete-quest:hover {
-    background: rgba(239, 68, 68, 0.08);
-    color: #f87171;
-  }
+  .btn-delete-quest:hover { background: rgba(239, 68, 68, 0.08); color: #f87171; }
 
-  /* --- Adaptive Empty State --- */
   .empty-quest-state {
     text-align: center;
     padding: 60px 20px;
@@ -574,15 +413,11 @@ const styleSheet = `
     position: relative;
     margin-top: 24px !important;
     margin-bottom: 24px !important;
+    box-sizing: border-box;
   }
 
-  .empty-state-vector-frame {
-    width: 280px;
-    height: 180px;
-    margin: 0 auto 24px auto;
-  }
+  .empty-state-vector-frame { width: 280px; max-width: 100%; height: 180px; margin: 0 auto 24px auto; }
 
-  /* SVG Adaptive Properties inside styles */
   .empty-svg-sky { fill: var(--input-bg); }
   .empty-svg-accent { fill: #5c47f5; opacity: 0.15; }
   .empty-svg-terrain-back { fill: var(--glass-bg); opacity: 0.8; }
@@ -590,22 +425,9 @@ const styleSheet = `
   .empty-svg-silhouette { fill: var(--text-primary); opacity: 0.9; }
   .empty-svg-stroke { stroke: var(--text-primary); opacity: 0.9; }
 
-  .empty-quest-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 6px;
-  }
+  .empty-quest-title { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+  .empty-quest-subtitle { font-size: 14px; color: var(--text-secondary); max-width: 340px; margin: 0 auto; line-height: 1.5; }
 
-  .empty-quest-subtitle {
-    font-size: 14px;
-    color: var(--text-secondary);
-    max-width: 340px;
-    margin: 0 auto;
-    line-height: 1.5;
-  }
-
-  /* Responsive media queries - High Specificity overrides */
   @media (max-width: 768px) {
     .tasks-wrapper {
       width: 100% !important;
@@ -615,25 +437,30 @@ const styleSheet = `
       padding: 16px !important;
     }
 
-    /* Snapping horizontal carousel of metrics with zero overflow breaks */
+    .subjects-hero-header {
+      padding: 20px !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+    }
+
+    .hero-info-area h1 { font-size: 24px !important; }
+
     .stats-carousel-grid {
       display: flex !important;
       overflow-x: auto !important;
       scroll-snap-type: x mandatory !important;
       gap: 12px !important;
-      padding: 4px !important; /* Prevents shadows clipping */
+      padding: 4px !important;
       margin-bottom: 24px !important;
       width: 100% !important;
       box-sizing: border-box !important;
       -webkit-overflow-scrolling: touch !important;
     }
-    
-    .stats-carousel-grid::-webkit-scrollbar {
-      display: none !important;
-    }
+
+    .stats-carousel-grid::-webkit-scrollbar { display: none !important; }
 
     .kpi-card-glass {
-      flex: 0 0 78% !important; /* Slightly exposes next card to hint swiping */
+      flex: 0 0 78% !important;
       scroll-snap-align: start !important;
       min-height: 94px !important;
       padding: 14px !important;
@@ -641,79 +468,59 @@ const styleSheet = `
       box-sizing: border-box !important;
     }
 
-    .kpi-main-metric {
-      font-size: 22px !important;
-      margin-bottom: 2px !important;
-    }
+    .kpi-main-metric { font-size: 22px !important; margin-bottom: 2px !important; }
+    .kpi-desc { font-size: 10px !important; }
+    .golden-trophy-badge { display: none !important; }
 
-    .kpi-desc {
-      font-size: 10px !important;
-    }
+    .tasks-list-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
 
-    .golden-trophy-badge {
-      display: none !important; /* Hides decorative heavy icon inside carousel block */
-    }
+    .task-form-card { padding: 16px !important; border-radius: 16px !important; margin-bottom: 24px !important; }
 
-    .tasks-list-grid {
-      grid-template-columns: 1fr !important;
-      gap: 12px !important;
-    }
+    .input-group { flex-direction: column !important; align-items: stretch !important; gap: 12px !important; }
+    .task-input { width: 100% !important; }
+    .btn-add { width: 100% !important; justify-content: center !important; }
 
-    .task-quest-card {
-      min-height: auto !important;
-      padding: 16px !important;
-      border-radius: 14px !important;
-    }
+    .priority-options { flex-wrap: wrap !important; gap: 8px !important; }
+    .priority-btn { flex: 0 0 auto !important; }
 
-    .task-form-card {
-      padding: 16px !important;
-      border-radius: 16px !important;
-      margin-bottom: 24px !important;
-    }
-
-    .input-group {
-      flex-direction: column !important;
-      align-items: stretch !important;
-      gap: 12px !important;
-    }
-    
-    .task-input {
-      width: 100% !important;
-    }
-
-    .btn-add {
-      width: 100% !important;
-      justify-content: center !important;
-    }
-
-    /* Responsive Segmented Tabs (ZERO OVERLAP/COLLISION) */
     .filter-tabs-wrapper {
       display: flex !important;
       width: 100% !important;
       max-width: 100% !important;
       gap: 2px !important;
       padding: 4px !important;
-      margin: 24px 0 !important; /* Rigidly spaces tab below the composer card */
+      margin: 24px 0 !important;
       border-radius: 12px !important;
       box-sizing: border-box !important;
     }
 
-    .filter-tab {
-      flex: 1 !important; /* Equal auto-width distribution */
-      padding: 8px 4px !important;
-      font-size: 11px !important;
-      justify-content: center !important;
+    .filter-tab { flex: 1 !important; padding: 8px 4px !important; font-size: 11px !important; justify-content: center !important; min-width: 0 !important; }
+    .filter-tab-label { max-width: 100%; }
+    .tab-count-badge { display: none !important; }
+
+    /* Stack task cards vertically instead of cramming title + badge + delete on one line */
+    .task-quest-card {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 12px !important;
+      padding: 16px !important;
+      border-radius: 14px !important;
+      min-height: auto !important;
     }
 
-    .tab-count-badge {
-      display: none !important; /* Prevents overflow inside narrow devices */
+    .checkbox-wrapper { width: 100% !important; }
+    .task-quest-title { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
+
+    .card-actions {
+      width: 100% !important;
+      justify-content: space-between !important;
+      padding-left: 36px !important;
+      box-sizing: border-box !important;
     }
   }
 
   @media (min-width: 769px) and (max-width: 1024px) {
-    .stats-carousel-grid {
-      grid-template-columns: repeat(2, 1fr) !important;
-    }
+    .stats-carousel-grid { grid-template-columns: repeat(2, 1fr) !important; }
   }
 `;
 
@@ -722,24 +529,11 @@ function Tasks({ userId }) {
   const [title, setTitle] = useState('')
   const [priority, setPriority] = useState('medium')
   const [loading, setLoading] = useState(true)
-  const [currentFilter, setCurrentFilter] = useState('all') // 'all' | 'active' | 'completed'
-
-  // Responsive device tracking state
+  const [currentFilter, setCurrentFilter] = useState('all')
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     fetchTasks()
-    
-    // Disable pinch-to-zoom and lock viewport constraints
-    const meta = document.querySelector('meta[name="viewport"]')
-    if (meta) {
-      meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
-    } else {
-      const newMeta = document.createElement('meta')
-      newMeta.name = 'viewport'
-      newMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
-      document.getElementsByTagName('head')[0].appendChild(newMeta)
-    }
 
     const handleResize = () => setIsMobile(window.innerWidth <= 768)
     handleResize()
@@ -759,16 +553,15 @@ function Tasks({ userId }) {
   async function addTask(e) {
     e.preventDefault()
     if (!title.trim()) return
-    const { error = null } = await supabase
+    const { error } = await supabase
       .from('tasks')
       .insert([{ title, user_id: userId, priority, progress: 0 }])
-    if (!error) { 
+    if (!error) {
       setTitle('')
-      fetchTasks() 
+      fetchTasks()
     }
   }
 
-  // Cyclic priority updating triggered directly on click
   async function cyclePriority(task) {
     const priorities = ['low', 'medium', 'high']
     const nextIndex = (priorities.indexOf(task.priority) + 1) % priorities.length
@@ -778,7 +571,7 @@ function Tasks({ userId }) {
       .from('tasks')
       .update({ priority: nextPriority })
       .eq('id', task.id)
-      
+
     if (!error) fetchTasks()
   }
 
@@ -793,7 +586,6 @@ function Tasks({ userId }) {
     fetchTasks()
   }
 
-  // Filter tasks computed on the fly
   const filteredTasks = tasks.filter(task => {
     if (currentFilter === 'active') return task.progress !== 100
     if (currentFilter === 'completed') return task.progress === 100
@@ -811,8 +603,7 @@ function Tasks({ userId }) {
       <div className="aurora-blur-sphere sphere-primary" style={{ top: '10%', left: '5%' }} />
       <div className="aurora-blur-sphere sphere-secondary" style={{ bottom: '20%', right: '5%', background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0) 70%)' }} />
 
-      {/* --- Page Hero Header --- */}
-      <motion.div 
+      <motion.div
         className="subjects-hero-header"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -828,28 +619,24 @@ function Tasks({ userId }) {
         </div>
       </motion.div>
 
-      {/* --- Top Academic Summary Grid --- */}
       <div className="stats-carousel-grid">
-        {/* KPI: Total Modules */}
-        <SummaryCard 
-          label="Active Tasks" 
-          value={activeCount} 
+        <SummaryCard
+          label="Active Tasks"
+          value={activeCount}
           icon={<ListTodo size={16} />}
           desc={`${completedCount} tasks accomplished`}
           sparklinePath="M0,15 C10,12 20,18 30,5 C40,2 50,14 60,8"
         />
-        
-        {/* KPI: Total Credits */}
-        <SummaryCard 
-          label="Completed" 
-          value={completedCount} 
+
+        <SummaryCard
+          label="Completed"
+          value={completedCount}
           icon={<CheckCircle2 size={16} />}
           desc={`${activeCount} objectives remaining`}
           sparklinePath="M0,8 C10,14 20,5 30,12 C40,16 50,2 60,10"
         />
 
-        {/* KPI: SGPA Card with Gold Emblem */}
-        <motion.div 
+        <motion.div
           className="kpi-card-glass"
           variants={{
             hidden: { opacity: 0, y: 15 },
@@ -874,18 +661,16 @@ function Tasks({ userId }) {
           </div>
         </motion.div>
 
-        {/* KPI: Gradation Completion */}
-        <SummaryCard 
-          label="Total Objectives" 
-          value={totalTasksCount} 
+        <SummaryCard
+          label="Total Objectives"
+          value={totalTasksCount}
           icon={<Target size={16} />}
           desc="Overall task logs on list"
           sparklinePath="M0,18 C10,15 20,10 30,10 C40,10 50,3 60,3"
         />
       </div>
 
-      {/* --- Task Creation Section --- */}
-      <motion.div 
+      <motion.div
         className="task-form-card"
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
@@ -899,8 +684,8 @@ function Tasks({ userId }) {
               placeholder="Add a new task..."
               className="task-input"
             />
-            <motion.button 
-              type="submit" 
+            <motion.button
+              type="submit"
               className="btn-add"
               whileTap={{ scale: 0.98 }}
             >
@@ -908,25 +693,25 @@ function Tasks({ userId }) {
               <span>Add Task</span>
             </motion.button>
           </div>
-          
+
           <div className="priority-options">
-            <span style={{ fontSize: '11px', color: 'var(--text-sub)', fontWeight: 700, textTransform: 'uppercase' }}>Priority:</span>
-            <button 
-              type="button" 
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase' }}>Priority:</span>
+            <button
+              type="button"
               className={`priority-btn ${priority === 'low' ? 'active low' : ''}`}
               onClick={() => setPriority('low')}
             >
               ⚡ Low
             </button>
-            <button 
-              type="button" 
+            <button
+              type="button"
               className={`priority-btn ${priority === 'medium' ? 'active medium' : ''}`}
               onClick={() => setPriority('medium')}
             >
               🔮 Medium
             </button>
-            <button 
-              type="button" 
+            <button
+              type="button"
               className={`priority-btn ${priority === 'high' ? 'active high' : ''}`}
               onClick={() => setPriority('high')}
             >
@@ -936,62 +721,60 @@ function Tasks({ userId }) {
         </form>
       </motion.div>
 
-      {/* --- Segmented Filter Navigation --- */}
       <div className="filter-tabs-wrapper">
-        <button 
-          className={`filter-tab ${currentFilter === 'all' ? 'active' : ''}`} 
+        <button
+          className={`filter-tab ${currentFilter === 'all' ? 'active' : ''}`}
           onClick={() => setCurrentFilter('all')}
         >
           {currentFilter === 'all' && (
-            <motion.div 
-              layoutId="activeTabIndicator" 
-              className="active-tab-indicator" 
+            <motion.div
+              layoutId="activeTabIndicator"
+              className="active-tab-indicator"
               transition={{ type: 'spring', stiffness: 350, damping: 28 }}
             />
           )}
-          <span style={{ position: 'relative', zIndex: 1 }}>All Tasks</span>
-          <span className="tab-count-badge" style={{ position: 'relative', zIndex: 1 }}>{totalTasksCount}</span>
+          <span className="filter-tab-label">All Tasks</span>
+          <span className="tab-count-badge">{totalTasksCount}</span>
         </button>
-        <button 
-          className={`filter-tab ${currentFilter === 'active' ? 'active' : ''}`} 
+        <button
+          className={`filter-tab ${currentFilter === 'active' ? 'active' : ''}`}
           onClick={() => setCurrentFilter('active')}
         >
           {currentFilter === 'active' && (
-            <motion.div 
-              layoutId="activeTabIndicator" 
-              className="active-tab-indicator" 
+            <motion.div
+              layoutId="activeTabIndicator"
+              className="active-tab-indicator"
               transition={{ type: 'spring', stiffness: 350, damping: 28 }}
             />
           )}
-          <span style={{ position: 'relative', zIndex: 1 }}>Active</span>
-          <span className="tab-count-badge" style={{ position: 'relative', zIndex: 1 }}>{activeCount}</span>
+          <span className="filter-tab-label">Active</span>
+          <span className="tab-count-badge">{activeCount}</span>
         </button>
-        <button 
-          className={`filter-tab ${currentFilter === 'completed' ? 'active' : ''}`} 
+        <button
+          className={`filter-tab ${currentFilter === 'completed' ? 'active' : ''}`}
           onClick={() => setCurrentFilter('completed')}
         >
           {currentFilter === 'completed' && (
-            <motion.div 
-              layoutId="activeTabIndicator" 
-              className="active-tab-indicator" 
+            <motion.div
+              layoutId="activeTabIndicator"
+              className="active-tab-indicator"
               transition={{ type: 'spring', stiffness: 350, damping: 28 }}
             />
           )}
-          <span style={{ position: 'relative', zIndex: 1 }}>Completed</span>
-          <span className="tab-count-badge" style={{ position: 'relative', zIndex: 1 }}>{completedCount}</span>
+          <span className="filter-tab-label">Completed</span>
+          <span className="tab-count-badge">{completedCount}</span>
         </button>
       </div>
 
       {loading ? (
-        <p style={{ color: 'var(--text-sub)', fontSize: '13px', textAlign: 'center' }}>Loading tasks...</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', textAlign: 'center' }}>Loading tasks...</p>
       ) : filteredTasks.length === 0 ? (
-        
-        /* Flawless Adaptive SVG Landscape Empty State */
+
         <div className="empty-quest-state">
           <svg className="empty-state-vector-frame" viewBox="0 0 300 180" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect width="300" height="180" rx="16" className="empty-svg-sky" />
             <circle cx="150" cy="90" r="50" className="empty-svg-accent" />
-            
+
             <g transform="translate(142, 60)">
               <line x1="8" y1="10" x2="8" y2="40" className="empty-svg-stroke" strokeWidth="2" />
               <path d="M5,15 Q8,8 11,15 Z" className="empty-svg-silhouette" />
@@ -1019,7 +802,7 @@ function Tasks({ userId }) {
         </div>
 
       ) : (
-        <motion.div 
+        <motion.div
           className="tasks-list-grid"
           initial="hidden"
           animate="visible"
@@ -1033,8 +816,8 @@ function Tasks({ userId }) {
         >
           <AnimatePresence mode="popLayout">
             {filteredTasks.map((task) => (
-              <motion.div 
-                key={task.id} 
+              <motion.div
+                key={task.id}
                 className={`task-quest-card ${task.priority}-p`}
                 layout
                 initial={{ opacity: 0, y: 12, scale: 0.96 }}
@@ -1043,8 +826,6 @@ function Tasks({ userId }) {
                 transition={{ type: 'spring', stiffness: 350, damping: 25 }}
                 whileHover={!isMobile ? { y: -2, transition: { duration: 0.2 } } : {}}
               >
-                
-                {/* Left Checkbox node */}
                 <div className="checkbox-wrapper" onClick={() => toggleDone(task)}>
                   <div className={`custom-checkbox-node ${task.progress === 100 ? 'checked' : ''}`}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1056,16 +837,15 @@ function Tasks({ userId }) {
                   </span>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="card-actions">
-                  <span 
+                  <span
                     onClick={() => cyclePriority(task)}
                     className={`quest-priority-badge badge-${task.priority}`}
                     title="Click to toggle priority"
                   >
                     {task.priority === 'high' ? '🔥 High' : task.priority === 'medium' ? '🔮 Medium' : '⚡ Low'}
                   </span>
-                  
+
                   <button onClick={() => deleteTask(task.id)} className="btn-delete-quest" title="Delete Task">
                     <Trash2 size={15} />
                   </button>
@@ -1082,7 +862,7 @@ function Tasks({ userId }) {
 
 function SummaryCard({ label, value, icon, desc, sparklinePath }) {
   return (
-    <motion.div 
+    <motion.div
       className="kpi-card-glass"
       variants={{
         hidden: { opacity: 0, y: 15 },
@@ -1097,8 +877,6 @@ function SummaryCard({ label, value, icon, desc, sparklinePath }) {
       <div className="kpi-main-metric">{value}</div>
       <div className="kpi-desc-row">
         <span className="kpi-desc">{desc}</span>
-        
-        {/* Soft glowing vector micro-sparkline */}
         <svg width="60" height="20" viewBox="0 0 60 20" fill="none" style={{ opacity: 0.7 }}>
           <path d={sparklinePath} stroke="var(--sparkline-color)" strokeWidth="2" strokeLinecap="round" />
         </svg>
