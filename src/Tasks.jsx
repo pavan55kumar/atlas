@@ -70,6 +70,7 @@ const styleSheet = `
     margin: 0 auto;
     position: relative;
     padding: 20px 0;
+    box-sizing: border-box;
   }
 
   /* --- Glowing Backdrop Aurora Spheres --- */
@@ -340,7 +341,7 @@ const styleSheet = `
     color: #34d399;
   }
 
-  /* --- Segmented Filter Navigation --- */
+  /* --- Segmented Filter Navigation (Responsive Flex Grid) --- */
   .filter-tabs-wrapper {
     position: relative;
     display: flex;
@@ -349,9 +350,10 @@ const styleSheet = `
     border: 1px solid var(--glass-border);
     padding: 4px;
     border-radius: 14px;
-    margin-bottom: 24px;
+    margin: 24px 0; /* Ensures consistent 24px space from creation card */
     z-index: 10;
     width: max-content;
+    box-sizing: border-box;
   }
 
   .filter-tab {
@@ -370,6 +372,7 @@ const styleSheet = `
     display: flex;
     align-items: center;
     gap: 6px;
+    box-sizing: border-box;
   }
 
   .filter-tab:hover {
@@ -595,47 +598,76 @@ const styleSheet = `
     line-height: 1.5;
   }
 
-  /* Responsive media queries */
+  /* Responsive media queries - High Specificity overrides */
   @media (max-width: 768px) {
+    .tasks-wrapper {
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow-x: hidden !important;
+      box-sizing: border-box !important;
+      padding: 16px !important;
+    }
+
+    /* Snapping horizontal carousel of metrics with zero overflow breaks */
     .stats-carousel-grid {
-      display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      gap: 12px;
-      padding-bottom: 12px;
-      margin-bottom: 24px;
-      -webkit-overflow-scrolling: touch;
+      display: flex !important;
+      overflow-x: auto !important;
+      scroll-snap-type: x mandatory !important;
+      gap: 12px !important;
+      padding: 4px !important; /* Prevents shadows clipping */
+      margin-bottom: 24px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+      -webkit-overflow-scrolling: touch !important;
     }
     
     .stats-carousel-grid::-webkit-scrollbar {
-      display: none;
+      display: none !important;
     }
 
     .kpi-card-glass {
-      flex: 0 0 82%;
-      scroll-snap-align: start;
+      flex: 0 0 78% !important; /* Slightly exposes next card to hint swiping */
+      scroll-snap-align: start !important;
+      min-height: 94px !important;
+      padding: 14px !important;
+      border-radius: 14px !important;
+      box-sizing: border-box !important;
+    }
+
+    .kpi-main-metric {
+      font-size: 22px !important;
+      margin-bottom: 2px !important;
+    }
+
+    .kpi-desc {
+      font-size: 10px !important;
+    }
+
+    .golden-trophy-badge {
+      display: none !important; /* Hides decorative heavy icon inside carousel block */
     }
 
     .tasks-list-grid {
-      grid-template-columns: 1fr;
-      gap: 12px;
+      grid-template-columns: 1fr !important;
+      gap: 12px !important;
     }
 
     .task-quest-card {
-      min-height: auto;
-      padding: 16px;
-      border-radius: 14px;
+      min-height: auto !important;
+      padding: 16px !important;
+      border-radius: 14px !important;
     }
 
     .task-form-card {
-      padding: 16px;
-      border-radius: 16px;
+      padding: 16px !important;
+      border-radius: 16px !important;
+      margin-bottom: 24px !important;
     }
 
     .input-group {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 12px;
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 12px !important;
     }
     
     .task-input {
@@ -644,13 +676,36 @@ const styleSheet = `
 
     .btn-add {
       width: 100% !important;
-      justify-content: center;
+      justify-content: center !important;
+    }
+
+    /* Responsive Segmented Tabs (ZERO OVERLAP/COLLISION) */
+    .filter-tabs-wrapper {
+      display: flex !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      gap: 2px !important;
+      padding: 4px !important;
+      margin: 24px 0 !important; /* Rigidly spaces tab below the composer card */
+      border-radius: 12px !important;
+      box-sizing: border-box !important;
+    }
+
+    .filter-tab {
+      flex: 1 !important; /* Equal auto-width distribution */
+      padding: 8px 4px !important;
+      font-size: 11px !important;
+      justify-content: center !important;
+    }
+
+    .tab-count-badge {
+      display: none !important; /* Prevents overflow inside narrow devices */
     }
   }
 
   @media (min-width: 769px) and (max-width: 1024px) {
     .stats-carousel-grid {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, 1fr) !important;
     }
   }
 `;
@@ -667,6 +722,18 @@ function Tasks({ userId }) {
 
   useEffect(() => {
     fetchTasks()
+    
+    // Disable pinch-to-zoom and lock viewport constraints
+    const meta = document.querySelector('meta[name="viewport"]')
+    if (meta) {
+      meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
+    } else {
+      const newMeta = document.createElement('meta')
+      newMeta.name = 'viewport'
+      newMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+      document.getElementsByTagName('head')[0].appendChild(newMeta)
+    }
+
     const handleResize = () => setIsMobile(window.innerWidth <= 768)
     handleResize()
     window.addEventListener('resize', handleResize)
@@ -755,18 +822,7 @@ function Tasks({ userId }) {
       </motion.div>
 
       {/* --- Top Academic Summary Grid --- */}
-      <motion.div 
-        className="stats-carousel-grid"
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: { opacity: 0 },
-          visible: {
-            opacity: 1,
-            transition: { staggerChildren: 0.05 }
-          }
-        }}
-      >
+      <div className="stats-carousel-grid">
         {/* KPI: Total Modules */}
         <SummaryCard 
           label="Active Tasks" 
@@ -819,7 +875,7 @@ function Tasks({ userId }) {
           desc="Overall task logs on list"
           sparklinePath="M0,18 C10,15 20,10 30,10 C40,10 50,3 60,3"
         />
-      </motion.div>
+      </div>
 
       {/* --- Task Creation Section --- */}
       <motion.div 
@@ -879,34 +935,44 @@ function Tasks({ userId }) {
           className={`filter-tab ${currentFilter === 'all' ? 'active' : ''}`} 
           onClick={() => setCurrentFilter('all')}
         >
-          <span>All Tasks</span>
-          <span className="tab-count-badge">{totalTasksCount}</span>
+          {currentFilter === 'all' && (
+            <motion.div 
+              layoutId="activeTabIndicator" 
+              className="active-tab-indicator" 
+              transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+            />
+          )}
+          <span style={{ position: 'relative', zIndex: 1 }}>All Tasks</span>
+          <span className="tab-count-badge" style={{ position: 'relative', zIndex: 1 }}>{totalTasksCount}</span>
         </button>
         <button 
           className={`filter-tab ${currentFilter === 'active' ? 'active' : ''}`} 
           onClick={() => setCurrentFilter('active')}
         >
-          <span>Active</span>
-          <span className="tab-count-badge">{activeCount}</span>
+          {currentFilter === 'active' && (
+            <motion.div 
+              layoutId="activeTabIndicator" 
+              className="active-tab-indicator" 
+              transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+            />
+          )}
+          <span style={{ position: 'relative', zIndex: 1 }}>Active</span>
+          <span className="tab-count-badge" style={{ position: 'relative', zIndex: 1 }}>{activeCount}</span>
         </button>
         <button 
           className={`filter-tab ${currentFilter === 'completed' ? 'active' : ''}`} 
           onClick={() => setCurrentFilter('completed')}
         >
-          <span>Completed</span>
-          <span className="tab-count-badge">{completedCount}</span>
+          {currentFilter === 'completed' && (
+            <motion.div 
+              layoutId="activeTabIndicator" 
+              className="active-tab-indicator" 
+              transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+            />
+          )}
+          <span style={{ position: 'relative', zIndex: 1 }}>Completed</span>
+          <span className="tab-count-badge" style={{ position: 'relative', zIndex: 1 }}>{completedCount}</span>
         </button>
-        
-        {/* Animated Background Indicator overlay */}
-        <motion.div 
-          className="active-tab-indicator"
-          layoutId="activeTabIndicator"
-          animate={{
-            x: currentFilter === 'all' ? 0 : currentFilter === 'active' ? (isMobile ? 104 : 108) : (isMobile ? 186 : 194)
-          }}
-          transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-          style={{ width: currentFilter === 'all' ? (isMobile ? 100 : 104) : currentFilter === 'active' ? (isMobile ? 78 : 82) : (isMobile ? 106 : 110) }}
-        />
       </div>
 
       {loading ? (
