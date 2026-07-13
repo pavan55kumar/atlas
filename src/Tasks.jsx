@@ -62,7 +62,7 @@ const styleSheet = `
     position: relative;
     padding: 24px 20px;
     box-sizing: border-box;
-    overflow-x: hidden;
+    overflow: visible !important;
   }
 
   .aurora-blur-sphere {
@@ -78,27 +78,36 @@ const styleSheet = `
   .sphere-secondary { bottom: 10%; right: -10%; width: 400px; height: 400px; background: var(--aurora-secondary); }
   .sphere-tertiary { top: 40%; left: 40%; width: 350px; height: 350px; background: var(--aurora-tertiary); }
 
-  .subjects-hero-header {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    padding: 24px 32px;
-    margin-bottom: 24px;
-    box-shadow: var(--card-shadow);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+  /* Premium Minimalist Header section */
+  .workspace-header-section {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: relative;
+    margin-bottom: 16px;
     z-index: 10;
-    flex-wrap: wrap;
-    gap: 16px;
+    position: relative;
   }
 
-  .hero-info-area h1 { font-size: 28px; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; color: var(--text-primary); }
-  .hero-info-area p { font-size: 13px; color: var(--text-secondary); margin: 0; font-weight: 500; line-height: 1.4; }
-  .hero-meta-badges { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .header-brand-label {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-brand-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--sparkline-color);
+    box-shadow: 0 0 8px var(--sparkline-color);
+  }
+
+  .hero-meta-badges { display: flex; align-items: center; gap: 10px; }
 
   .semester-pill {
     background: rgba(139, 92, 246, 0.1);
@@ -134,13 +143,38 @@ const styleSheet = `
     white-space: nowrap;
   }
 
+  /* Standalone Workspace Intro Card */
+  .workspace-hero-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 24px 32px;
+    margin-bottom: 28px; /* High-end separation spacing */
+    box-shadow: var(--card-shadow);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    position: relative;
+    z-index: 10;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .hero-info-area h1 { font-size: 28px; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; color: var(--text-primary); }
+  .hero-info-area p { font-size: 13px; color: var(--text-secondary); margin: 0; font-weight: 500; line-height: 1.4; }
+
+  /* Transparent Carousel container */
   .stats-carousel-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
-    margin-bottom: 24px;
+    margin-bottom: 28px; /* Clean layout break */
     z-index: 10;
     position: relative;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
   }
 
   .kpi-card-glass {
@@ -154,10 +188,25 @@ const styleSheet = `
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 110px;
+    min-height: 112px;
     position: relative;
     overflow: hidden;
     box-sizing: border-box;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .kpi-card-glass:hover {
+    transform: translateY(-4px) scale(1.02);
+    border-color: rgba(139, 92, 246, 0.2);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4), 0 0 1px rgba(139, 92, 246, 0.2);
+  }
+
+  body.light-theme .kpi-card-glass:hover,
+  body.light .kpi-card-glass:hover,
+  .light-theme .kpi-card-glass:hover,
+  .light .kpi-card-glass:hover,
+  [data-theme="light"] .kpi-card-glass:hover {
+    border-color: rgba(99, 102, 241, 0.2);
   }
 
   .kpi-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -167,6 +216,7 @@ const styleSheet = `
   .kpi-desc-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; }
   .kpi-desc { font-size: 11px; color: var(--text-tertiary); font-weight: 500; max-width: 65%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+  /* Add Task Section Card */
   .task-form-card {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
@@ -247,6 +297,7 @@ const styleSheet = `
   .priority-btn.active.medium { background: rgba(124, 58, 237, 0.12); border-color: #7c3aed; color: #a78bfa; }
   .priority-btn.active.low { background: rgba(16, 185, 129, 0.12); border-color: #10b981; color: #34d399; }
 
+  /* Filters */
   .filter-tabs-wrapper {
     position: relative;
     display: flex;
@@ -324,6 +375,7 @@ const styleSheet = `
     flex-shrink: 0;
   }
 
+  /* List Grid */
   .tasks-list-grid { display: grid; grid-template-columns: 1fr; gap: 10px; z-index: 10; position: relative; }
 
   .task-quest-card {
@@ -444,6 +496,7 @@ const styleSheet = `
 
   .btn-delete-quest:hover { background: rgba(239, 68, 68, 0.08); color: #f87171; }
 
+  /* Empty State */
   .empty-quest-state {
     text-align: center;
     padding: 48px 16px;
@@ -470,6 +523,7 @@ const styleSheet = `
   .empty-quest-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
   .empty-quest-subtitle { font-size: 13px; color: var(--text-secondary); max-width: 320px; margin: 0 auto; line-height: 1.5; }
 
+  /* Responsive / Mobile overrides */
   @media (max-width: 768px) {
     .tasks-wrapper {
       width: 100% !important;
@@ -479,27 +533,30 @@ const styleSheet = `
       padding: 16px !important;
     }
 
-    .subjects-hero-header {
-      padding: 16px 20px !important;
-      flex-direction: column !important;
-      align-items: flex-start !important;
-      margin-bottom: 16px !important;
+    .workspace-header-section {
+      margin-bottom: 12px !important;
+    }
+
+    .workspace-hero-card {
+      padding: 18px 20px !important;
+      margin-bottom: 24px !important;
       border-radius: 16px !important;
-      gap: 12px !important;
     }
 
     .hero-info-area h1 { font-size: 22px !important; }
     .hero-info-area p { font-size: 12px !important; }
 
+    /* Floating premium swipe carousel, with overflow visible */
     .stats-carousel-grid {
       display: flex !important;
       overflow-x: auto !important;
+      overflow-y: visible !important;
       scroll-snap-type: x mandatory !important;
       gap: 12px !important;
       padding: 4px 16px !important;
       margin-left: -16px !important;
       margin-right: -16px !important;
-      margin-bottom: 20px !important;
+      margin-bottom: 24px !important;
       width: calc(100% + 32px) !important;
       -webkit-overflow-scrolling: touch !important;
       box-sizing: border-box !important;
@@ -508,12 +565,12 @@ const styleSheet = `
     .stats-carousel-grid::-webkit-scrollbar { display: none !important; }
 
     .kpi-card-glass {
-      flex: 0 0 85% !important; /* 85% width lets the next card peek out for premium swipe cue */
-      scroll-snap-align: center !important;
-      min-height: 100px !important;
+      flex: 0 0 calc(93% - 12px) !important; /* 93% card width leaves exactly 7% peeking as visual swipe cue */
+      scroll-snap-align: start !important;
+      min-height: 108px !important;
       padding: 16px !important;
       border-radius: 14px !important;
-      box-sizing: border-box !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
     }
 
     .kpi-main-metric { font-size: 24px !important; margin-bottom: 2px !important; }
@@ -538,7 +595,7 @@ const styleSheet = `
       margin-top: 12px !important;
     }
     
-    .priority-options > span { display: none !important; } /* Hide label to save row space */
+    .priority-options > span { display: none !important; }
 
     .priority-btn { 
       flex: 1 !important; 
@@ -567,7 +624,7 @@ const styleSheet = `
     .filter-tab-label { max-width: 100%; }
     .tab-count-badge { font-size: 9px !important; padding: 1px 4px !important; margin-left: 3px !important; }
 
-    /* Vertical stack layout for task cards to prevent horizontal squeeze on smaller device screens */
+    /* Vertical stacked mobile task layout */
     .task-quest-card {
       flex-direction: column !important;
       align-items: stretch !important;
@@ -584,14 +641,14 @@ const styleSheet = `
     .card-actions {
       width: 100% !important;
       justify-content: space-between !important;
-      padding-left: 34px !important; /* Align interactive metrics with card layout */
+      padding-left: 34px !important;
       box-sizing: border-box !important;
     }
     
     .btn-delete-quest {
       width: 36px !important;
       height: 36px !important;
-      margin: -6px -6px -6px 0 !important; /* Expands interactive touch alignment targets */
+      margin: -6px -6px -6px 0 !important;
     }
   }
 
@@ -615,7 +672,7 @@ function Tasks({ userId }) {
     handleResize()
     window.addEventListener('resize', handleResize)
 
-    // Prevent page pinch-to-zoom scaling behavior on mobile devices
+    // Prevent page scale zoom behavior on touch devices
     const meta = document.querySelector('meta[name="viewport"]')
     if (meta) {
       meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
@@ -693,8 +750,21 @@ function Tasks({ userId }) {
       <div className="aurora-blur-sphere sphere-primary" style={{ top: '10%', left: '5%' }} />
       <div className="aurora-blur-sphere sphere-secondary" style={{ bottom: '20%', right: '5%', background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0) 70%)' }} />
 
+      {/* 1. Page Header */}
+      <div className="workspace-header-section">
+        <div className="header-brand-label">
+          <div className="header-brand-dot" />
+          <span>Workspace Console</span>
+        </div>
+        <div className="hero-meta-badges">
+          <span className="semester-pill">Focused Sprint</span>
+          {completionRate > 0 && <span className="sgpa-badge-glowing">{completionRate}% Done</span>}
+        </div>
+      </div>
+
+      {/* 2. Productivity Workspace Card */}
       <motion.div
-        className="subjects-hero-header"
+        className="workspace-hero-card"
         initial={{ opacity: 0, y: -15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 100, damping: 15 }}
@@ -703,12 +773,9 @@ function Tasks({ userId }) {
           <h1>Productivity Workspace</h1>
           <p>Organize objectives, evaluate priority levels, and track active performance.</p>
         </div>
-        <div className="hero-meta-badges">
-          <span className="semester-pill">Focused Sprint</span>
-          {completionRate > 0 && <span className="sgpa-badge-glowing">{completionRate}% Done</span>}
-        </div>
       </motion.div>
 
+      {/* 3. Statistics Carousel Container */}
       <div className="stats-carousel-grid">
         <SummaryCard
           label="Active Tasks"
@@ -732,7 +799,7 @@ function Tasks({ userId }) {
             hidden: { opacity: 0, y: 15 },
             visible: { opacity: 1, y: 0, transition: { type: 'spring' } }
           }}
-          whileHover={!isMobile ? { y: -3, transition: { duration: 0.2 } } : {}}
+          whileHover={!isMobile ? { y: -4, transition: { duration: 0.25 } } : {}}
         >
           <div className="kpi-header-row">
             <span className="kpi-label">Completion Rate</span>
@@ -744,7 +811,7 @@ function Tasks({ userId }) {
             {completionRate}%
           </div>
           <div className="kpi-desc-row">
-            <span className="kpi-desc">Overall metrics.</span>
+            <span className="kpi-desc">Overall performance metrics.</span>
             <div className="golden-trophy-badge" style={{ position: 'absolute', width: '26px', height: '26px', bottom: '12px', right: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #ffeaa7 0%, #e1b12c 100%)', boxShadow: '0 4px 10px rgba(225, 177, 44, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Sparkles size={12} color="#0c0b11" strokeWidth={2.5} />
             </div>
@@ -760,6 +827,7 @@ function Tasks({ userId }) {
         />
       </div>
 
+      {/* 4. Add Task Section Card */}
       <motion.div
         className="task-form-card"
         initial={{ opacity: 0, y: 12 }}
@@ -811,6 +879,7 @@ function Tasks({ userId }) {
         </form>
       </motion.div>
 
+      {/* 5. Filter Tabs */}
       <div className="filter-tabs-wrapper">
         <button
           className={`filter-tab ${currentFilter === 'all' ? 'active' : ''}`}
@@ -856,6 +925,7 @@ function Tasks({ userId }) {
         </button>
       </div>
 
+      {/* 6. Task List */}
       {loading ? (
         <p style={{ color: 'var(--text-secondary)', fontSize: '13px', textAlign: 'center' }}>Loading tasks...</p>
       ) : filteredTasks.length === 0 ? (
@@ -958,7 +1028,7 @@ function SummaryCard({ label, value, icon, desc, sparklinePath }) {
         hidden: { opacity: 0, y: 15 },
         visible: { opacity: 1, y: 0, transition: { type: 'spring' } }
       }}
-      whileHover={{ y: -3, transition: { duration: 0.2 } }}
+      whileHover={{ y: -4, transition: { duration: 0.25 } }}
     >
       <div className="kpi-header-row">
         <span className="kpi-label">{label}</span>
