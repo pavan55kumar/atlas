@@ -24,12 +24,13 @@ const styleSheet = `
     --input-focus-glow: rgba(139, 92, 246, 0.25);
     --btn-primary-bg: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
     --btn-primary-glow: rgba(139, 92, 246, 0.4);
-    --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
     --aurora-primary: rgba(139, 92, 246, 0.12);
     --aurora-secondary: rgba(236, 72, 153, 0.08);
     --aurora-tertiary: rgba(59, 130, 246, 0.08);
     --sparkline-color: #8b5cf6;
     --checkbox-border: rgba(255, 255, 255, 0.2);
+    --focus-ring: rgba(139, 92, 246, 0.45);
   }
 
   body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
@@ -52,18 +53,72 @@ const styleSheet = `
     --aurora-tertiary: #eedcff;
     --sparkline-color: #6366f1;
     --checkbox-border: rgba(15, 23, 42, 0.2);
+    --focus-ring: rgba(99, 102, 241, 0.35);
   }
 
-  /* Structural Page Shell */
+  /* Structural Page Shell & Spacing Overrides */
   .tasks-wrapper {
     font-family: var(--tasks-font);
     color: var(--text-primary);
     max-width: 1100px;
     margin: 0 auto;
     position: relative;
-    padding: 24px 20px;
+    padding: 12px 16px 32px 16px;
     box-sizing: border-box;
-    overflow: visible !important; /* Prevents layout clipping of carousel cards */
+    overflow: visible !important;
+  }
+
+  /*
+    Dynamic Neutralizer: strip any ancestor "card" chrome so this page never
+    sits inside someone else's rounded rectangle. Uses a descendant :has()
+    (not a direct-child combinator) so it reaches every ancestor level, not
+    just the immediate parent, since host apps may nest several wrapper divs.
+  */
+  div:has(.tasks-wrapper),
+  section:has(.tasks-wrapper),
+  article:has(.tasks-wrapper),
+  main:has(.tasks-wrapper),
+  aside:has(.tasks-wrapper),
+  li:has(.tasks-wrapper) {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  /* Interaction and tap resets */
+  * {
+    -webkit-tap-highlight-color: transparent !important;
+    tap-highlight-color: transparent !important;
+  }
+
+  *:focus {
+    outline: none !important;
+  }
+
+  /* Custom purple focus glow (keyboard/tap) instead of the browser default blue */
+  button:focus-visible,
+  a:focus-visible,
+  .task-input:focus-visible,
+  .checkbox-wrapper:focus-visible .custom-checkbox-node,
+  .filter-tab:focus-visible,
+  .priority-btn:focus-visible,
+  .btn-add:focus-visible,
+  .quest-priority-badge:focus-visible,
+  .btn-delete-quest:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 0 3px var(--focus-ring) !important;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  button:active,
+  .quest-priority-badge:active,
+  .filter-tab:active,
+  .priority-btn:active {
+    transform: scale(0.97);
   }
 
   .aurora-blur-sphere {
@@ -79,36 +134,91 @@ const styleSheet = `
   .sphere-secondary { bottom: 10%; right: -10%; width: 400px; height: 400px; background: var(--aurora-secondary); }
   .sphere-tertiary { top: 40%; left: 40%; width: 350px; height: 350px; background: var(--aurora-tertiary); }
 
-  /* 1. Header Area */
-  .workspace-header-section {
+  /* 1. Standalone Workspace Hero Card */
+  .subjects-hero-header {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 22px 28px;
+    margin-bottom: 28px !important; /* Visual vertical section gap */
+    box-shadow: var(--card-shadow);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
-    z-index: 10;
     position: relative;
+    z-index: 10;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
-  .header-brand-label {
+  .workspace-console-tag {
     font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--text-tertiary);
+    color: #a855f7;
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-bottom: 12px;
   }
 
-  .header-brand-dot {
+  .workspace-console-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: var(--sparkline-color);
-    box-shadow: 0 0 8px var(--sparkline-color);
+    background: #a855f7;
+    box-shadow: 0 0 8px #a855f7;
   }
 
-  .hero-meta-badges { display: flex; align-items: center; gap: 10px; }
+  .hero-info-area h1 { font-size: 28px; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; color: var(--text-primary); }
+  .hero-info-area p { font-size: 13px; color: var(--text-secondary); margin: 0; font-weight: 500; line-height: 1.4; }
+  .hero-meta-badges { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  /* Right-Side Pure CSS Illustration Stack */
+  .hero-visual-stack {
+    position: relative;
+    width: 120px;
+    height: 80px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .visual-card-element {
+    position: absolute;
+    width: 76px;
+    height: 56px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+    transition: transform 0.3s ease;
+  }
+
+  .visual-card-element-1 {
+    transform: translate(-14px, -8px) rotate(-10deg);
+    background: rgba(255, 255, 255, 0.02);
+    z-index: 1;
+    opacity: 0.3;
+  }
+
+  .visual-card-element-2 {
+    transform: translate(-5px, -3px) rotate(-5deg);
+    background: rgba(255, 255, 255, 0.04);
+    z-index: 2;
+    opacity: 0.6;
+  }
+
+  .visual-card-element-3 {
+    transform: translate(5px, 3px) rotate(0deg);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.12) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.15);
+    z-index: 3;
+  }
 
   .semester-pill {
     background: rgba(139, 92, 246, 0.1);
@@ -144,38 +254,19 @@ const styleSheet = `
     white-space: nowrap;
   }
 
-  /* 2. Workspace Hero Card */
-  .workspace-hero-card {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    padding: 24px 32px;
-    margin-bottom: 32px; /* Generous vertical separation from sibling carousel */
-    box-shadow: var(--card-shadow);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    position: relative;
-    z-index: 10;
-    box-sizing: border-box;
-    overflow: hidden;
-  }
-
-  .hero-info-area h1 { font-size: 28px; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; color: var(--text-primary); }
-  .hero-info-area p { font-size: 13px; color: var(--text-secondary); margin: 0; font-weight: 500; line-height: 1.4; }
-
-  /* 3. Independent Floating Statistics Carousel */
+  /* 2. Sibling Floating Statistics Carousel Container */
   .stats-carousel-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
-    margin-bottom: 32px; /* Distinct visual break from bottom interactive cards */
+    margin-bottom: 28px !important; /* Uniform gap */
     z-index: 10;
     position: relative;
-    background: transparent !important; /* Removed container panel background entirely */
+    background: transparent !important;
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
-    overflow: visible !important; /* Prevents edge clipping of active cards */
+    overflow: visible !important;
   }
 
   .kpi-card-glass {
@@ -217,13 +308,45 @@ const styleSheet = `
   .kpi-desc-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; }
   .kpi-desc { font-size: 11px; color: var(--text-tertiary); font-weight: 500; max-width: 65%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  /* 4. Add Task Section Card */
+  /* Swipe indicator dots */
+  .carousel-pager-dots {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: -12px;
+    margin-bottom: 28px !important;
+  }
+
+  .pager-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease;
+  }
+
+  .pager-dot.active {
+    width: 14px;
+    border-radius: 100px;
+    background: #8b5cf6;
+  }
+
+  body.light-theme .pager-dot.active,
+  body.light .pager-dot.active,
+  .light-theme .pager-dot.active,
+  .light .pager-dot.active,
+  [data-theme="light"] .pager-dot.active {
+    background: #6366f1;
+  }
+
+  /* 3. Add Task Section Card */
   .task-form-card {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: 20px;
     padding: 20px;
-    margin-bottom: 24px;
+    margin-bottom: 28px !important; /* Sibling spacing */
     box-shadow: var(--card-shadow);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -250,7 +373,13 @@ const styleSheet = `
   }
 
   .task-input::placeholder { color: var(--text-secondary); opacity: 0.5; }
-  .task-input:focus { outline: none; border-color: var(--input-focus-border); background: var(--input-bg); box-shadow: 0 0 0 3px var(--input-focus-glow); }
+  
+  .task-input:focus { 
+    outline: none !important; 
+    border-color: var(--input-focus-border) !important; 
+    background: var(--input-bg); 
+    box-shadow: 0 0 0 3px var(--input-focus-glow) !important; 
+  }
 
   .btn-add {
     background: var(--btn-primary-bg);
@@ -294,20 +423,34 @@ const styleSheet = `
     white-space: nowrap;
   }
 
-  .priority-btn.active.high { background: rgba(239, 68, 68, 0.12); border-color: #ef4444; color: #f87171; }
-  .priority-btn.active.medium { background: rgba(124, 58, 237, 0.12); border-color: #7c3aed; color: #a78bfa; }
-  .priority-btn.active.low { background: rgba(16, 185, 129, 0.12); border-color: #10b981; color: #34d399; }
+  .priority-btn.active.high { background: rgba(239, 68, 68, 0.12); border-color: #ef4444; color: #f87171; box-shadow: 0 0 8px rgba(239, 68, 68, 0.2); }
+  .priority-btn.active.medium { background: rgba(124, 58, 237, 0.12); border-color: #7c3aed; color: #a78bfa; box-shadow: 0 0 8px rgba(124, 58, 237, 0.2); }
+  .priority-btn.active.low { background: rgba(16, 185, 129, 0.12); border-color: #10b981; color: #34d399; box-shadow: 0 0 8px rgba(16, 185, 129, 0.2); }
 
-  /* 5. Filter Tabs Area */
+  body.light-theme .priority-btn.active.medium,
+  body.light .priority-btn.active.medium,
+  .light-theme .priority-btn.active.medium,
+  .light .priority-btn.active.medium,
+  [data-theme="light"] .priority-btn.active.medium {
+    border-color: #6366f1;
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.12);
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.2);
+  }
+
+  /* 4. Filter Tabs Wrapper */
   .filter-tabs-wrapper {
     position: relative;
     display: flex;
     gap: 4px;
-    background: var(--input-bg);
+    background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     padding: 4px;
     border-radius: 12px;
-    margin: 20px 0;
+    margin: 0 0 28px 0 !important; /* Unified visual spacing */
+    box-shadow: var(--card-shadow);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     z-index: 10;
     width: max-content;
     max-width: 100%;
@@ -376,7 +519,7 @@ const styleSheet = `
     flex-shrink: 0;
   }
 
-  /* 6. Tasks List Grid */
+  /* 5. Tasks List Grid / Independent Empty Panel */
   .tasks-list-grid { display: grid; grid-template-columns: 1fr; gap: 10px; z-index: 10; position: relative; }
 
   .task-quest-card {
@@ -497,7 +640,7 @@ const styleSheet = `
 
   .btn-delete-quest:hover { background: rgba(239, 68, 68, 0.08); color: #f87171; }
 
-  /* Empty State Frame */
+  /* Independent Empty State Panel */
   .empty-quest-state {
     text-align: center;
     padding: 48px 16px;
@@ -507,8 +650,6 @@ const styleSheet = `
     backdrop-filter: blur(20px);
     z-index: 10;
     position: relative;
-    margin-top: 16px !important;
-    margin-bottom: 16px !important;
     box-sizing: border-box;
   }
 
@@ -524,28 +665,38 @@ const styleSheet = `
   .empty-quest-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
   .empty-quest-subtitle { font-size: 13px; color: var(--text-secondary); max-width: 320px; margin: 0 auto; line-height: 1.5; }
 
-  /* Mobile Device Breakpoints */
+  /* Mobile Layout Restructuring */
   @media (max-width: 768px) {
     .tasks-wrapper {
       width: 100% !important;
       max-width: 100% !important;
       overflow-x: hidden !important;
       box-sizing: border-box !important;
-      padding: 16px !important;
+      padding: 10px 14px 24px 14px !important; /* Lighter, more modern density */
     }
 
-    .workspace-header-section {
-      margin-bottom: 12px !important;
-    }
-
-    .workspace-hero-card {
-      padding: 18px 20px !important;
-      margin-bottom: 28px !important; /* Visual space separation */
+    .subjects-hero-header {
+      padding: 18px !important;
+      margin-bottom: 20px !important; /* Visual spacing alignment */
       border-radius: 16px !important;
     }
 
     .hero-info-area h1 { font-size: 22px !important; }
     .hero-info-area p { font-size: 12px !important; }
+
+    .hero-visual-stack {
+      width: 90px !important;
+      height: 70px !important;
+    }
+
+    .visual-card-element {
+      width: 58px !important;
+      height: 42px !important;
+    }
+
+    .visual-card-element-1 { transform: translate(-10px, -6px) rotate(-10deg); }
+    .visual-card-element-2 { transform: translate(-4px, -2px) rotate(-5deg); }
+    .visual-card-element-3 { transform: translate(4px, 2px) rotate(0deg); }
 
     /* Independent Horizontal swipe carousel configuration */
     .stats-carousel-grid {
@@ -554,11 +705,11 @@ const styleSheet = `
       overflow-y: visible !important;
       scroll-snap-type: x mandatory !important;
       gap: 12px !important;
-      padding: 4px 16px !important;
-      margin-left: -16px !important;
-      margin-right: -16px !important;
-      margin-bottom: 28px !important; /* Standard spacing break */
-      width: calc(100% + 32px) !important; /* Bleeds container edge-to-edge on mobile display */
+      padding: 4px 14px !important;
+      margin-left: -14px !important;
+      margin-right: -14px !important;
+      margin-bottom: 12px !important; /* Target spacing for indicator dots positioning */
+      width: calc(100% + 28px) !important; /* Bleeds container edge-to-edge on mobile display */
       -webkit-overflow-scrolling: touch !important;
       box-sizing: border-box !important;
     }
@@ -572,6 +723,10 @@ const styleSheet = `
       padding: 16px !important;
       border-radius: 14px !important;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    .carousel-pager-dots {
+      display: flex !important;
     }
 
     .kpi-main-metric { font-size: 24px !important; margin-bottom: 2px !important; }
@@ -616,7 +771,7 @@ const styleSheet = `
       max-width: 100% !important;
       gap: 2px !important;
       padding: 3px !important;
-      margin: 16px 0 !important;
+      margin: 0 0 20px 0 !important;
       border-radius: 10px !important;
       box-sizing: border-box !important;
     }
@@ -673,7 +828,8 @@ function Tasks({ userId }) {
     handleResize()
     window.addEventListener('resize', handleResize)
 
-    // Setup viewport scale behaviors on touch screens
+    // Configure the viewport so pinch-zoom is disabled while all touch
+    // interactions (scroll, tap, swipe) keep working normally.
     const meta = document.querySelector('meta[name="viewport"]')
     if (meta) {
       meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
@@ -682,6 +838,29 @@ function Tasks({ userId }) {
       newMeta.name = 'viewport'
       newMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
       document.head.appendChild(newMeta)
+    }
+
+    // Programmatically strip any parent wrapper card chrome (background,
+    // border, shadow, padding) so this page never renders nested inside a
+    // host-app card. Walk up several ancestor levels rather than just one,
+    // since host layouts commonly nest more than a single wrapper div
+    // (e.g. page shell > route container > card > this component).
+    const wrapper = document.querySelector('.tasks-wrapper')
+    if (wrapper) {
+      let node = wrapper.parentElement
+      let depth = 0
+      const MAX_ANCESTOR_DEPTH = 8
+      while (node && node !== document.body && depth < MAX_ANCESTOR_DEPTH) {
+        node.style.background = 'transparent'
+        node.style.backgroundColor = 'transparent'
+        node.style.backgroundImage = 'none'
+        node.style.border = 'none'
+        node.style.borderColor = 'transparent'
+        node.style.boxShadow = 'none'
+        node.style.padding = '0'
+        node = node.parentElement
+        depth += 1
+      }
     }
 
     return () => {
@@ -751,32 +930,33 @@ function Tasks({ userId }) {
       <div className="aurora-blur-sphere sphere-primary" style={{ top: '10%', left: '5%' }} />
       <div className="aurora-blur-sphere sphere-secondary" style={{ bottom: '20%', right: '5%', background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0) 70%)' }} />
 
-      {/* 1. Header Area */}
-      <div className="workspace-header-section">
-        <div className="header-brand-label">
-          <div className="header-brand-dot" />
-          <span>Workspace Console</span>
-        </div>
-        <div className="hero-meta-badges">
-          <span className="semester-pill">Focused Sprint</span>
-          {completionRate > 0 && <span className="sgpa-badge-glowing">{completionRate}% Done</span>}
-        </div>
-      </div>
-
-      {/* 2. Productivity Workspace Card */}
+      {/* 1. Productivity Workspace Hero Card */}
       <motion.div
-        className="workspace-hero-card"
+        className="subjects-hero-header"
         initial={{ opacity: 0, y: -15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 100, damping: 15 }}
       >
         <div className="hero-info-area">
+          <div className="workspace-console-tag">
+            <div className="workspace-console-dot" />
+            <span>Workspace Console</span>
+          </div>
           <h1>Productivity Workspace</h1>
           <p>Organize objectives, evaluate priority levels, and track active performance.</p>
         </div>
+        <div className="hero-meta-badges">
+          <span className="semester-pill">Focused Sprint</span>
+          {completionRate > 0 && <span className="sgpa-badge-glowing">{completionRate}% Done</span>}
+        </div>
+        <div className="hero-visual-stack">
+          <div className="visual-card-element visual-card-element-1" />
+          <div className="visual-card-element visual-card-element-2" />
+          <div className="visual-card-element visual-card-element-3" />
+        </div>
       </motion.div>
 
-      {/* 3. Statistics Carousel Container (Sibling layout section) */}
+      {/* 2. Sibling Floating Statistics Carousel Container */}
       <div className="stats-carousel-grid">
         <SummaryCard
           label="Active Tasks"
@@ -828,7 +1008,15 @@ function Tasks({ userId }) {
         />
       </div>
 
-      {/* 4. Add Task Section Card */}
+      {/* 2b. Swipe indicator dots (Visible on mobile) */}
+      <div className="carousel-pager-dots">
+        <span className="pager-dot active" />
+        <span className="pager-dot" />
+        <span className="pager-dot" />
+        <span className="pager-dot" />
+      </div>
+
+      {/* 3. Add Task Section Card */}
       <motion.div
         className="task-form-card"
         initial={{ opacity: 0, y: 12 }}
@@ -880,7 +1068,7 @@ function Tasks({ userId }) {
         </form>
       </motion.div>
 
-      {/* 5. Filter Tabs */}
+      {/* 4. Filter Tabs (now an independent floating card, not touching the list) */}
       <div className="filter-tabs-wrapper">
         <button
           className={`filter-tab ${currentFilter === 'all' ? 'active' : ''}`}
@@ -926,7 +1114,7 @@ function Tasks({ userId }) {
         </button>
       </div>
 
-      {/* 6. Tasks List */}
+      {/* 5. Floating Tasks List / Independent Empty Panel */}
       {loading ? (
         <p style={{ color: 'var(--text-secondary)', fontSize: '13px', textAlign: 'center' }}>Loading tasks...</p>
       ) : filteredTasks.length === 0 ? (
