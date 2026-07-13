@@ -8,7 +8,7 @@ import { supabase } from './lib/supabase'
 
 // Premium Theme Adaptive Glassmorphic Stylesheet
 const styleSheet = `
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap');
   
   :root {
     --atlas-font: 'Plus Jakarta Sans', -apple-system, sans-serif;
@@ -57,9 +57,9 @@ const styleSheet = `
     --card-shadow: 0 15px 35px rgba(31, 38, 135, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
     
     /* Light Theme soft pastel gradients */
-    --aurora-primary: #ffe3d8; /* Peach sphere */
-    --aurora-secondary: #dce5ff; /* Soft periwinkle sphere */
-    --aurora-tertiary: #eedcff; /* Pale lavender sphere */
+    --aurora-primary: #ffe3d8;
+    --aurora-secondary: #dce5ff;
+    --aurora-tertiary: #eedcff;
     --sparkline-color: #6366f1;
   }
 
@@ -69,7 +69,8 @@ const styleSheet = `
     max-width: 1100px;
     margin: 0 auto;
     position: relative;
-    padding: 20px 0;
+    padding: 20px 12px;
+    box-sizing: border-box;
   }
 
   /* --- Glowing Backdrop Aurora Spheres --- */
@@ -217,7 +218,7 @@ const styleSheet = `
     border: 1px solid var(--input-border);
     border-radius: 12px;
     padding: 12px 16px;
-    color: var(--input-text);
+    color: var(--text-primary);
     font-size: 14px;
     font-weight: 500;
     box-sizing: border-box;
@@ -530,6 +531,11 @@ const styleSheet = `
     align-items: flex-start;
   }
 
+  .ai-suggestion-box > div {
+    min-width: 0;
+    word-wrap: break-word;
+  }
+
   .suggestion-bullet {
     width: 6px;
     height: 6px;
@@ -551,6 +557,7 @@ const styleSheet = `
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 16px;
   }
 
   /* --- Empty State --- */
@@ -570,26 +577,40 @@ const styleSheet = `
   }
 
   /* =========================================================================
-     MOBILE DIRECTIVE LAYOUT - SWIPEABLE WEEK & DRAWER CREATOR (BELOW 768PX)
+     MOBILE DIRECTIVE LAYOUT - FIXED OVERLAPS, CLIPIING & SPACING
      ========================================================================= */
   @media (max-width: 768px) {
-    .stats-carousel-grid {
-      display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      gap: 12px;
-      padding-bottom: 12px;
-      margin-bottom: 24px;
-      -webkit-overflow-scrolling: touch;
+    .calendar-dashboard {
+      /* Dynamic bottom padding lets screen scroll past Floating Action Button */
+      padding-bottom: 120px !important; 
     }
-    
-    .stats-carousel-grid::-webkit-scrollbar {
-      display: none;
+
+    /* Elegant, balanced 2x2 grid to show all KPIs cleanly */
+    .stats-carousel-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
     }
 
     .kpi-card-glass {
-      flex: 0 0 82%;
-      scroll-snap-align: start;
+      min-height: 95px;
+      padding: 14px;
+      border-radius: 16px;
+    }
+
+    .kpi-main-metric {
+      font-size: 22px;
+      margin-bottom: 2px;
+    }
+
+    .kpi-label {
+      font-size: 9px;
+    }
+
+    .kpi-desc {
+      font-size: 9px;
+      max-width: 100%;
     }
 
     .calendar-dashboard-layout {
@@ -597,23 +618,40 @@ const styleSheet = `
       gap: 20px;
     }
 
-    /* Swipeable weekly calendar at top */
+    /* Fixed 7-day ribbon grid so Saturday is never cut off */
     .week-days-ribbon {
-      display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      gap: 10px;
-      padding-bottom: 8px;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
     }
 
     .day-ribbon-card {
-      flex: 0 0 54px;
-      scroll-snap-align: start;
+      padding: 10px 4px;
+      border-radius: 12px;
+      gap: 4px;
     }
 
-    /* Collapsing composer drawer button */
+    .day-label-text {
+      font-size: 9px;
+    }
+
+    .day-number-text {
+      font-size: 15px;
+    }
+
+    .today-glow-dot {
+      width: 4px;
+      height: 4px;
+      bottom: 4px;
+    }
+
+    /* Collapse standard composer on mobile */
     .composer-card-glass {
-      display: none; /* Collapses form on mobile layout */
+      display: none; 
+    }
+
+    .month-radial-card {
+      padding: 18px 20px;
     }
 
     .mobile-floating-add-btn {
@@ -778,7 +816,7 @@ function CalendarWidget({ userId }) {
       <div className="aurora-blur-sphere sphere-primary" />
       <div className="aurora-blur-sphere sphere-secondary" />
 
-      {/* --- KPI Summary Grid Carousel --- */}
+      {/* --- KPI Summary Grid --- */}
       <motion.div 
         className="stats-carousel-grid"
         initial="hidden"
@@ -802,21 +840,21 @@ function CalendarWidget({ userId }) {
           label="Upcoming" 
           value={upcomingCount} 
           icon={<Clock3 size={16} />}
-          desc="Overall scheduled logs"
+          desc="Scheduled events"
           sparklinePath="M0,8 C10,14 20,5 30,12 C40,16 50,2 60,10"
         />
         <SummaryCard 
           label="Focus Score" 
           value="9.2" 
           icon={<Brain size={16} />}
-          desc="Target: 9.5 index scale"
+          desc="Target: 9.5 scale"
           sparklinePath="M0,18 C10,15 20,10 30,10 C40,10 50,3 60,3"
         />
         <SummaryCard 
           label="Accomplished" 
           value={completedEventsCount} 
           icon={<CircleCheck size={16} />}
-          desc="Course events completed"
+          desc="Finished logs"
           sparklinePath="M0,4 C10,12 20,2 30,8 C40,14 50,2 60,15"
         />
       </motion.div>
@@ -1011,7 +1049,7 @@ function CalendarWidget({ userId }) {
             </div>
             
             {/* SVG radial ring progress */}
-            <div style={{ position: 'relative', width: '60px', height: '60px' }}>
+            <div style={{ position: 'relative', width: '60px', height: '60px', flexShrink: 0 }}>
               <svg width="60" height="60" viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }}>
                 <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="3" />
                 <path fill="none" stroke="url(#gradientRing)" strokeWidth="3.5" strokeDasharray={`${monthProgressRate}, 100`} strokeLinecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
