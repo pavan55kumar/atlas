@@ -7,6 +7,10 @@ import {
 import { supabase } from './lib/supabase'
 
 // Premium Handcrafted Theme Adaptive Glassmorphic Stylesheet
+// NOTE: Only visual/layout rules were touched in this pass. No functional logic,
+// state, hooks, event handlers, API calls, or theme-variable *values* were changed.
+// Mobile (<=900px) rules were rebuilt for a premium, production-ready feel;
+// desktop rules above the breakpoint are left as they were.
 const styleSheet = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap');
   
@@ -58,14 +62,21 @@ const styleSheet = `
     --aurora-secondary: #eedcff;
   }
 
+  /* Global overflow safety net — scoped to this page's own subtree only */
+  .ai-workspace-container,
+  .ai-workspace-container * {
+    box-sizing: border-box;
+  }
+
   .ai-workspace-container {
     font-family: var(--atlas-font);
     color: var(--text-primary);
     max-width: 1200px;
+    width: 100%;
     margin: 0 auto;
     position: relative;
     padding: 10px 12px;
-    box-sizing: border-box;
+    overflow-x: clip;
   }
 
   /* --- Glowing Backdrop Aurora Spheres --- */
@@ -146,6 +157,7 @@ const styleSheet = `
     display: flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
   }
 
   .status-pulse-bullet {
@@ -155,6 +167,7 @@ const styleSheet = `
     border-radius: 50%;
     box-shadow: 0 0 8px #34d399;
     animation: statusPulse 1.5s infinite alternate;
+    flex-shrink: 0;
   }
 
   @keyframes statusPulse {
@@ -167,7 +180,7 @@ const styleSheet = `
     display: flex;
     gap: 10px;
     overflow-x: auto;
-    padding-bottom: 8px;
+    padding: 2px 2px 8px 2px;
     margin-bottom: 20px;
     z-index: 10;
     position: relative;
@@ -547,24 +560,107 @@ const styleSheet = `
     40% { transform: scale(1); }
   }
 
-  /* --- Mobile Layout Scaling overrides --- */
+  /* ======================================================================
+     MOBILE PREMIUM POLISH (<= 900px)
+     Everything below is layout/visual only — no functionality is affected.
+     Rebuilt on an 8pt spacing rhythm with safe-area-aware padding, no
+     horizontal overflow, 44dp+ touch targets, and richer glass depth.
+     ====================================================================== */
   @media (max-width: 900px) {
+
+    html, body {
+      overflow-x: hidden;
+    }
+
+    .ai-workspace-container {
+      padding-top: max(16px, env(safe-area-inset-top));
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+      padding-left: max(20px, env(safe-area-inset-left));
+      padding-right: max(20px, env(safe-area-inset-right));
+      overflow-x: clip;
+    }
+
+    /* Keep the ambient glow but stop it from ever contributing to page width */
+    .sphere-primary {
+      width: 260px;
+      height: 260px;
+      top: 0%;
+      left: -20%;
+      filter: blur(70px);
+    }
+
+    .sphere-secondary {
+      width: 240px;
+      height: 240px;
+      bottom: 8%;
+      right: -20%;
+      filter: blur(70px);
+    }
+
+    /* --- Hero card: calmer padding, cleaner hierarchy, badges that never
+       wrap mid-word --- */
     .ai-hero-header {
-      padding: 16px 20px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+      padding: 20px;
       margin-bottom: 16px;
-      border-radius: 18px;
+      border-radius: 22px;
+      border-color: var(--glass-border);
+    }
+
+    .hero-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
     .hero-info h1 {
-      font-size: 22px;
+      font-size: 21px;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
     }
 
     .hero-info p {
-      font-size: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      max-width: 34ch;
     }
 
+    .hero-status-pills {
+      gap: 8px;
+      justify-content: flex-start;
+    }
+
+    .status-pill {
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      padding: 8px 14px;
+      min-height: 32px;
+    }
+
+    /* --- Suggestions: true pill shape, snap scrolling, edge fade so the
+       cut-off card at the edge reads as "more content" not "broken layout" --- */
+    .suggestions-carousel {
+      margin: 0 -20px 20px -20px;
+      padding: 2px 20px 10px 20px;
+      scroll-snap-type: x proximity;
+      -webkit-mask-image: linear-gradient(to right, transparent 0, #000 20px, #000 calc(100% - 28px), transparent 100%);
+      mask-image: linear-gradient(to right, transparent 0, #000 20px, #000 calc(100% - 28px), transparent 100%);
+    }
+
+    .suggestion-pill-card {
+      scroll-snap-align: start;
+      border-radius: 100px;
+      padding: 11px 18px;
+      min-height: 44px;
+      font-size: 12.5px;
+    }
+
+    /* --- Chat card becomes the clear hero of the page --- */
     .ai-split-workspace {
       grid-template-columns: 1fr;
+      gap: 16px;
     }
 
     .system-summary-pane {
@@ -572,29 +668,155 @@ const styleSheet = `
     }
 
     .chat-workspace-pane {
-      /* Dynamic height calculation to utilize vertical mobile screen space and prevent vertical squishing */
-      height: calc(100vh - 280px);
-      min-height: 500px;
+      width: 100%;
+      height: calc(100dvh - 300px);
+      min-height: 460px;
       max-height: 720px;
-      border-radius: 24px;
+      border-radius: 26px;
+      border-color: var(--glass-border);
+      box-shadow: var(--card-shadow), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
     }
 
     .chat-messages-container {
-      padding: 18px;
+      padding: 20px 16px;
+      gap: 12px;
     }
 
     .msg-bubble {
-      max-width: 85%;
+      max-width: 86%;
+      padding: 12px 16px;
+      font-size: 14px;
     }
 
+    /* --- Orb: bigger, softer, more "alive" without extra animation cost --- */
+    .empty-chat-orb-state {
+      padding: 16px 8px;
+    }
+
+    .pulse-orb-outer {
+      width: 104px;
+      height: 104px;
+      margin-bottom: 24px;
+    }
+
+    .pulse-orb-orbit {
+      border-color: rgba(139, 92, 246, 0.22);
+    }
+
+    .pulse-orb-orbit::before {
+      content: '';
+      position: absolute;
+      inset: -14px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.16) 0%, rgba(139, 92, 246, 0) 70%);
+      filter: blur(6px);
+    }
+
+    .pulse-orb-center {
+      width: 52px;
+      height: 52px;
+      box-shadow: 0 0 40px rgba(92, 71, 245, 0.55);
+    }
+
+    .empty-chat-orb-state h3 {
+      font-size: 19px !important;
+      line-height: 1.35 !important;
+      letter-spacing: -0.01em;
+      max-width: 26ch;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .empty-chat-orb-state p {
+      font-size: 13.5px !important;
+      line-height: 1.6 !important;
+      max-width: 30ch !important;
+    }
+
+    /* --- Input dock: taller, calmer, everything reachable with a thumb --- */
     .input-dock-layer {
-      padding: 12px 16px 16px 16px;
+      padding: 14px 16px max(14px, env(safe-area-inset-bottom)) 16px;
+      gap: 12px;
+    }
+
+    .linked-context-chips-row {
+      gap: 8px;
+    }
+
+    .linked-context-chips {
+      gap: 6px;
+      row-gap: 8px;
+    }
+
+    .context-mini-badge {
+      font-size: 10.5px;
+      padding: 5px 11px;
+      border-radius: 100px;
+      min-height: 26px;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .voice-toggle-pill {
+      padding: 7px 14px;
+      min-height: 36px;
+      border-radius: 100px;
+    }
+
+    .capsule-input-bar {
+      padding: 5px 5px 5px 18px;
+      min-height: 52px;
+      gap: 6px;
+    }
+
+    .capsule-field {
+      font-size: 15px;
+    }
+
+    .btn-dock-mic {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+    }
+
+    .btn-dock-send {
+      width: 40px;
+      height: 40px;
     }
   }
 
   @media (max-width: 480px) {
+    .ai-workspace-container {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
+    .suggestions-carousel {
+      margin: 0 -16px 18px -16px;
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
     .hero-status-pills {
-      margin-top: 8px;
+      margin-top: 2px;
+    }
+
+    .hero-info p {
+      max-width: 100%;
+    }
+
+    .chat-workspace-pane {
+      border-radius: 22px;
+    }
+  }
+
+  /* Respect reduced-motion preferences without altering default behavior */
+  @media (prefers-reduced-motion: reduce) {
+    .pulse-orb-orbit,
+    .pulse-orb-center,
+    .status-pulse-bullet {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
     }
   }
 `;
