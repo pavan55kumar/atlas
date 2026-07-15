@@ -23,13 +23,18 @@ import AIChat from './AIChat'
 import SearchModal from './SearchModal'
 import Settings from './Settings'
 import About from './About'
+import PrivacyPolicy from "./PrivacyPolicy";
+import Terms from "./Terms";
+import Licenses from "./Licenses";
+import Changelog from "./Changelog";
 
 const titles = {
   tasks: 'Tasks', habits: 'Habits', goals: 'Goals', calendar: 'Calendar',
   ai: 'AI Assistant', analytics: 'Analytics', settings: 'Settings',about: 'About Atlas', notes: 'Notes',
   focus: 'Focus Mode', 'schedule-ai': 'AI Schedule', expenses: 'Expenses',
   subjects: 'Subjects', attendance: 'Attendance', assignments: 'Assignments',
-  cgpa: 'CGPA Planner', 'grade-predictor': 'Grade Predictor', 'study-planner': 'Study Planner'
+  cgpa: 'CGPA Planner',  'study-planner': 'Study Planner' ,privacy: "Privacy Policy",terms: "Terms & Conditions",licenses: "Open Source Licenses",
+  changelog: "What's New",
 }
 
 function Dashboard({ user, onLogout, theme, onToggleTheme }) {
@@ -148,12 +153,33 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
       )}
       {page === 'about' && (
   <PageCard>
-    <About />
+    <About onNavigate={setPage} />
+  </PageCard>
+)}
+{page === "privacy" && (
+  <PageCard>
+    <PrivacyPolicy />
   </PageCard>
 )}
     </motion.div>
   </AnimatePresence>
 </div>
+{page === "terms" && (
+  <PageCard>
+    <Terms />
+  </PageCard>
+)}
+{page === "licenses" && (
+  <PageCard>
+    <Licenses />
+  </PageCard>
+)}
+
+{page === "changelog" && (
+  <PageCard>
+    <Changelog />
+  </PageCard>
+)}
 
         {searchOpen && (
           <SearchModal userId={user.id} onNavigate={setPage} onClose={function () { setSearchOpen(false) }} />
