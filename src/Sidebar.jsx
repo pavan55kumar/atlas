@@ -35,7 +35,6 @@ const SECTIONS = [
       { key: 'attendance', label: 'Attendance', icon: CalendarCheck },
       { key: 'assignments', label: 'Assignments', icon: ClipboardList },
       { key: 'cgpa', label: 'CGPA Planner', icon: TrendingUp },
-      { key: 'grade-predictor', label: 'Grade Predictor', icon: Award },
       { key: 'study-planner', label: 'Study Planner', icon: BookOpen }
     ]
   },
