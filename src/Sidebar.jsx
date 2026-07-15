@@ -4,7 +4,7 @@ import {
   FileText, Wallet, BarChart3,
   GraduationCap, CalendarCheck, ClipboardList, TrendingUp, Award, BookOpen,
   Sparkles, ListOrdered,
-  Settings, ChevronDown, X
+  Settings,Info, ChevronDown, X
 } from 'lucide-react'
 
 const SECTIONS = [
@@ -48,7 +48,8 @@ const SECTIONS = [
   {
     label: 'System',
     items: [
-      { key: 'settings', label: 'Settings', icon: Settings }
+      { key: 'settings', label: 'Settings', icon: Settings },
+     { key: 'about', label: 'Info', icon: Info }
     ]
   }
 ]

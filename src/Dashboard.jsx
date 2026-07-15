@@ -22,11 +22,11 @@ import StudyPlanner from './StudyPlanner'
 import AIChat from './AIChat'
 import SearchModal from './SearchModal'
 import Settings from './Settings'
-
+import About from './About'
 
 const titles = {
   tasks: 'Tasks', habits: 'Habits', goals: 'Goals', calendar: 'Calendar',
-  ai: 'AI Assistant', analytics: 'Analytics', settings: 'Settings', notes: 'Notes',
+  ai: 'AI Assistant', analytics: 'Analytics', settings: 'Settings',about: 'About Atlas', notes: 'Notes',
   focus: 'Focus Mode', 'schedule-ai': 'AI Schedule', expenses: 'Expenses',
   subjects: 'Subjects', attendance: 'Attendance', assignments: 'Assignments',
   cgpa: 'CGPA Planner', 'grade-predictor': 'Grade Predictor', 'study-planner': 'Study Planner'
@@ -146,6 +146,11 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
           <Settings user={user} theme={theme} onToggleTheme={onToggleTheme} />
         </PageCard>
       )}
+      {page === 'about' && (
+  <PageCard>
+    <About />
+  </PageCard>
+)}
     </motion.div>
   </AnimatePresence>
 </div>
