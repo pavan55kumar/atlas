@@ -6,33 +6,35 @@ import {
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
 
-// Premium Theme Adaptive Glassmorphic Stylesheet
+// Premium Flagship Adaptive Glassmorphic Stylesheet
 const styleSheet = `
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
   
   :root {
     --atlas-font: 'Plus Jakarta Sans', -apple-system, sans-serif;
     
-    /* Handcrafted Dark Theme Colors (Linear/Arc style) */
+    /* Handcrafted Dark Theme Colors (Arc / Linear Style) */
     --canvas-bg: #090810;
-    --glass-bg: rgba(18, 16, 30, 0.65);
-    --glass-border: rgba(255, 255, 255, 0.05);
-    --glass-border-glow: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(236, 72, 153, 0.3) 100%);
-    --text-primary: #ffffff;
+    --glass-bg: rgba(18, 16, 32, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-border-glow: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%);
+    --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
     --text-tertiary: #64748b;
-    --input-bg: rgba(26, 23, 44, 0.6);
+    --input-bg: rgba(26, 23, 44, 0.45);
     --input-border: rgba(255, 255, 255, 0.06);
     --input-focus-border: #8b5cf6;
-    --input-focus-glow: rgba(139, 92, 246, 0.25);
+    --input-focus-glow: rgba(139, 92, 246, 0.15);
     
-    /* Gradients matching your dark mockup */
-    --btn-primary-bg: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-    --btn-primary-glow: rgba(139, 92, 246, 0.4);
-    --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    /* Gradients matching premium dark theme */
+    --btn-primary-bg: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+    --btn-primary-glow: rgba(139, 92, 246, 0.25);
+    --card-shadow: 
+      0 1px 0 rgba(255, 255, 255, 0.05) inset,
+      0 10px 30px -10px rgba(0, 0, 0, 0.5);
     
-    /* Ambient sphere tints */
-    --aurora-primary: rgba(139, 92, 246, 0.12);
+    /* Ambient backdrop spheres */
+    --aurora-primary: rgba(139, 92, 246, 0.15);
     --aurora-secondary: rgba(236, 72, 153, 0.08);
     --aurora-tertiary: rgba(59, 130, 246, 0.08);
     --sparkline-color: #8b5cf6;
@@ -40,30 +42,32 @@ const styleSheet = `
 
   /* Handcrafted Light Theme Colors (Apple Settings / Notion style) */
   body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
-    --canvas-bg: #f8fafc;
-    --glass-bg: rgba(255, 255, 255, 0.7);
+    --canvas-bg: #f6f8fa;
+    --glass-bg: rgba(255, 255, 255, 0.75);
     --glass-border: rgba(15, 23, 42, 0.06);
-    --glass-border-glow: linear-gradient(135deg, rgba(92, 71, 245, 0.15) 0%, rgba(224, 83, 93, 0.15) 100%);
-    --text-primary: #1e1b4b;
+    --glass-border-glow: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(224, 83, 93, 0.15) 100%);
+    --text-primary: #0f172a;
     --text-secondary: #475569;
     --text-tertiary: #94a3b8;
-    --input-bg: rgba(241, 245, 249, 0.75);
+    --input-bg: rgba(241, 245, 249, 0.85);
     --input-border: rgba(15, 23, 42, 0.08);
     --input-focus-border: #6366f1;
-    --input-focus-glow: rgba(99, 102, 241, 0.15);
+    --input-focus-glow: rgba(99, 102, 241, 0.12);
     
     --btn-primary-bg: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-    --btn-primary-glow: rgba(99, 102, 241, 0.2);
-    --card-shadow: 0 15px 35px rgba(31, 38, 135, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    --btn-primary-glow: rgba(99, 102, 241, 0.15);
+    --card-shadow: 
+      0 1px 0 rgba(255, 255, 255, 0.6) inset,
+      0 10px 30px -10px rgba(15, 23, 42, 0.04);
     
     /* Light Theme soft pastel gradients */
-    --aurora-primary: #ffe3d8;
-    --aurora-secondary: #dce5ff;
-    --aurora-tertiary: #eedcff;
+    --aurora-primary: rgba(99, 102, 241, 0.08);
+    --aurora-secondary: rgba(236, 72, 153, 0.06);
+    --aurora-tertiary: rgba(59, 130, 246, 0.06);
     --sparkline-color: #6366f1;
   }
 
-  /* Global browser reset for touch selection highlights */
+  /* Global resets and micro-interaction optimization */
   * {
     -webkit-tap-highlight-color: transparent !important;
     outline: none !important;
@@ -75,7 +79,7 @@ const styleSheet = `
     max-width: 1100px;
     margin: 0 auto;
     position: relative;
-    padding: 20px 12px;
+    padding: 24px 16px;
     box-sizing: border-box;
     
     /* Disables zoom/pinch gestures and horizontal wiggle */
@@ -85,30 +89,52 @@ const styleSheet = `
     -webkit-user-select: none;
   }
 
-  /* --- Glowing Backdrop Aurora Spheres --- */
+  /* --- Glowing Backdrop Aurora Spheres with Slow Pulsation --- */
   .aurora-blur-sphere {
     position: absolute;
     border-radius: 50%;
-    filter: blur(90px);
+    filter: blur(110px);
     pointer-events: none;
     z-index: 0;
-    transition: background 0.5s ease;
+    transition: background 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes floatSphere1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(30px, -20px) scale(1.1); }
+  }
+
+  @keyframes floatSphere2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-20px, 30px) scale(1.08); }
   }
 
   .sphere-primary {
-    top: 5%;
-    left: -10%;
-    width: 450px;
-    height: 450px;
+    top: -5%;
+    left: -15%;
+    width: 500px;
+    height: 500px;
     background: var(--aurora-primary);
+    animation: floatSphere1 20s infinite ease-in-out;
   }
 
   .sphere-secondary {
-    bottom: 10%;
-    right: -10%;
-    width: 400px;
-    height: 400px;
+    bottom: 5%;
+    right: -15%;
+    width: 450px;
+    height: 450px;
     background: var(--aurora-secondary);
+    animation: floatSphere2 25s infinite ease-in-out;
+  }
+
+  /* --- Premium Matte Glass Panels --- */
+  .premium-card-glass {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 22px;
+    box-shadow: var(--card-shadow);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
   }
 
   /* --- KPI Summary Grid --- */
@@ -116,23 +142,17 @@ const styleSheet = `
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
     z-index: 10;
     position: relative;
   }
 
   .kpi-card-glass {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 20px;
     padding: 20px;
-    box-shadow: var(--card-shadow);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 120px;
+    min-height: 125px;
     position: relative;
     overflow: hidden;
   }
@@ -141,7 +161,7 @@ const styleSheet = `
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
 
   .kpi-label {
@@ -149,7 +169,7 @@ const styleSheet = `
     font-weight: 700;
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
   }
 
   .kpi-icon-wrapper {
@@ -158,11 +178,12 @@ const styleSheet = `
   }
 
   .kpi-main-metric {
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 800;
     color: var(--text-primary);
-    line-height: 1;
-    margin-bottom: 6px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
   }
 
   .kpi-desc-row {
@@ -176,9 +197,10 @@ const styleSheet = `
     color: var(--text-tertiary);
     font-weight: 500;
     max-width: 60%;
+    line-height: 1.3;
   }
 
-  /* --- Main workspace double pane layout --- */
+  /* --- Main Workspace Layout --- */
   .calendar-dashboard-layout {
     display: grid;
     grid-template-columns: 1.6fr 1fr;
@@ -201,18 +223,13 @@ const styleSheet = `
 
   /* --- Premium Event Creator Card --- */
   .composer-card-glass {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 24px;
     padding: 24px;
-    box-shadow: var(--card-shadow);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
   }
 
   .composer-title {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
+    color: var(--text-primary);
     margin: 0 0 16px 0;
     letter-spacing: -0.01em;
   }
@@ -229,23 +246,24 @@ const styleSheet = `
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     border-radius: 12px;
-    padding: 12px 16px;
-    color: var(--text-primary); /* Corrected from undefined var */
-    font-size: 14px;
+    padding: 11px 16px;
+    color: var(--text-primary);
+    font-size: 13.5px;
     font-weight: 500;
     box-sizing: border-box;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     outline: none;
   }
 
   .composer-input::placeholder {
     color: var(--text-secondary);
-    opacity: 0.6;
+    opacity: 0.55;
   }
 
   .composer-input:focus {
     border-color: var(--input-focus-border);
     box-shadow: 0 0 0 3px var(--input-focus-glow);
+    background: var(--glass-bg);
   }
 
   .composer-input.title {
@@ -254,12 +272,12 @@ const styleSheet = `
   }
 
   .composer-input.date-picker {
-    width: 160px;
+    width: 155px;
     cursor: pointer;
   }
 
   .composer-input.time-picker {
-    width: 120px;
+    width: 115px;
     cursor: pointer;
   }
 
@@ -268,12 +286,12 @@ const styleSheet = `
     color: #ffffff;
     border: none;
     border-radius: 12px;
-    padding: 12px 24px;
-    font-size: 14px;
+    padding: 11px 22px;
+    font-size: 13.5px;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 6px 16px var(--btn-primary-glow);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px var(--btn-primary-glow);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -283,18 +301,17 @@ const styleSheet = `
 
   .btn-composer-add:hover {
     transform: translateY(-1px);
-    box-shadow: 0 8px 22px var(--btn-primary-glow);
+    box-shadow: 0 6px 18px var(--btn-primary-glow);
+    filter: brightness(1.05);
+  }
+
+  .btn-composer-add:active {
+    transform: translateY(0);
   }
 
   /* --- Premium Weekly Ribbon Layout --- */
   .calendar-nav-card {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 24px;
     padding: 24px;
-    box-shadow: var(--card-shadow);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
   }
 
   .calendar-nav-header {
@@ -304,11 +321,34 @@ const styleSheet = `
     margin-bottom: 20px;
   }
 
+  /* Premium Glass Date Pill Header with ambient backlight */
   .active-month-text {
-    font-size: 18px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
     color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    padding: 8px 16px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    position: relative;
+  }
+
+  .active-month-text::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    background: var(--btn-primary-bg);
+    filter: blur(12px);
+    opacity: 0.12;
+    z-index: -1;
+    border-radius: 99px;
   }
 
   .nav-controls-box {
@@ -320,65 +360,68 @@ const styleSheet = `
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     color: var(--text-primary);
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .btn-nav-arrow:hover {
     background: var(--glass-border);
+    border-color: rgba(255, 255, 255, 0.15);
     transform: translateY(-1px);
   }
 
   .week-days-ribbon {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 10px;
+    gap: 8px;
   }
 
   .day-ribbon-card {
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(255, 255, 255, 0.015);
     border: 1px solid var(--glass-border);
     border-radius: 16px;
-    padding: 14px;
+    padding: 14px 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
     user-select: none;
-    -webkit-tap-highlight-color: transparent;
   }
 
   .day-ribbon-card:hover {
     transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.12);
   }
 
+  /* Elevate selected dates with softer premium glows instead of sharp neon */
   .day-ribbon-card.is-selected {
     background: var(--btn-primary-bg);
-    border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 8px 24px var(--btn-primary-glow);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 
+      0 8px 24px var(--btn-primary-glow),
+      inset 0 1px 1px rgba(255, 255, 255, 0.2);
   }
 
   .day-label-text {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
   }
 
   .day-number-text {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 800;
     color: var(--text-primary);
   }
@@ -390,24 +433,18 @@ const styleSheet = `
 
   /* Current day glowing bullet */
   .today-glow-dot {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     background-color: #ffd166;
     border-radius: 50%;
-    box-shadow: 0 0 10px #ffd166;
+    box-shadow: 0 0 8px #ffd166;
     position: absolute;
     bottom: 8px;
   }
 
   /* --- Timeline & Event Feed --- */
   .timeline-container {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 24px;
     padding: 24px;
-    box-shadow: var(--card-shadow);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
   }
 
   .timeline-axis {
@@ -416,6 +453,7 @@ const styleSheet = `
     margin-top: 16px;
   }
 
+  /* Softer dashed/gradient timeline axis */
   .timeline-axis::before {
     content: '';
     position: absolute;
@@ -423,7 +461,7 @@ const styleSheet = `
     bottom: 6px;
     left: 7px;
     width: 2px;
-    background: var(--glass-border);
+    background: linear-gradient(180deg, var(--glass-border) 0%, rgba(255, 255, 255, 0.02) 100%);
   }
 
   .timeline-node-dot {
@@ -436,16 +474,19 @@ const styleSheet = `
     border: 2px solid var(--canvas-bg);
     box-shadow: 0 0 0 3px var(--glass-border);
     z-index: 2;
+    transition: all 0.2s ease;
   }
 
   .timeline-node-dot.active {
     background: #ff737b;
-    box-shadow: 0 0 10px rgba(255, 115, 123, 0.4), 0 0 0 3px rgba(255, 115, 123, 0.2);
+    box-shadow: 
+      0 0 0 4px var(--canvas-bg), 
+      0 0 12px rgba(255, 115, 123, 0.5);
   }
 
   .timeline-event-wrapper {
     position: relative;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
   }
 
   .timeline-event-wrapper:last-child {
@@ -453,30 +494,30 @@ const styleSheet = `
   }
 
   .timeline-time-col {
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 800;
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     margin-bottom: 6px;
   }
 
   .event-card-tactile {
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(255, 255, 255, 0.015);
     border: 1px solid var(--glass-border);
     border-radius: 16px;
     padding: 16px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .event-card-tactile:hover {
     transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
-    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.03);
   }
 
   .event-title-main {
@@ -500,6 +541,7 @@ const styleSheet = `
     padding: 2px 8px;
     border-radius: 6px;
     font-weight: 600;
+    border: 1px solid var(--input-border);
   }
 
   .btn-delete-event {
@@ -520,28 +562,31 @@ const styleSheet = `
     color: #ff737b;
   }
 
-  /* --- Interactive Side Panels (AI, Progress) --- */
+  /* --- Interactive Side Panels (AI Suggestions & Progress) --- */
   .ai-assistant-card {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%);
-    border: 1px solid var(--glass-border-glow);
-    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(236, 72, 153, 0.04) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.15);
     padding: 24px;
-    box-shadow: var(--card-shadow);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     position: relative;
     overflow: hidden;
   }
 
   .ai-suggestion-box {
-    background: rgba(22, 21, 34, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.04);
+    background: rgba(22, 21, 34, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.03);
     border-radius: 14px;
     padding: 14px;
     margin-top: 14px;
     display: flex;
     gap: 12px;
     align-items: flex-start;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .ai-suggestion-box:hover {
+    transform: translateY(-2px);
+    background: rgba(22, 21, 34, 0.5);
+    border-color: rgba(139, 92, 246, 0.1);
   }
 
   .ai-suggestion-box > div {
@@ -559,14 +604,17 @@ const styleSheet = `
     flex-shrink: 0;
   }
 
+  @keyframes shimmerSparkle {
+    0%, 100% { opacity: 0.5; transform: scale(0.9) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1.1) rotate(15deg); }
+  }
+
+  .ai-sparkle-animated {
+    animation: shimmerSparkle 3s infinite ease-in-out;
+  }
+
   .month-radial-card {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 24px;
     padding: 24px;
-    box-shadow: var(--card-shadow);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -576,7 +624,7 @@ const styleSheet = `
   /* --- Empty State --- */
   .empty-events-banner {
     text-align: center;
-    padding: 40px 20px;
+    padding: 44px 20px;
     border-radius: 20px;
     border: 1px dashed var(--glass-border);
     background: rgba(255, 255, 255, 0.01);
@@ -590,15 +638,14 @@ const styleSheet = `
   }
 
   /* =========================================================================
-     MOBILE DIRECTIVE LAYOUT - FIXED OVERLAPS, CLIPPING & SPACING
+     MOBILE DIRECTIVE LAYOUT - PERFECT OVERLAPS, CLIPPING & SPACING
      ========================================================================= */
   @media (max-width: 768px) {
     .calendar-dashboard {
-      /* Dynamic bottom padding lets screen scroll past Floating Action Button */
       padding-bottom: 120px !important; 
     }
 
-    /* Elegant, balanced 2x2 grid to show all KPIs cleanly */
+    /* Balanced 2x2 grid to show all KPIs cleanly */
     .stats-carousel-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -607,13 +654,13 @@ const styleSheet = `
     }
 
     .kpi-card-glass {
-      min-height: 95px;
+      min-height: 100px;
       padding: 14px;
       border-radius: 16px;
     }
 
     .kpi-main-metric {
-      font-size: 22px;
+      font-size: 24px;
       margin-bottom: 2px;
     }
 
@@ -645,7 +692,7 @@ const styleSheet = `
     }
 
     .day-label-text {
-      font-size: 9px;
+      font-size: 8.5px;
     }
 
     .day-number-text {
@@ -667,6 +714,7 @@ const styleSheet = `
       padding: 18px 20px;
     }
 
+    /* Soft Glow Reduced FAB */
     .mobile-floating-add-btn {
       position: fixed;
       bottom: 24px;
@@ -679,7 +727,7 @@ const styleSheet = `
       align-items: center;
       justify-content: center;
       color: #ffffff;
-      box-shadow: 0 8px 24px var(--btn-primary-glow);
+      box-shadow: 0 8px 24px rgba(139, 92, 246, 0.25);
       z-index: 99;
       cursor: pointer;
       border: none;
@@ -691,7 +739,7 @@ const styleSheet = `
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(9, 8, 16, 0.85);
+      background: rgba(9, 8, 16, 0.75);
       backdrop-filter: blur(25px);
       -webkit-backdrop-filter: blur(25px);
       z-index: 100;
@@ -738,7 +786,7 @@ const styleSheet = `
 function getWeekDates(anchor) {
   const start = new Date(anchor)
   const day = start.getDay()
-  start.setDate(start.getDate() - day) // back up to Sunday
+  start.setDate(start.getDate() - day) // Back up to Sunday
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(start)
     d.setDate(start.getDate() + i)
@@ -845,28 +893,28 @@ function CalendarWidget({ userId }) {
         <SummaryCard 
           label="Today's Events" 
           value={todayEventsCount} 
-          icon={<CalendarClock size={16} />}
+          icon={<CalendarClock size={16} strokeWidth={1.75} />}
           desc="Due within 24 hours"
           sparklinePath="M0,15 C10,12 20,18 30,5 C40,2 50,14 60,8"
         />
         <SummaryCard 
           label="Upcoming" 
           value={upcomingCount} 
-          icon={<Clock3 size={16} />}
+          icon={<Clock3 size={16} strokeWidth={1.75} />}
           desc="Scheduled events"
           sparklinePath="M0,8 C10,14 20,5 30,12 C40,16 50,2 60,10"
         />
         <SummaryCard 
           label="Focus Score" 
           value="9.2" 
-          icon={<Brain size={16} />}
+          icon={<Brain size={16} strokeWidth={1.75} />}
           desc="Target: 9.5 scale"
           sparklinePath="M0,18 C10,15 20,10 30,10 C40,10 50,3 60,3"
         />
         <SummaryCard 
           label="Accomplished" 
           value={completedEventsCount} 
-          icon={<CircleCheck size={16} />}
+          icon={<CircleCheck size={16} strokeWidth={1.75} />}
           desc="Finished logs"
           sparklinePath="M0,4 C10,12 20,2 30,8 C40,14 50,2 60,15"
         />
@@ -879,50 +927,69 @@ function CalendarWidget({ userId }) {
         <div className="left-pane">
           
           {/* Calendar weekly ribbon navigation */}
-          <div className="calendar-nav-card">
+          <div className="calendar-nav-card premium-card-glass">
             <div className="calendar-nav-header">
-              <span className="active-month-text">
-                {weekDates[0].toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-              </span>
+              <AnimatePresence mode="popLayout">
+                <motion.span 
+                  key={weekDates[0].getMonth() + '-' + weekDates[0].getFullYear()}
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                  className="active-month-text"
+                >
+                  {weekDates[0].toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </motion.span>
+              </AnimatePresence>
               <div className="nav-controls-box">
                 <button onClick={() => shiftWeek(-1)} className="btn-nav-arrow"><ChevronLeft size={16} /></button>
                 <button onClick={() => shiftWeek(1)} className="btn-nav-arrow"><ChevronRight size={16} /></button>
               </div>
             </div>
 
-            <div className="week-days-ribbon">
-              {weekDates.map(d => {
-                const key = d.toISOString().split('T')[0]
-                const isToday = key === today
-                const dayEvents = eventsByDate[key] || []
-                const isSelected = selectedDay === key
-                return (
-                  <motion.div
-                    key={key}
-                    onClick={() => setSelectedDay(isSelected ? null : key)}
-                    className={`day-ribbon-card ${isSelected ? 'is-selected' : ''}`}
-                    whileTap={{ scale: 0.96 }}
-                  >
-                    <span className="day-label-text">
-                      {d.toLocaleDateString('en-US', { weekday: 'short' })}
-                    </span>
-                    <span className="day-number-text">{d.getDate()}</span>
-                    {isToday && <div className="today-glow-dot" />}
-                    {dayEvents.length > 0 && !isToday && (
-                      <div style={{
-                        width: '5px', height: '5px', borderRadius: '50%',
-                        background: isSelected ? '#ffffff' : '#ff737b',
-                        marginTop: '4px'
-                      }} />
-                    )}
-                  </motion.div>
-                )
-              })}
-            </div>
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key={weekAnchor.toISOString()}
+                initial={{ opacity: 0, x: 15 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -15 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                className="week-days-ribbon"
+              >
+                {weekDates.map(d => {
+                  const key = d.toISOString().split('T')[0]
+                  const isToday = key === today
+                  const dayEvents = eventsByDate[key] || []
+                  const isSelected = selectedDay === key
+                  return (
+                    <motion.div
+                      key={key}
+                      onClick={() => setSelectedDay(isSelected ? null : key)}
+                      className={`day-ribbon-card ${isSelected ? 'is-selected' : ''}`}
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.96 }}
+                    >
+                      <span className="day-label-text">
+                        {d.toLocaleDateString('en-US', { weekday: 'short' })}
+                      </span>
+                      <span className="day-number-text">{d.getDate()}</span>
+                      {isToday && <div className="today-glow-dot" />}
+                      {dayEvents.length > 0 && !isToday && (
+                        <div style={{
+                          width: '5px', height: '5px', borderRadius: '50%',
+                          background: isSelected ? '#ffffff' : '#ff737b',
+                          marginTop: '4px'
+                        }} />
+                      )}
+                    </motion.div>
+                  )
+                })}
+              </motion.div>
+            </AnimatePresence>
           </div>
 
           {/* Interactive selected day timeline view */}
-          <div className="timeline-container">
+          <div className="timeline-container premium-card-glass">
             <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 16px 0' }}>
               {selectedDay ? (
                 new Date(selectedDay).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
@@ -1003,7 +1070,7 @@ function CalendarWidget({ userId }) {
           
           {/* Desktop-only Event Composer Form panel */}
           {!isMobile && (
-            <div className="composer-card-glass">
+            <div className="composer-card-glass premium-card-glass">
               <h3 className="composer-title">Create Schedule Node</h3>
               <form onSubmit={addEvent} className="composer-form">
                 <input
@@ -1033,9 +1100,9 @@ function CalendarWidget({ userId }) {
           )}
 
           {/* AI Insights & suggestions */}
-          <div className="ai-assistant-card">
+          <div className="ai-assistant-card premium-card-glass">
             <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Sparkles size={16} color="#e1b12c" />
+              <Sparkles size={16} className="ai-sparkle-animated" style={{ color: '#ffd166' }} />
               <span>Atlas AI Suggestions</span>
             </h3>
             
@@ -1055,17 +1122,26 @@ function CalendarWidget({ userId }) {
           </div>
 
           {/* Radial progress card */}
-          <div className="month-radial-card">
+          <div className="month-radial-card premium-card-glass">
             <div>
               <h3 style={{ fontSize: '14px', fontWeight: 700, margin: '0 0 4px 0' }}>Month Completion</h3>
               <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Based on overall metrics.</p>
             </div>
             
-            {/* SVG radial ring progress */}
-            <div style={{ position: 'relative', width: '60px', height: '60px', flexShrink: 0 }}>
-              <svg width="60" height="60" viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }}>
+            {/* SVG radial ring progress with layout animation */}
+            <div style={{ position: 'relative', width: '64px', height: '64px', flexShrink: 0 }}>
+              <svg width="64" height="64" viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }}>
                 <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="3" />
-                <path fill="none" stroke="url(#gradientRing)" strokeWidth="3.5" strokeDasharray={`${monthProgressRate}, 100`} strokeLinecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <motion.path 
+                  fill="none" 
+                  stroke="url(#gradientRing)" 
+                  strokeWidth="3.5" 
+                  strokeLinecap="round" 
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                  initial={{ strokeDasharray: "0, 100" }}
+                  animate={{ strokeDasharray: `${monthProgressRate}, 100` }}
+                  transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                />
                 <defs>
                   <linearGradient id="gradientRing" x1="0" y1="0" x2="1" y2="1">
                     <stop offset="0%" stopColor="#ff737b" />
@@ -1073,7 +1149,7 @@ function CalendarWidget({ userId }) {
                   </linearGradient>
                 </defs>
               </svg>
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '11px', fontWeight: 800 }}>
+              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '11.5px', fontWeight: 800 }}>
                 {monthProgressRate}%
               </div>
             </div>
@@ -1088,12 +1164,14 @@ function CalendarWidget({ userId }) {
          ========================================================================= */}
       {isMobile && (
         <>
-          <button 
+          <motion.button 
             className="mobile-floating-add-btn"
             onClick={() => setIsMobileDrawerOpen(true)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             <Plus size={24} strokeWidth={2.5} />
-          </button>
+          </motion.button>
 
           <AnimatePresence>
             {isMobileDrawerOpen && (
@@ -1111,7 +1189,7 @@ function CalendarWidget({ userId }) {
                   initial={{ y: '100%' }}
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                  transition={{ type: 'spring', damping: 26, stiffness: 220 }}
                 >
                   <h3 className="composer-title" style={{ margin: 0 }}>Add Event Node</h3>
                   
@@ -1166,12 +1244,12 @@ function CalendarWidget({ userId }) {
 function SummaryCard({ label, value, icon, desc, sparklinePath }) {
   return (
     <motion.div 
-      className="kpi-card-glass"
+      className="kpi-card-glass premium-card-glass"
       variants={{
         hidden: { opacity: 0, y: 15 },
-        visible: { opacity: 1, y: 0, transition: { type: 'spring' } }
+        visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 200, damping: 20 } }
       }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.2 } }}
     >
       <div className="kpi-header-row">
         <span className="kpi-label">{label}</span>
@@ -1181,9 +1259,31 @@ function SummaryCard({ label, value, icon, desc, sparklinePath }) {
       <div className="kpi-desc-row">
         <span className="kpi-desc">{desc}</span>
         
-        {/* Soft glowing vector micro-sparkline */}
-        <svg width="60" height="20" viewBox="0 0 60 20" fill="none" style={{ opacity: 0.7 }}>
-          <path d={sparklinePath} stroke="var(--sparkline-color)" strokeWidth="2" strokeLinecap="round" />
+        {/* Glowing Vector Micro-Sparkline with line and area animation on page load */}
+        <svg width="60" height="20" viewBox="0 0 60 20" fill="none" style={{ opacity: 0.85, overflow: 'visible' }}>
+          <defs>
+            <linearGradient id={`sparklineGrad-${label}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--sparkline-color)" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="var(--sparkline-color)" stopOpacity="0.0" />
+            </linearGradient>
+          </defs>
+          <motion.path
+            d={`${sparklinePath} L60,20 L0,20 Z`}
+            fill={`url(#sparklineGrad-${label})`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.6 }}
+            transition={{ duration: 1.5, delay: 0.2 }}
+          />
+          <motion.path 
+            d={sparklinePath} 
+            stroke="var(--sparkline-color)" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
+          />
         </svg>
       </div>
     </motion.div>
