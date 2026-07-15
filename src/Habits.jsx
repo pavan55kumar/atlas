@@ -29,14 +29,46 @@ function badgeFor(streak) {
   return null
 }
 
+// ---------------------------------------------------------------------------
+// Local calendar date helpers
+//
+// Everything in this file that decides "which day did this happen on" needs
+// to use the user's LOCAL calendar day, not UTC. `Date.prototype.toISOString()`
+// always returns UTC, and `new Date("YYYY-MM-DD")` is parsed as UTC midnight
+// by the JS spec — both of these silently shift a date by one day for anyone
+// west of UTC, which is exactly how a completion made right around midnight
+// (or any date comparison) ends up filed under the wrong day. The helpers
+// below only ever use local-time getters/setters (getFullYear, getMonth,
+// getDate, setDate) so streaks, heatmaps, and sparklines all agree on "today".
+// ---------------------------------------------------------------------------
+
+// Date -> "YYYY-MM-DD" using local time.
+function toDateKey(date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+// "YYYY-MM-DD" -> Date at local midnight (avoids the UTC-parsing footgun).
+function parseDateKey(dateStr) {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+// Date -> new Date offset by `delta` local calendar days.
+function addDays(date, delta) {
+  const d = new Date(date)
+  d.setDate(d.getDate() + delta)
+  return d
+}
+
 function formatLastCompleted(dateStr, today) {
   if (!dateStr) return 'Never'
   if (dateStr === today) return 'Today'
-  const y = new Date(today)
-  y.setDate(y.getDate() - 1)
-  const yesterday = y.toISOString().split('T')[0]
+  const yesterday = toDateKey(addDays(parseDateKey(today), -1))
   if (dateStr === yesterday) return 'Yesterday'
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return parseDateKey(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 function CountUp({ value, style }) {
@@ -117,37 +149,97 @@ function Habits({ userId }) {
   async function addHabit(e) {
     e.preventDefault()
     if (!name.trim()) return
-    const { error } = await supabase
+    // .select() hands back the inserted row so we can drop it straight into
+    // state instead of re-fetching the whole habits list from Supabase.
+    const { data, error } = await supabase
       .from('habits')
       .insert([{ name, user_id: userId, streak: 0 }])
-    if (!error) { setName(''); fetchHabits() }
+      .select()
+    if (!error && data && data[0]) {
+      setHabits(function (prev) { return [data[0], ...prev] })
+      setName('')
+    }
   }
 
+  // ---------------------------------------------------------------------
+  // Streak logic — real calendar continuity, not a blind +1.
+  //
+  //   Case 1 (already done today)      -> no-op: no duplicate log, no streak bump
+  //   Case 2 (last_completed = yesterday) -> streak continues, +1
+  //   Case 3 (a day or more was missed)   -> streak resets to 1
+  //   Case 4 (never completed before)     -> streak starts at 1
+  //
+  // Every completion still creates exactly one habit_logs row for that
+  // calendar day, so the heatmap only ever shows real completions — missed
+  // days stay empty, they are never backfilled or implied.
+  // ---------------------------------------------------------------------
   async function markDoneToday(habit) {
-    const today = new Date().toISOString().split('T')[0]
+    const today = toDateKey(new Date())
+
+    // Case 1: already marked done today. Bail out before touching the DB so
+    // we never double-increment the streak or insert a second log for today.
     if (habit.last_completed === today) return
+    // Belt-and-suspenders duplicate guard: even if `last_completed` were ever
+    // out of sync with habit_logs, don't insert a second log for the same day.
+    if (logs[habit.id] && logs[habit.id].has(today)) return
 
-    await supabase.from('habits')
-      .update({ streak: habit.streak + 1, last_completed: today })
+    const yesterday = toDateKey(addDays(new Date(), -1))
+
+    let newStreak
+    if (!habit.last_completed) {
+      // Case 4: first completion ever.
+      newStreak = 1
+    } else if (habit.last_completed === yesterday) {
+      // Case 2: consecutive calendar day -> extend the streak.
+      newStreak = habit.streak + 1
+    } else {
+      // Case 3: one or more days were missed since the last completion.
+      newStreak = 1
+    }
+
+    const { error: updateError } = await supabase.from('habits')
+      .update({ streak: newStreak, last_completed: today })
       .eq('id', habit.id)
+    if (updateError) return
 
-    await supabase.from('habit_logs')
+    const { error: logError } = await supabase.from('habit_logs')
       .insert([{ habit_id: habit.id, user_id: userId, completed_date: today }])
+    if (logError) return
+
+    // Update local state directly (instead of re-fetching everything) so the
+    // ring/streak/heatmap/sparkline all reflect the change with zero extra
+    // Supabase requests.
+    setHabits(function (prev) {
+      return prev.map(function (h) {
+        return h.id === habit.id ? { ...h, streak: newStreak, last_completed: today } : h
+      })
+    })
+    setLogs(function (prev) {
+      const next = { ...prev }
+      const set = new Set(next[habit.id] || [])
+      set.add(today)
+      next[habit.id] = set
+      return next
+    })
 
     setCelebrateId(habit.id)
     setTimeout(function () { setCelebrateId(null) }, 1100)
-
-    fetchHabits()
   }
 
   async function deleteHabit(id) {
     setMenuOpenId(null)
     await supabase.from('habits').delete().eq('id', id)
     await supabase.from('habit_logs').delete().eq('habit_id', id)
-    fetchHabits()
+    // Same idea as above: prune local state instead of re-fetching.
+    setHabits(function (prev) { return prev.filter(function (h) { return h.id !== id } ) })
+    setLogs(function (prev) {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
   }
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = toDateKey(new Date())
 
   return (
     <div className="habits-page">
@@ -180,12 +272,13 @@ function Habits({ userId }) {
               const Icon = ICONS[iconIndex]
               const accent = PALETTE[iconIndex % PALETTE.length]
 
+              // Progress ring: % of the last 30 real calendar days completed.
+              // Sparkline: last 7 real calendar days, missed days as 0.
               let completedLast30 = 0
               const sparklineData = []
               for (let i = 29; i >= 0; i--) {
-                const d = new Date()
-                d.setDate(d.getDate() - i)
-                const key = d.toISOString().split('T')[0]
+                const d = addDays(new Date(), -i)
+                const key = toDateKey(d)
                 const done = habitLogs.has(key)
                 if (done) completedLast30++
                 if (i < 7) sparklineData.push(done ? 1 : 0)
@@ -205,9 +298,20 @@ function Habits({ userId }) {
                   whileTap={{ scale: 0.98 }}
                   transition={{ type: 'spring', stiffness: 260, damping: 22 }}
                   className="habit-card"
-                  style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.12), 0 0 0 1px var(--border)' }}
+                  style={{
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.12), 0 0 0 1px var(--border)',
+                    // Lift the card whose menu is open above its neighbors so the
+                    // dropdown never renders underneath an adjacent card.
+                    zIndex: menuOpenId === habit.id ? 5 : 0
+                  }}
                 >
-                  <div className="habit-card-glow" style={{ background: accent }} />
+                  {/* Glow is clipped by its own rounded wrapper now, not by the
+                      card itself — see .habit-card-glow-clip. This keeps the
+                      glow looking identical while letting the delete menu
+                      below escape the card's edge instead of being cut off. */}
+                  <div className="habit-card-glow-clip">
+                    <div className="habit-card-glow" style={{ background: accent }} />
+                  </div>
 
                   <div className="habit-card-top">
                     <div className="habit-icon-chip" style={{ background: accent }}>
@@ -316,14 +420,18 @@ function Habits({ userId }) {
         }
         .habit-card {
           position: relative; background: var(--surface); border-radius: 26px;
-          padding: 20px; overflow: hidden; backdrop-filter: blur(16px);
+          padding: 20px; backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
+        }
+        .habit-card-glow-clip {
+          position: absolute; inset: 0; border-radius: 26px;
+          overflow: hidden; pointer-events: none; z-index: 0;
         }
         .habit-card-glow {
           position: absolute; top: -40px; right: -40px; width: 140px; height: 140px;
           border-radius: 50%; filter: blur(50px); opacity: 0.18; pointer-events: none;
         }
-        .habit-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; position: relative; z-index: 1; }
+        .habit-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; position: relative; z-index: 2; }
         .habit-icon-chip {
           width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
@@ -358,10 +466,11 @@ function Habits({ userId }) {
           display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600;
           border: 1px solid; padding: 3px 9px; border-radius: 999px; margin-bottom: 12px;
         }
-        .habit-heatmap-wrap { margin-bottom: 14px; }
+        .habit-heatmap-wrap { margin-bottom: 14px; position: relative; z-index: 1; }
         .habit-complete-btn {
           width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
           padding: 10px; border-radius: 12px; border: none; font-size: 12.5px; font-weight: 600;
+          position: relative; z-index: 1;
         }
       `}</style>
     </div>
@@ -374,9 +483,8 @@ function Heatmap({ completedDates, accent }) {
   const today = new Date()
 
   for (let i = totalDays - 1; i >= 0; i--) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - i)
-    const key = d.toISOString().split('T')[0]
+    const d = addDays(today, -i)
+    const key = toDateKey(d)
     cells.push({ date: key, done: completedDates.has(key) })
   }
 
