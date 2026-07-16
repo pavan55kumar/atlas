@@ -173,9 +173,3 @@ select:focus {
   box-shadow: none;
 }
 
-/* Faster touch response */
-button,
-a,
-[role="button"] {
-  touch-action: manipulation;
-}
