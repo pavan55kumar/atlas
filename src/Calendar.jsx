@@ -9,6 +9,23 @@ import { supabase } from './lib/supabase'
 const ease = [0.22, 1, 0.36, 1]
 
 // Premium Theme Adaptive Glassmorphic Stylesheet
+//
+// RESPONSIVE STRATEGY (read this before touching any rule below):
+// 1) The #1 cause of "clipped Saturday column" / "card cut off on the right"
+//    bugs in this file was CSS Grid's default track sizing: `1fr` really
+//    means `minmax(auto, 1fr)`, so a grid track will NEVER shrink below the
+//    intrinsic (min-content) width of what's inside it — even if that
+//    means the whole grid overflows its container. Every multi-column grid
+//    below now uses `minmax(0, 1fr)` instead of `1fr`, which allows tracks
+//    to compress all the way down when the viewport is narrow, so nothing
+//    pushes past the screen edge and gets clipped.
+// 2) All paddings/gaps that scale with screen size use clamp()/min()/max()
+//    instead of a single fixed px value, so spacing shrinks gracefully on
+//    320-360px phones and stays spacious on large phones/tablets, without
+//    needing separate breakpoint overrides for every increment.
+// 3) The floating action button is positioned with safe-area-aware
+//    clamp()/max() math so it can never sit outside the viewport or behind
+//    a gesture-navigation bar, regardless of device.
 const styleSheet = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
@@ -76,23 +93,43 @@ const styleSheet = `
     --accent-amber: #d97706;
   }
 
+  /* Kill the mobile blue tap-flash without touching focus accessibility.
+     Only the highlight color is removed here — real keyboard focus rings
+     are restored explicitly (:focus-visible) below on every interactive
+     element, per item 16 (accessibility must survive item 14's touch fix). */
   * {
-    -webkit-tap-highlight-color: transparent !important;
-    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .calendar-dashboard button:focus-visible,
+  .calendar-dashboard [role="button"]:focus-visible,
+  .calendar-dashboard input:focus-visible {
+    outline: 2px solid var(--input-focus-border);
+    outline-offset: 2px;
   }
 
   .calendar-dashboard {
     font-family: var(--atlas-font);
     color: var(--text-primary);
     max-width: 1100px;
+    width: 100%;
     margin: 0 auto;
     position: relative;
-    padding: 20px 12px;
+    /* Fluid inline padding: 14px on the narrowest phones, scaling with
+       viewport width, capped at 28px so large phones/tablets don't feel
+       like their content is glued to the edges (item 7). */
+    padding-block: clamp(16px, 4vw, 24px);
+    padding-inline: clamp(14px, 4vw, 28px);
     box-sizing: border-box;
     touch-action: pan-y;
-    overflow-x: hidden;
+    overflow-x: clip;
     user-select: none;
     -webkit-user-select: none;
+  }
+
+  .calendar-dashboard,
+  .calendar-dashboard * {
+    box-sizing: border-box;
   }
 
   /* ---------- Layered ambient background ---------- */
@@ -139,6 +176,10 @@ const styleSheet = `
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     position: relative;
+    /* Never let a card be wider than its column — this is what makes the
+       whole layout genuinely fluid instead of relying on fixed widths. */
+    width: 100%;
+    max-width: 100%;
   }
 
   .kpi-card-glass::before,
@@ -157,16 +198,19 @@ const styleSheet = `
   /* ---------- KPI Summary Grid ---------- */
   .stats-carousel-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
-    margin-bottom: 32px;
+    /* minmax(0, 1fr) — NOT plain 1fr — so columns can shrink past their
+       content's min-content width on narrow phones instead of forcing
+       the grid (and the card inside it) to overflow the viewport. */
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(10px, 2.2vw, 18px);
+    margin-bottom: clamp(20px, 4vw, 32px);
     z-index: 10;
     position: relative;
   }
 
   .kpi-card-glass {
-    border-radius: 22px;
-    padding: 20px;
+    border-radius: clamp(16px, 3vw, 22px);
+    padding: clamp(14px, 3.2vw, 20px);
     min-height: 120px;
     display: flex;
     flex-direction: column;
@@ -180,27 +224,46 @@ const styleSheet = `
     box-shadow: var(--card-shadow-hover);
   }
 
-  .kpi-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .kpi-label { font-size: 10px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.07em; }
+  .kpi-header-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .kpi-label {
+    font-size: clamp(9px, 2.2vw, 10px);
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    /* Labels wrap onto two lines on narrow cards ("TODAY'S EVENTS") —
+       keep them readable instead of overlapping the icon badge. */
+    line-height: 1.3;
+    min-width: 0;
+  }
   .kpi-icon-wrapper {
-    width: 28px; height: 28px; border-radius: 9px;
+    width: clamp(24px, 6vw, 28px);
+    height: clamp(24px, 6vw, 28px);
+    border-radius: 9px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
-  .kpi-main-metric { font-size: 30px; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 6px; letter-spacing: -0.01em; }
-  .kpi-desc-row { display: flex; justify-content: space-between; align-items: flex-end; }
-  .kpi-desc { font-size: 11px; color: var(--text-tertiary); font-weight: 500; max-width: 60%; }
+  .kpi-main-metric {
+    font-size: clamp(20px, 5.5vw, 30px);
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+  .kpi-desc-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; }
+  .kpi-desc { font-size: clamp(9px, 2vw, 11px); color: var(--text-tertiary); font-weight: 500; max-width: 60%; }
 
   /* ---------- Double pane layout ---------- */
   .calendar-dashboard-layout {
     display: grid;
     grid-template-columns: 1.6fr 1fr;
-    gap: 24px;
+    gap: clamp(16px, 3vw, 24px);
     z-index: 10;
     position: relative;
   }
-  .left-pane { display: flex; flex-direction: column; gap: 24px; }
-  .right-pane { display: flex; flex-direction: column; gap: 24px; }
+  .left-pane { display: flex; flex-direction: column; gap: clamp(16px, 3vw, 24px); min-width: 0; }
+  .right-pane { display: flex; flex-direction: column; gap: clamp(16px, 3vw, 24px); min-width: 0; }
 
   /* ---------- Event Composer ---------- */
   .composer-card-glass { border-radius: 24px; padding: 24px; }
@@ -216,14 +279,15 @@ const styleSheet = `
     font-size: 14px;
     font-weight: 500;
     box-sizing: border-box;
+    min-width: 0;
     transition: border-color 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1);
     outline: none;
   }
   .composer-input::placeholder { color: var(--text-secondary); opacity: 0.65; }
   .composer-input:focus { border-color: var(--input-focus-border); box-shadow: 0 0 0 3px var(--input-focus-glow), inset 0 1px 2px rgba(0,0,0,0.06); }
-  .composer-input.title { flex: 2; min-width: 200px; }
-  .composer-input.date-picker { width: 160px; cursor: pointer; }
-  .composer-input.time-picker { width: 120px; cursor: pointer; }
+  .composer-input.title { flex: 2 1 200px; min-width: 0; }
+  .composer-input.date-picker { flex: 1 1 140px; max-width: 160px; cursor: pointer; }
+  .composer-input.time-picker { flex: 1 1 100px; max-width: 120px; cursor: pointer; }
 
   .btn-composer-add {
     position: relative;
@@ -253,16 +317,27 @@ const styleSheet = `
   @keyframes btn-ripple-expand { to { transform: scale(1); opacity: 0; } }
 
   /* ---------- Weekly ribbon (Calendar card) ---------- */
-  .calendar-nav-card { border-radius: 24px; padding: 24px; overflow: hidden; }
-  .calendar-nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-  .active-month-text { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; color: var(--text-primary); }
+  .calendar-nav-card {
+    border-radius: clamp(18px, 3.5vw, 24px);
+    padding: clamp(16px, 4vw, 24px);
+    overflow: hidden;
+  }
+  .calendar-nav-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: clamp(14px, 3vw, 20px); }
+  .active-month-text {
+    font-size: clamp(16px, 4.5vw, 20px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    min-width: 0;
+  }
 
-  .nav-controls-box { display: flex; gap: 10px; }
+  .nav-controls-box { display: flex; gap: 10px; flex-shrink: 0; }
   .btn-nav-arrow {
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     color: var(--text-primary);
-    width: 38px; height: 38px;
+    width: clamp(34px, 8vw, 38px);
+    height: clamp(34px, 8vw, 38px);
     border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
@@ -270,22 +345,30 @@ const styleSheet = `
   }
   .btn-nav-arrow:hover { background: var(--glass-border); border-color: rgba(139, 92, 246, 0.25); }
 
-  .week-days-ribbon { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
+  .week-days-ribbon {
+    display: grid;
+    /* This is the fix for the clipped Saturday column: minmax(0, 1fr)
+       lets all seven day-cells compress evenly to fit any width instead
+       of overflowing past the last visible column. */
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: clamp(4px, 1.6vw, 12px);
+  }
 
   .day-ribbon-card {
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--glass-border);
-    border-radius: 18px;
-    padding: 14px;
+    border-radius: clamp(12px, 3vw, 18px);
+    padding: clamp(8px, 2.4vw, 14px) clamp(2px, 1vw, 14px);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: clamp(3px, 1vw, 8px);
     cursor: pointer;
     transition: background 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease, box-shadow 0.3s ease;
     position: relative;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    min-width: 0;
   }
   .day-ribbon-card:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.12); }
 
@@ -306,8 +389,15 @@ const styleSheet = `
     box-shadow: 0 14px 30px -10px rgba(90, 60, 220, 0.35), inset 0 1px 0 rgba(255,255,255,0.14);
   }
 
-  .day-label-text { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
-  .day-number-text { font-size: 20px; font-weight: 800; color: var(--text-primary); }
+  .day-label-text {
+    font-size: clamp(8.5px, 2.4vw, 11px);
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .day-number-text { font-size: clamp(13px, 3.6vw, 20px); font-weight: 800; color: var(--text-primary); }
   .day-ribbon-card.is-selected .day-label-text,
   .day-ribbon-card.is-selected .day-number-text { color: #ffffff; }
 
@@ -321,8 +411,8 @@ const styleSheet = `
   }
 
   /* ---------- Timeline & Event Feed ---------- */
-  .timeline-container { border-radius: 24px; padding: 24px; }
-  .timeline-axis { position: relative; padding-left: 30px; margin-top: 16px; }
+  .timeline-container { border-radius: clamp(18px, 3.5vw, 24px); padding: clamp(16px, 4vw, 24px); }
+  .timeline-axis { position: relative; padding-left: clamp(22px, 5vw, 30px); margin-top: 16px; min-width: 0; }
   .timeline-axis::before {
     content: '';
     position: absolute;
@@ -343,18 +433,20 @@ const styleSheet = `
     box-shadow: 0 0 8px rgba(167, 139, 250, 0.4), 0 0 0 3px rgba(167, 139, 250, 0.18);
   }
 
-  .timeline-event-wrapper { position: relative; margin-bottom: 26px; }
+  .timeline-event-wrapper { position: relative; margin-bottom: 26px; min-width: 0; }
   .timeline-event-wrapper:last-child { margin-bottom: 0; }
   .timeline-time-col { font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
 
   .event-card-tactile {
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--glass-border);
-    border-radius: 18px;
-    padding: 16px 20px;
+    border-radius: clamp(14px, 3vw, 18px);
+    padding: clamp(12px, 3vw, 16px) clamp(14px, 3.5vw, 20px);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
+    min-width: 0;
     transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, box-shadow 0.3s ease, background 0.25s ease;
   }
   .event-card-tactile:hover {
@@ -364,14 +456,19 @@ const styleSheet = `
     background: rgba(255, 255, 255, 0.045);
   }
 
-  .event-title-main { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0; }
-  .event-meta-info { font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; font-weight: 500; }
+  .event-title-main {
+    font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  .event-meta-info { font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; font-weight: 500; flex-wrap: wrap; }
   .meta-tag { background: var(--input-bg); padding: 2px 8px; border-radius: 6px; font-weight: 600; }
 
   .btn-delete-event {
     background: none; border: none; color: var(--text-tertiary);
     cursor: pointer; padding: 8px; border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
     transition: background 0.2s ease, color 0.2s ease;
   }
   .btn-delete-event:hover { background: rgba(239, 68, 68, 0.09); color: var(--accent-red); }
@@ -379,8 +476,8 @@ const styleSheet = `
   /* ---------- AI Suggestions & Progress ---------- */
   .ai-assistant-card {
     background-image: linear-gradient(150deg, rgba(139, 92, 246, 0.08) 0%, rgba(96, 165, 250, 0.04) 60%, transparent 100%);
-    border-radius: 24px;
-    padding: 24px;
+    border-radius: clamp(18px, 3.5vw, 24px);
+    padding: clamp(16px, 4vw, 24px);
     overflow: hidden;
   }
 
@@ -405,13 +502,21 @@ const styleSheet = `
 
   .suggestion-bullet { width: 6px; height: 6px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
 
-  .month-radial-card { border-radius: 24px; padding: 24px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+  .month-radial-card {
+    border-radius: clamp(18px, 3.5vw, 24px);
+    padding: clamp(16px, 4vw, 24px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(12px, 3vw, 18px);
+  }
+  .month-radial-card > div:first-child { min-width: 0; }
 
   /* ---------- Empty State ---------- */
   .empty-events-banner {
     text-align: center;
-    padding: 44px 20px;
-    border-radius: 22px;
+    padding: clamp(28px, 6vw, 44px) 16px;
+    border-radius: clamp(16px, 3.5vw, 22px);
     border: 1px dashed var(--glass-border);
   }
   .empty-icon-badge {
@@ -424,30 +529,65 @@ const styleSheet = `
   }
   .empty-banner-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0; letter-spacing: -0.01em; }
 
-  /* Mobile */
+  /* ======================================================================
+     TABLET (769px – 1024px): collapse to a single column but keep the
+     desktop-style KPI 2x2 grid and full composer, since there's still
+     plenty of width to work with.
+     ====================================================================== */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .calendar-dashboard-layout { grid-template-columns: 1fr; }
+    .stats-carousel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  /* ======================================================================
+     MOBILE (<= 768px): everything below is layout/visual only — no
+     functionality changes. Rebuilt so the reference phone layout (the
+     "correct" screenshot) is treated as the target proportions, and
+     everything narrower intelligently compresses padding/gaps/type
+     rather than clipping content (item 2).
+     ====================================================================== */
   @media (max-width: 768px) {
-    .calendar-dashboard { padding-bottom: 120px !important; }
+    .calendar-dashboard {
+      /* Room for the fixed FAB plus the device's own gesture-nav inset,
+         so the last timeline card is never hidden behind either. */
+      padding-bottom: calc(clamp(96px, 22vw, 120px) + env(safe-area-inset-bottom)) !important;
+    }
 
-    .stats-carousel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
-    .kpi-card-glass { min-height: 95px; padding: 14px; border-radius: 18px; }
-    .kpi-main-metric { font-size: 22px; margin-bottom: 2px; }
-    .kpi-label { font-size: 9px; }
-    .kpi-desc { font-size: 9px; max-width: 100%; }
+    .stats-carousel-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(8px, 2.6vw, 10px);
+      margin-bottom: clamp(16px, 4vw, 20px);
+    }
+    .kpi-card-glass { min-height: 95px; padding: clamp(12px, 3.4vw, 14px); border-radius: clamp(14px, 3.5vw, 18px); }
+    .kpi-main-metric { font-size: clamp(19px, 5.6vw, 22px); margin-bottom: 2px; }
+    .kpi-label { font-size: clamp(8.5px, 2.4vw, 9px); }
+    .kpi-desc { font-size: clamp(8.5px, 2.2vw, 9px); max-width: 100%; }
 
-    .calendar-dashboard-layout { grid-template-columns: 1fr; gap: 20px; }
+    .calendar-dashboard-layout { grid-template-columns: 1fr; gap: clamp(14px, 3.5vw, 20px); }
 
-    .week-days-ribbon { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-    .day-ribbon-card { padding: 10px 4px; border-radius: 13px; gap: 4px; }
-    .day-label-text { font-size: 9px; }
-    .day-number-text { font-size: 15px; }
+    .day-ribbon-card { gap: clamp(2px, 1vw, 4px); }
     .today-glow-dot { width: 4px; height: 4px; bottom: 4px; }
 
     .composer-card-glass { display: none; }
-    .month-radial-card { padding: 18px 20px; }
+    .month-radial-card { padding: clamp(14px, 4vw, 18px) clamp(16px, 4.5vw, 20px); }
 
+    /* --- Floating Action Button ---
+       Fixed to the viewport, sized and positioned entirely with fluid
+       units so it can never be clipped or hidden by gesture bars:
+       - max(20px, env(safe-area-inset-bottom)) keeps it above Android's
+         3-button/gesture nav and the iPhone home indicator alike.
+       - clamp(16px, 4vw, 28px) keeps its right margin proportional to
+         screen width instead of a single fixed value that can crowd a
+         320px screen or look stranded on a large one.
+       - The button's own diameter is also clamp()-based so it stays a
+         comfortable 44dp+ touch target on every device. */
     .mobile-floating-add-btn {
-      position: fixed; bottom: 24px; right: 24px;
-      width: 56px; height: 56px; border-radius: 50%;
+      position: fixed;
+      bottom: max(20px, env(safe-area-inset-bottom));
+      right: clamp(16px, 4vw, 28px);
+      width: clamp(52px, 14vw, 58px);
+      height: clamp(52px, 14vw, 58px);
+      border-radius: 50%;
       background: var(--btn-primary-bg);
       display: flex; align-items: center; justify-content: center;
       color: #ffffff;
@@ -470,18 +610,24 @@ const styleSheet = `
       background-image: linear-gradient(165deg, var(--glass-sheen-1) 0%, var(--glass-sheen-2) 100%);
       border-top: 1px solid var(--glass-border);
       border-radius: 28px 28px 0 0;
-      padding: 30px 24px;
-      display: flex; flex-direction: column; gap: 20px;
+      padding: clamp(22px, 6vw, 30px) clamp(16px, 5vw, 24px);
+      /* Keep the sheet's own controls clear of the home-indicator area. */
+      padding-bottom: calc(clamp(22px, 6vw, 30px) + env(safe-area-inset-bottom));
+      display: flex; flex-direction: column; gap: clamp(14px, 4vw, 20px);
     }
 
     .composer-form { flex-direction: column; align-items: stretch; }
-    .composer-input { width: 100% !important; }
+    .composer-input { width: 100% !important; max-width: 100% !important; }
     .btn-composer-add { width: 100%; justify-content: center; }
   }
 
-  @media (min-width: 769px) and (max-width: 1024px) {
-    .calendar-dashboard-layout { grid-template-columns: 1fr; }
-    .stats-carousel-grid { grid-template-columns: repeat(2, 1fr); }
+  /* Extra-narrow phones (Fold cover screens, small Android devices) get a
+     little more headroom shaved off automatically via the clamp()s above;
+     this block only nudges the couple of values that still read as too
+     tight at the very bottom of the range. */
+  @media (max-width: 340px) {
+    .day-ribbon-card { padding-inline: 2px; }
+    .day-label-text { letter-spacing: 0.02em; }
   }
 `;
 
@@ -570,6 +716,16 @@ function CalendarWidget({ userId }) {
     }, 650)
   }
 
+  // Keyboard support for the day cells: they're clickable divs (for the
+  // tap/press animation styling), so Enter/Space need to be wired up
+  // manually to match native <button> behavior for keyboard users.
+  function handleDayKeyDown(e, key, isSelected) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      setSelectedDay(isSelected ? null : key)
+    }
+  }
+
   const today = new Date().toISOString().split('T')[0]
   const weekDates = getWeekDates(weekAnchor)
   const eventsByDate = {}
@@ -617,7 +773,7 @@ function CalendarWidget({ userId }) {
         <SummaryCard
           label="Today's Events"
           value={todayEventsCount}
-          icon={<CalendarClock size={15} />}
+          icon={<CalendarClock size={15} aria-hidden="true" />}
           desc="Due within 24 hours"
           sparklinePath="M0,15 C10,12 20,18 30,5 C40,2 50,14 60,8"
           accent="#f59e0b"
@@ -625,7 +781,7 @@ function CalendarWidget({ userId }) {
         <SummaryCard
           label="Upcoming"
           value={upcomingCount}
-          icon={<Clock3 size={15} />}
+          icon={<Clock3 size={15} aria-hidden="true" />}
           desc="Scheduled events"
           sparklinePath="M0,8 C10,14 20,5 30,12 C40,16 50,2 60,10"
           accent="#60a5fa"
@@ -633,7 +789,7 @@ function CalendarWidget({ userId }) {
         <SummaryCard
           label="Focus Score"
           value="9.2"
-          icon={<Brain size={15} />}
+          icon={<Brain size={15} aria-hidden="true" />}
           desc="Target: 9.5 scale"
           sparklinePath="M0,18 C10,15 20,10 30,10 C40,10 50,3 60,3"
           accent="#8b5cf6"
@@ -641,7 +797,7 @@ function CalendarWidget({ userId }) {
         <SummaryCard
           label="Accomplished"
           value={completedEventsCount}
-          icon={<CircleCheck size={15} />}
+          icon={<CircleCheck size={15} aria-hidden="true" />}
           desc="Finished logs"
           sparklinePath="M0,4 C10,12 20,2 30,8 C40,14 50,2 60,15"
           accent="#10b981"
@@ -675,8 +831,9 @@ function CalendarWidget({ userId }) {
                   whileHover={{ y: -1 }}
                   whileTap={{ scale: 0.92 }}
                   transition={{ type: 'spring', stiffness: 420, damping: 24 }}
+                  aria-label="Previous week"
                 >
-                  <ChevronLeft size={16} />
+                  <ChevronLeft size={16} aria-hidden="true" />
                 </motion.button>
                 <motion.button
                   onClick={() => shiftWeek(1)}
@@ -684,8 +841,9 @@ function CalendarWidget({ userId }) {
                   whileHover={{ y: -1 }}
                   whileTap={{ scale: 0.92 }}
                   transition={{ type: 'spring', stiffness: 420, damping: 24 }}
+                  aria-label="Next week"
                 >
-                  <ChevronRight size={16} />
+                  <ChevronRight size={16} aria-hidden="true" />
                 </motion.button>
               </div>
             </div>
@@ -704,22 +862,28 @@ function CalendarWidget({ userId }) {
                   const isToday = key === today
                   const dayEvents = eventsByDate[key] || []
                   const isSelected = selectedDay === key
+                  const fullLabel = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
                   return (
                     <motion.div
                       key={key}
                       onClick={() => setSelectedDay(isSelected ? null : key)}
+                      onKeyDown={(e) => handleDayKeyDown(e, key, isSelected)}
                       className={`day-ribbon-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}`}
                       animate={{ y: isSelected ? -3 : 0, scale: isSelected ? 1.03 : 1 }}
                       transition={{ type: 'spring', stiffness: 340, damping: 22 }}
                       whileTap={{ scale: 0.96 }}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={isSelected}
+                      aria-label={`${fullLabel}${isToday ? ' (today)' : ''}${dayEvents.length ? `, ${dayEvents.length} event${dayEvents.length > 1 ? 's' : ''}` : ''}`}
                     >
                       <span className="day-label-text">
                         {d.toLocaleDateString('en-US', { weekday: 'short' })}
                       </span>
                       <span className="day-number-text">{d.getDate()}</span>
-                      {isToday && <div className="today-glow-dot" />}
+                      {isToday && <div className="today-glow-dot" aria-hidden="true" />}
                       {dayEvents.length > 0 && !isToday && (
-                        <div style={{
+                        <div aria-hidden="true" style={{
                           width: '5px', height: '5px', borderRadius: '50%',
                           background: isSelected ? '#ffffff' : 'var(--accent-purple-light)',
                           marginTop: '4px'
@@ -746,19 +910,19 @@ function CalendarWidget({ userId }) {
               {selectedDay ? (
                 selectedEvents.length === 0 ? (
                   <div className="empty-events-banner">
-                    <div className="empty-icon-badge"><Clock3 size={20} /></div>
+                    <div className="empty-icon-badge"><Clock3 size={20} aria-hidden="true" /></div>
                     <span className="empty-banner-title">Nothing Scheduled</span>
                     <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>You have no events allocated for this day.</p>
                   </div>
                 ) : (
                   selectedEvents.map((ev, index) => (
                     <div className="timeline-event-wrapper" key={ev.id}>
-                      <div className={`timeline-node-dot ${index === 0 ? 'active' : ''}`} />
+                      <div className={`timeline-node-dot ${index === 0 ? 'active' : ''}`} aria-hidden="true" />
                       <div className="timeline-time-col">
                         {ev.event_time ? ev.event_time.slice(0, 5) : "All Day"}
                       </div>
                       <div className="event-card-tactile">
-                        <div>
+                        <div style={{ minWidth: 0 }}>
                           <h4 className="event-title-main">{ev.title}</h4>
                           <div className="event-meta-info">
                             <span className="meta-tag">Course module</span>
@@ -766,8 +930,12 @@ function CalendarWidget({ userId }) {
                             <span>Active timeline</span>
                           </div>
                         </div>
-                        <button onClick={() => deleteEvent(ev.id)} className="btn-delete-event">
-                          <Trash2 size={16} />
+                        <button
+                          onClick={() => deleteEvent(ev.id)}
+                          className="btn-delete-event"
+                          aria-label={`Delete event: ${ev.title}`}
+                        >
+                          <Trash2 size={16} aria-hidden="true" />
                         </button>
                       </div>
                     </div>
@@ -776,18 +944,18 @@ function CalendarWidget({ userId }) {
               ) : (
                 (eventsByDate[today] || []).length === 0 ? (
                   <div className="empty-events-banner">
-                    <div className="empty-icon-badge"><Clock3 size={20} /></div>
+                    <div className="empty-icon-badge"><Clock3 size={20} aria-hidden="true" /></div>
                     <span className="empty-banner-title">No Events Scheduled Today</span>
                   </div>
                 ) : (
                   (eventsByDate[today] || []).map((ev, index) => (
                     <div className="timeline-event-wrapper" key={ev.id}>
-                      <div className={`timeline-node-dot ${index === 0 ? 'active' : ''}`} />
+                      <div className={`timeline-node-dot ${index === 0 ? 'active' : ''}`} aria-hidden="true" />
                       <div className="timeline-time-col">
                         {ev.event_time ? ev.event_time.slice(0, 5) : "All Day"}
                       </div>
                       <div className="event-card-tactile">
-                        <div>
+                        <div style={{ minWidth: 0 }}>
                           <h4 className="event-title-main">{ev.title}</h4>
                           <div className="event-meta-info">
                             <span className="meta-tag">Today</span>
@@ -795,8 +963,12 @@ function CalendarWidget({ userId }) {
                             <span>Active timeline</span>
                           </div>
                         </div>
-                        <button onClick={() => deleteEvent(ev.id)} className="btn-delete-event">
-                          <Trash2 size={16} />
+                        <button
+                          onClick={() => deleteEvent(ev.id)}
+                          className="btn-delete-event"
+                          aria-label={`Delete event: ${ev.title}`}
+                        >
+                          <Trash2 size={16} aria-hidden="true" />
                         </button>
                       </div>
                     </div>
@@ -820,18 +992,21 @@ function CalendarWidget({ userId }) {
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Event title..."
                   className="composer-input title"
+                  aria-label="Event title"
                 />
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   className="composer-input date-picker"
+                  aria-label="Event date"
                 />
                 <input
                   type="time"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
                   className="composer-input time-picker"
+                  aria-label="Event time (optional)"
                 />
                 <motion.button
                   type="submit"
@@ -839,9 +1014,10 @@ function CalendarWidget({ userId }) {
                   whileTap={{ scale: 0.97 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 24 }}
                   onPointerDown={(e) => spawnRipple(e, setComposerRipples)}
+                  aria-label="Add event"
                 >
                   <span className="btn-composer-content">
-                    <Plus size={16} />
+                    <Plus size={16} aria-hidden="true" />
                     <span>Add Event</span>
                   </span>
                   <span className="btn-ripple-layer">
@@ -857,19 +1033,19 @@ function CalendarWidget({ userId }) {
           {/* AI Insights & suggestions */}
           <div className="ai-assistant-card">
             <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className="ai-sparkle-icon"><Sparkles size={16} color="var(--accent-amber)" /></span>
+              <span className="ai-sparkle-icon"><Sparkles size={16} color="var(--accent-amber)" aria-hidden="true" /></span>
               <span>Atlas AI Suggestions</span>
             </h3>
 
             <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.985 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
-              <div className="suggestion-bullet" style={{ background: 'var(--accent-amber)', boxShadow: '0 0 6px rgba(245, 158, 11, 0.45)' }} />
+              <div className="suggestion-bullet" aria-hidden="true" style={{ background: 'var(--accent-amber)', boxShadow: '0 0 6px rgba(245, 158, 11, 0.45)' }} />
               <div style={{ fontSize: '12px', lineHeight: 1.55 }}>
                 You have <strong>3 hours free</strong> in your afternoon slot. Schedule a focus session?
               </div>
             </motion.div>
 
             <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.985 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
-              <div className="suggestion-bullet" style={{ background: 'var(--accent-red)', boxShadow: '0 0 6px rgba(239, 68, 68, 0.4)' }} />
+              <div className="suggestion-bullet" aria-hidden="true" style={{ background: 'var(--accent-red)', boxShadow: '0 0 6px rgba(239, 68, 68, 0.4)' }} />
               <div style={{ fontSize: '12px', lineHeight: 1.55 }}>
                 Assignment due tomorrow. Ensure preparation notes are reviewed.
               </div>
@@ -884,7 +1060,7 @@ function CalendarWidget({ userId }) {
             </div>
 
             <div style={{ position: 'relative', width: '68px', height: '68px', flexShrink: 0 }}>
-              <svg width="68" height="68" viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }}>
+              <svg width="68" height="68" viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }} role="img" aria-label={`Month completion: ${monthProgressRate}%`}>
                 <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
                 <motion.path
                   fill="none"
@@ -903,7 +1079,7 @@ function CalendarWidget({ userId }) {
                   </linearGradient>
                 </defs>
               </svg>
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '12px', fontWeight: 800 }}>
+              <div aria-hidden="true" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '12px', fontWeight: 800 }}>
                 {monthProgressRate}%
               </div>
             </div>
@@ -923,8 +1099,9 @@ function CalendarWidget({ userId }) {
             animate={{ y: scrolled ? -3 : 0 }}
             whileTap={{ scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 380, damping: 22 }}
+            aria-label="Add event"
           >
-            <Plus size={24} strokeWidth={2.5} style={{ position: 'relative', zIndex: 3 }} />
+            <Plus size={24} strokeWidth={2.5} aria-hidden="true" style={{ position: 'relative', zIndex: 3 }} />
             <span className="btn-ripple-layer">
               {fabRipples.map((r) => (
                 <span key={r.id} className="btn-ripple" style={{ left: r.x, top: r.y, width: r.size, height: r.size }} />
@@ -939,6 +1116,9 @@ function CalendarWidget({ userId }) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Add event"
               >
                 <div style={{ flex: 1 }} onClick={() => setIsMobileDrawerOpen(false)} />
 
@@ -957,21 +1137,24 @@ function CalendarWidget({ userId }) {
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="Event title..."
                       className="composer-input"
+                      aria-label="Event title"
                     />
-                    <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                    <div style={{ display: 'flex', gap: '10px', width: '100%', flexWrap: 'wrap' }}>
                       <input
                         type="date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
                         className="composer-input"
-                        style={{ flex: 1 }}
+                        style={{ flex: '1 1 130px', minWidth: 0 }}
+                        aria-label="Event date"
                       />
                       <input
                         type="time"
                         value={time}
                         onChange={(e) => setTime(e.target.value)}
                         className="composer-input"
-                        style={{ flex: 1 }}
+                        style={{ flex: '1 1 110px', minWidth: 0 }}
+                        aria-label="Event time (optional)"
                       />
                     </div>
                     <div style={{ display: 'flex', gap: '10px', width: '100%', marginTop: '10px' }}>
@@ -980,10 +1163,11 @@ function CalendarWidget({ userId }) {
                         onClick={() => setIsMobileDrawerOpen(false)}
                         className="composer-input"
                         style={{ flex: 1, border: '1px solid var(--glass-border)', background: 'none' }}
+                        aria-label="Cancel adding event"
                       >
                         Cancel
                       </button>
-                      <button type="submit" className="btn-composer-add" style={{ flex: 2, justifyContent: 'center' }}>
+                      <button type="submit" className="btn-composer-add" style={{ flex: 2, justifyContent: 'center' }} aria-label="Add event">
                         <span className="btn-composer-content" style={{ justifyContent: 'center', width: '100%' }}>Add Event</span>
                       </button>
                     </div>
@@ -1018,7 +1202,7 @@ function SummaryCard({ label, value, icon, desc, sparklinePath, accent }) {
       <div className="kpi-main-metric">{value}</div>
       <div className="kpi-desc-row">
         <span className="kpi-desc">{desc}</span>
-        <svg width="60" height="20" viewBox="0 0 60 20" fill="none">
+        <svg width="60" height="20" viewBox="0 0 60 20" fill="none" aria-hidden="true">
           <defs>
             <linearGradient id={gradId} x1="0" y1="0" x2="60" y2="0" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stopColor={accentColor} stopOpacity="0.3" />

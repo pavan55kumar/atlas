@@ -1,16 +1,16 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Send, Sparkles, Mic, MicOff, Volume2, Sparkle, Brain, Target, Flame, 
+import {
+  Send, Sparkles, Mic, MicOff, Volume2, VolumeX, Sparkle, Brain, Target, Flame,
   Layers, CalendarDays, Terminal, HelpCircle, FileText, ChevronRight, Activity, Cpu
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
 
 // Premium Handcrafted Theme Adaptive Glassmorphic Stylesheet
 // NOTE: Only visual/layout rules were touched in this pass. No functional logic,
-// state, hooks, event handlers, API calls, or theme-variable *values* were changed.
-// Mobile (<=900px) rules were rebuilt for a premium, production-ready feel;
-// desktop rules above the breakpoint are left as they were.
+// state, hooks, event handlers, API calls, or theme-variable *values* were changed,
+// aside from what's needed to support the fixed Read Aloud control below and
+// baseline tap/focus hygiene (items 9 & 11 from the polish spec).
 const styleSheet = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap');
   
@@ -77,6 +77,37 @@ const styleSheet = `
     position: relative;
     padding: 10px 12px;
     overflow-x: clip;
+  }
+
+  /* --- Item 9 & 11: kill the default mobile tap-highlight flash on every
+     interactive element in this page, while keeping a real, visible,
+     accessible focus style for keyboard users (focus-visible only, so
+     mouse/touch clicks stay clean). --- */
+  .ai-workspace-container button,
+  .ai-workspace-container [role="button"],
+  .ai-workspace-container .suggestion-pill-card,
+  .ai-workspace-container .voice-toggle-pill {
+    -webkit-tap-highlight-color: transparent;
+    tap-highlight-color: transparent;
+    outline: none;
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  .ai-workspace-container button:focus-visible,
+  .ai-workspace-container [role="button"]:focus-visible,
+  .ai-workspace-container .suggestion-pill-card:focus-visible,
+  .ai-workspace-container .voice-toggle-pill:focus-visible {
+    outline: 2px solid var(--input-focus-border);
+    outline-offset: 2px;
+  }
+
+  .ai-workspace-container button:disabled {
+    cursor: default;
+    opacity: 0.55;
   }
 
   /* --- Glowing Backdrop Aurora Spheres --- */
@@ -455,7 +486,8 @@ const styleSheet = `
     transform: scale(0.95);
   }
 
-  /* Premium Pill switch for Voice */
+  /* Premium Pill switch for Voice - now a real <button>, doubles as the
+     Read Aloud / Stop Reading control (see item 12 fix in the component). */
   .voice-switch-container {
     display: flex;
     justify-content: flex-end;
@@ -483,6 +515,31 @@ const styleSheet = `
     color: var(--text-primary);
     border-color: rgba(139, 92, 246, 0.25);
     background: rgba(139, 92, 246, 0.08);
+  }
+
+  /* While actively speaking, give the pill a distinct "live" treatment so
+     it visually reads as a Stop control, not just an active toggle. */
+  .voice-toggle-pill.speaking {
+    color: #f472b6;
+    border-color: rgba(244, 114, 182, 0.35);
+    background: rgba(244, 114, 182, 0.1);
+  }
+
+  .voice-toggle-pill .speaking-bar {
+    width: 3px;
+    height: 10px;
+    border-radius: 2px;
+    background: currentColor;
+    display: inline-block;
+    animation: speakingBounce 0.9s infinite ease-in-out;
+  }
+
+  .voice-toggle-pill .speaking-bar:nth-child(2) { animation-delay: 0.15s; }
+  .voice-toggle-pill .speaking-bar:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes speakingBounce {
+    0%, 100% { transform: scaleY(0.4); }
+    50% { transform: scaleY(1); }
   }
 
   /* --- Right Side: Live System Summary Pane (Desktop Only) --- */
@@ -814,7 +871,8 @@ const styleSheet = `
   @media (prefers-reduced-motion: reduce) {
     .pulse-orb-orbit,
     .pulse-orb-center,
-    .status-pulse-bullet {
+    .status-pulse-bullet,
+    .voice-toggle-pill .speaking-bar {
       animation-duration: 0.001ms !important;
       animation-iteration-count: 1 !important;
     }
@@ -829,8 +887,21 @@ function AIChat({ userId }) {
   const [loading, setLoading] = useState(false)
   const [listening, setListening] = useState(false)
   const [voiceSupported, setVoiceSupported] = useState(true)
+
+  // --- Read Aloud state -----------------------------------------------
+  // `speakReplies`  : persistent user preference — when true, every new
+  //                   assistant reply is automatically read aloud as it
+  //                   arrives (unchanged from the original feature intent).
+  // `isSpeaking`    : true only while SpeechSynthesis is actively talking,
+  //                   regardless of whether it was triggered automatically
+  //                   or by a manual tap. Drives the "Stop Reading" state.
+  // `speechSupported`: false when the browser has no SpeechSynthesis API,
+  //                   so we can disable the control and explain why
+  //                   instead of silently failing.
   const [speakReplies, setSpeakReplies] = useState(false)
-  
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [speechSupported, setSpeechSupported] = useState(true)
+
   // Custom focus state tracker for the input pill
   const [isInputFocused, setIsInputFocused] = useState(false)
 
@@ -844,8 +915,18 @@ function AIChat({ userId }) {
 
   const scrollRef = useRef(null)
   const recognitionRef = useRef(null)
+  // Cache of available SpeechSynthesis voices. Chrome (and some mobile
+  // browsers) populate this list asynchronously via `onvoiceschanged`, so
+  // reading `getVoices()` once on mount is not reliable — we keep this ref
+  // fresh and always read from it at speak-time instead.
+  const voicesRef = useRef([])
+  // Keep the latest `messages` array in a ref so the Read Aloud button can
+  // always find the most recent assistant reply without needing to be
+  // recreated (and re-subscribed) every time a message is added.
+  const messagesRef = useRef(messages)
 
   useEffect(() => {
+    messagesRef.current = messages
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
@@ -854,21 +935,47 @@ function AIChat({ userId }) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SpeechRecognition) {
       setVoiceSupported(false)
-      return
-    }
-    const recognition = new SpeechRecognition()
-    recognition.continuous = false
-    recognition.interimResults = false
-    recognition.lang = 'en-US'
+    } else {
+      const recognition = new SpeechRecognition()
+      recognition.continuous = false
+      recognition.interimResults = false
+      recognition.lang = 'en-US'
 
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript
-      setInput(transcript)
-    }
-    recognition.onend = () => setListening(false)
-    recognition.onerror = () => setListening(false)
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript
+        setInput(transcript)
+      }
+      recognition.onend = () => setListening(false)
+      recognition.onerror = () => setListening(false)
 
-    recognitionRef.current = recognition
+      recognitionRef.current = recognition
+    }
+
+    // --- Read Aloud setup --------------------------------------------
+    if (!('speechSynthesis' in window)) {
+      // Older/embedded WebViews and some mobile browsers don't implement
+      // SpeechSynthesis at all — disable the control and say so, rather
+      // than letting every click silently do nothing.
+      setSpeechSupported(false)
+    } else {
+      const loadVoices = () => {
+        voicesRef.current = window.speechSynthesis.getVoices()
+      }
+      loadVoices()
+      // Chrome fires this once the voice list is actually ready.
+      window.speechSynthesis.onvoiceschanged = loadVoices
+    }
+
+    // Cleanup: stop speech recognition and any in-flight speech synthesis
+    // when the component unmounts, so nothing keeps talking on a page
+    // the user has already navigated away from.
+    return () => {
+      recognitionRef.current?.stop?.()
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = null
+        window.speechSynthesis.cancel()
+      }
+    }
   }, [])
 
   // Fetches core statistics from Supabase to feed the Live summary panel on the right (No logic changes)
@@ -908,14 +1015,84 @@ function AIChat({ userId }) {
     }
   }
 
-  function speak(text) {
-    if (!window.speechSynthesis) return
+  // Picks the most natural-sounding available voice: prefers a short list
+  // of known high-quality voices, falls back to any en-US voice, then any
+  // English voice, then whatever the browser has as its default.
+  const pickVoice = useCallback(() => {
+    const voices = voicesRef.current.length ? voicesRef.current : window.speechSynthesis.getVoices()
+    if (!voices.length) return null
+
+    const preferredNames = [
+      'Google US English', 'Google UK English Female', 'Samantha',
+      'Microsoft Aria Online (Natural)', 'Microsoft Zira', 'Microsoft David'
+    ]
+
+    return (
+      voices.find(v => preferredNames.some(name => v.name.includes(name))) ||
+      voices.find(v => v.lang === 'en-US') ||
+      voices.find(v => v.lang?.startsWith('en')) ||
+      voices[0]
+    )
+  }, [])
+
+  // Immediately halts any speech in progress. Safe to call even when
+  // nothing is speaking.
+  const stopReading = useCallback(() => {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+    setIsSpeaking(false)
+  }, [])
+
+  // Reads a single piece of text aloud. Always cancels any speech already
+  // in progress first, so overlapping utterances are impossible no matter
+  // how quickly this gets called back-to-back.
+  const readAloud = useCallback((text) => {
+    if (!speechSupported || !text || !('speechSynthesis' in window)) return
+
     window.speechSynthesis.cancel()
+
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate = 1
     utterance.pitch = 1
+    const voice = pickVoice()
+    if (voice) utterance.voice = voice
+
+    // Keep the button state accurate: it flips to "Stop Reading" once
+    // speech actually starts, and resets automatically the moment it
+    // finishes or errors out — no manual bookkeeping required elsewhere.
+    utterance.onstart = () => setIsSpeaking(true)
+    utterance.onend = () => setIsSpeaking(false)
+    utterance.onerror = () => setIsSpeaking(false)
+
     window.speechSynthesis.speak(utterance)
-  }
+  }, [speechSupported, pickVoice])
+
+  // The single control in the input dock does double duty, matching how
+  // production chat apps (e.g. ChatGPT) handle this:
+  //  - While idle: tapping it reads the latest assistant reply aloud.
+  //  - While speaking: tapping it (now labeled "Stop Reading") cancels it.
+  const toggleReadAloud = useCallback(() => {
+    if (!speechSupported) return
+
+    if (isSpeaking) {
+      stopReading()
+      return
+    }
+
+    const lastAssistantMessage = [...messagesRef.current].reverse().find(m => m.role === 'assistant')
+    if (lastAssistantMessage) readAloud(lastAssistantMessage.content)
+  }, [speechSupported, isSpeaking, stopReading, readAloud])
+
+  // Toggling the persistent "auto read future replies" preference. If the
+  // user turns it off while a reply happens to be speaking right now, stop
+  // that speech immediately too — flipping the setting off should feel
+  // instant, not "takes effect next message".
+  const handleAutoReadToggle = useCallback(() => {
+    setSpeakReplies((prev) => {
+      const next = !prev
+      if (!next && isSpeaking) stopReading()
+      return next
+    })
+  }, [isSpeaking, stopReading])
 
   async function fetchContext() {
     const today = new Date().toISOString().split('T')[0]
@@ -975,7 +1152,9 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
       } else {
         const reply = data.choices?.[0]?.message?.content || "I didn't quite catch that — could you rephrase?"
         setMessages([...newMessages, { role: 'assistant', content: reply }])
-        if (speakReplies) speak(reply)
+        // Only auto-read when the user has explicitly opted into it, and
+        // only ever the single latest reply — never the whole conversation.
+        if (speakReplies) readAloud(reply)
       }
     } catch (err) {
       setMessages([...newMessages, { role: 'assistant', content: "Something went wrong reaching the AI. Please try again." }])
@@ -983,14 +1162,16 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
     setLoading(false)
   }
 
-  // Pre-configured custom action quick triggers
-  const actionSuggestions = [
+  // Pre-configured custom action quick triggers. Memoized since this array
+  // never changes across renders — avoids recreating it (and the objects
+  // inside it) on every keystroke in the input field.
+  const actionSuggestions = useMemo(() => [
     { label: "📅 Plan my day", query: "Can you help me plan my tasks and events for today?" },
     { label: "🎯 What should I work on?", query: "Review my pending tasks and tell me what my high priority task should be." },
     { label: "📚 Study checklist", query: "Analyze my studies and create a quick active checklist for me." },
     { label: "📝 Summarize targets", query: "Give me a summary of my active targets and goals." },
     { label: "📈 Productivity check", query: "How is my task completion and habit streak performing?" }
-  ]
+  ], [])
 
   return (
     <div className="ai-workspace-container">
@@ -1024,14 +1205,17 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
       {/* --- Swipeable Custom Suggestions Carousel --- */}
       <div className="suggestions-carousel">
         {actionSuggestions.map((suggestion, idx) => (
-          <motion.div 
+          <motion.button
             key={idx}
+            type="button"
             className="suggestion-pill-card"
-            whileTap={{ scale: 0.98 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
             onClick={() => setInput(suggestion.query)}
+            aria-label={`Use suggestion: ${suggestion.label}`}
           >
             <span>{suggestion.label}</span>
-          </motion.div>
+          </motion.button>
         ))}
       </div>
 
@@ -1092,16 +1276,74 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
                 <span className="context-mini-badge" style={{ borderColor: 'rgba(236, 72, 153, 0.2)', color: '#ec4899' }}>● Habits</span>
               </div>
 
-              {/* Premium Pill toggle switch for Voice Speech Synthesis */}
+              {/* Read Aloud control: tap to read the latest assistant reply,
+                  tap again while speaking to stop it. Long-press-free,
+                  single source of truth (`isSpeaking`) drives the label. */}
               <div className="voice-switch-container">
-                <div 
-                  className={`voice-toggle-pill ${speakReplies ? 'active' : ''}`}
-                  onClick={() => setSpeakReplies(!speakReplies)}
+                <motion.button
+                  type="button"
+                  whileTap={speechSupported ? { scale: 0.96 } : undefined}
+                  transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                  className={`voice-toggle-pill ${speakReplies ? 'active' : ''} ${isSpeaking ? 'speaking' : ''}`}
+                  onClick={toggleReadAloud}
+                  disabled={!speechSupported}
+                  aria-pressed={isSpeaking}
+                  aria-label={isSpeaking ? 'Stop reading assistant reply aloud' : 'Read latest assistant reply aloud'}
+                  title={
+                    !speechSupported
+                      ? 'Read aloud is not supported in this browser'
+                      : isSpeaking
+                        ? 'Stop reading'
+                        : 'Read latest reply aloud'
+                  }
                 >
-                  <Volume2 size={12} />
-                  <span>Read aloud</span>
-                </div>
+                  {isSpeaking ? (
+                    <>
+                      <span aria-hidden="true" style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: '12px' }}>
+                        <span className="speaking-bar" />
+                        <span className="speaking-bar" />
+                        <span className="speaking-bar" />
+                      </span>
+                      <span>Stop Reading</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 size={12} aria-hidden="true" />
+                      <span>Read aloud</span>
+                    </>
+                  )}
+                </motion.button>
               </div>
+            </div>
+
+            {/* Secondary, explicit "auto-read future replies" preference —
+                separate from the manual Read Aloud action above, so users
+                can opt into hands-free listening without losing the
+                ability to manually stop mid-sentence. */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: 'var(--text-secondary)',
+                  cursor: speechSupported ? 'pointer' : 'default',
+                  opacity: speechSupported ? 1 : 0.5,
+                  userSelect: 'none'
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={speakReplies}
+                  onChange={handleAutoReadToggle}
+                  disabled={!speechSupported}
+                  aria-label="Automatically read new assistant replies aloud"
+                  style={{ accentColor: '#8b5cf6', width: '13px', height: '13px' }}
+                />
+                Auto-read new replies
+              </label>
             </div>
 
             <form onSubmit={sendMessage}>
@@ -1114,33 +1356,45 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
                   placeholder={listening ? 'Listening to voice...' : 'Ask about your tasks, habits, goals...'}
                   className="capsule-field"
                   disabled={loading}
+                  aria-label="Message Atlas assistant"
                 />
 
                 {voiceSupported && (
-                  <button
+                  <motion.button
                     type="button"
+                    whileTap={{ scale: 0.92 }}
+                    transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
                     onClick={toggleListening}
                     className={`btn-dock-mic ${listening ? 'active-listening' : ''}`}
                     title={listening ? 'Stop speech recognition' : 'Start speech recognition'}
+                    aria-label={listening ? 'Stop voice input' : 'Start voice input'}
+                    aria-pressed={listening}
                   >
                     {listening ? <MicOff size={16} /> : <Mic size={16} />}
-                  </button>
+                  </motion.button>
                 )}
 
-                <button 
-                  type="submit" 
+                <motion.button
+                  type="submit"
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
                   className="btn-dock-send"
                   disabled={loading}
                   title="Send query"
+                  aria-label="Send message"
                 >
                   <Send size={15} />
-                </button>
+                </motion.button>
               </div>
             </form>
 
-            {!voiceSupported && (
+            {(!voiceSupported || !speechSupported) && (
               <p style={{ fontSize: '11px', color: 'var(--text-secondary)', textAlign: 'center', margin: 0 }}>
-                Voice synthesis and recognition are supported natively in Chrome, Edge, and Safari.
+                {!voiceSupported && !speechSupported
+                  ? 'Voice input and read aloud are supported natively in Chrome, Edge, and Safari.'
+                  : !voiceSupported
+                    ? 'Voice input is supported natively in Chrome, Edge, and Safari.'
+                    : 'Read aloud is supported natively in Chrome, Edge, and Safari.'}
               </p>
             )}
           </div>
