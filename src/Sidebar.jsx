@@ -112,7 +112,12 @@ function NavList({ page, onNavigate, showAllLabels }) {
                         fontSize: '13px',
                         fontWeight: 500,
                         textAlign: 'left',
-                        whiteSpace: 'nowrap'
+                        whiteSpace: 'nowrap',
+                         outline: 'none',
+                        WebkitTapHighlightColor: 'transparent',
+                       WebkitTouchCallout: 'none',
+                          userSelect: 'none',
+                        WebkitUserSelect: 'none',
                       }}
                     >
                       <Icon size={17} style={{ flexShrink: 0 }} />
