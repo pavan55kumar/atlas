@@ -133,3 +133,49 @@ canvas,
 video {
   max-width: 100%;
 }
+/* Remove blue tap highlight on Android/Chrome */
+*,
+*::before,
+*::after {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Remove callout menu on long press */
+a,
+button,
+input,
+textarea,
+select,
+label,
+summary,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* Remove default focus outline on touch devices */
+button,
+a,
+input,
+textarea,
+select {
+  outline: none;
+}
+
+button:focus,
+button:active,
+a:focus,
+a:active,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Faster touch response */
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+}
