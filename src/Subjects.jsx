@@ -92,14 +92,16 @@ const styleSheet = `
   }
 
   .subjects-wrapper {
-    font-family: var(--atlas-font);
-    color: var(--text-primary);
-    max-width: 1100px;
-    margin: 0 auto;
-    position: relative;
-    padding: clamp(10px, 3vw, 20px) clamp(12px, 4vw, 24px);
-    box-sizing: border-box;
-  }
+  font-family: var(--atlas-font);
+  color: var(--text-primary);
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  padding: clamp(10px, 3vw, 20px) clamp(12px, 4vw, 24px);
+  box-sizing: border-box;
+  overflow-x: clip; /* or hidden */
+}
 
   .aurora-blur-sphere {
     position: absolute;
