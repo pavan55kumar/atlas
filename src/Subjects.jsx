@@ -32,7 +32,7 @@ const styleSheet = `
     --aurora-secondary: rgba(236, 72, 153, 0.08);
     --aurora-tertiary: rgba(59, 130, 246, 0.08);
     
-    /* Missing Variables defined for Dark Theme */
+    /* Variable Theme Overrides */
     --input-text: #ffffff;
     --accent-emerald: #10b981;
     --accent-amber: #f59e0b;
@@ -60,12 +60,35 @@ const styleSheet = `
     --aurora-secondary: #dce5ff;
     --aurora-tertiary: #eedcff;
 
-    /* Missing Variables defined for Light Theme */
     --input-text: #1e1b4b;
     --accent-emerald: #059669;
     --accent-amber: #d97706;
     --accent-coral: #dc2626;
     --sparkline-color: #6366f1;
+  }
+
+  /* --- Global Responsiveness & Zoom Controls --- */
+  a, button, input, select, textarea, [role="button"], 
+  .mobile-accordion-closed-row, .dropdown-trigger-btn, 
+  .dropdown-option-item, .mobile-add-subject-form-trigger,
+  .premium-subject-card, .mobile-subject-accordion-item,
+  .btn-destroy-subject {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    touch-action: manipulation; /* Prevents double-tap zoom delay */
+  }
+
+  .mobile-accordion-closed-row, 
+  .dropdown-trigger-btn, 
+  .dropdown-option-item, 
+  .mobile-add-subject-form-trigger, 
+  .btn-subject-add, 
+  .btn-destroy-subject,
+  .semester-pill,
+  .sgpa-badge-glowing,
+  .kpi-card-glass {
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .subjects-wrapper {
@@ -74,7 +97,8 @@ const styleSheet = `
     max-width: 1100px;
     margin: 0 auto;
     position: relative;
-    padding: 20px 0;
+    padding: clamp(10px, 3vw, 20px) clamp(12px, 4vw, 24px);
+    box-sizing: border-box;
   }
 
   .aurora-blur-sphere {
@@ -93,9 +117,9 @@ const styleSheet = `
   .subjects-hero-header {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: 24px;
-    padding: 32px 40px;
-    margin-bottom: 32px;
+    border-radius: clamp(16px, 3vw, 24px);
+    padding: clamp(20px, 4vw, 32px) clamp(24px, 5vw, 40px);
+    margin-bottom: clamp(16px, 4vw, 32px);
     box-shadow: var(--card-shadow);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -106,7 +130,14 @@ const styleSheet = `
     z-index: 10;
   }
 
-  .hero-info-area h1 { font-size: 32px; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; color: var(--text-primary); }
+  .hero-info-area h1 { 
+    font-size: clamp(24px, 5vw, 32px); 
+    font-weight: 800; 
+    margin: 0 0 6px 0; 
+    letter-spacing: -0.02em; 
+    color: var(--text-primary); 
+  }
+  
   .hero-info-area p { font-size: 14px; color: var(--text-secondary); margin: 0; font-weight: 500; }
   .hero-meta-badges { display: flex; align-items: center; gap: 12px; }
 
@@ -136,8 +167,8 @@ const styleSheet = `
   .stats-carousel-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 32px;
+    gap: clamp(8px, 2vw, 16px);
+    margin-bottom: clamp(16px, 4vw, 32px);
     z-index: 10;
     position: relative;
   }
@@ -145,15 +176,15 @@ const styleSheet = `
   .kpi-card-glass {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: 22px;
-    padding: 20px;
+    border-radius: clamp(16px, 3.5vw, 22px);
+    padding: clamp(14px, 3vw, 20px);
     box-shadow: var(--card-shadow);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 120px;
+    min-height: clamp(94px, 15vh, 120px);
     position: relative;
     overflow: hidden;
     transition: box-shadow 0.3s ease;
@@ -164,16 +195,16 @@ const styleSheet = `
   .kpi-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
   .kpi-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; }
   .kpi-icon-wrapper { color: var(--text-secondary); opacity: 0.8; }
-  .kpi-main-metric { font-size: 28px; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 6px; }
+  .kpi-main-metric { font-size: clamp(20px, 6vw, 28px); font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 6px; }
   .kpi-desc-row { display: flex; justify-content: space-between; align-items: flex-end; }
   .kpi-desc { font-size: 11px; color: var(--text-tertiary); font-weight: 500; max-width: 60%; }
 
   .subject-form-panel {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: 24px;
-    padding: 24px;
-    margin-bottom: 32px;
+    border-radius: clamp(16px, 3vw, 24px);
+    padding: clamp(16px, 4vw, 24px);
+    margin-bottom: clamp(16px, 4vw, 32px);
     box-shadow: var(--card-shadow);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -236,15 +267,15 @@ const styleSheet = `
   .premium-subject-card {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: 24px;
-    padding: 24px;
+    border-radius: clamp(18px, 3vw, 24px);
+    padding: clamp(18px, 3vw, 24px);
     box-shadow: var(--card-shadow);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 220px;
+    min-height: clamp(200px, 25vh, 220px);
     position: relative;
     overflow: visible;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
@@ -252,7 +283,7 @@ const styleSheet = `
 
   .premium-subject-card:hover {
     border-image: var(--glass-border-glow) 1;
-    border-radius: 24px;
+    border-radius: clamp(18px, 3vw, 24px);
     box-shadow: var(--card-shadow-hover);
   }
 
@@ -381,16 +412,19 @@ const styleSheet = `
   .empty-banner-title { font-size: 20px; font-weight: 700; color: var(--text-primary); margin: 16px 0 6px 0; }
   .empty-banner-subtitle { font-size: 14px; color: var(--text-secondary); max-width: 340px; margin: 0 auto; line-height: 1.5; }
 
+  /* =========================================================================
+     MOBILE SECURE RENDERING - ULTRA-COMPACT RESPONSIVE UX
+     ========================================================================= */
   @media (max-width: 768px) {
     .subjects-hero-header { padding: 16px 20px; margin-bottom: 16px; border-radius: 18px; flex-direction: row; align-items: center; gap: 12px; }
-    .subjects-hero-header h1 { font-size: 20px !important; }
+    .subjects-hero-header h1 { font-size: clamp(20px, 5.5vw, 24px) !important; }
     .subjects-hero-header p { display: none; }
 
     .stats-carousel-grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding-bottom: 4px; margin-bottom: 16px; -webkit-overflow-scrolling: touch; }
     .stats-carousel-grid::-webkit-scrollbar { display: none; }
 
-    .kpi-card-glass { flex: 0 0 70%; scroll-snap-align: start; min-height: 94px; padding: 14px; border-radius: 16px; }
-    .kpi-main-metric { font-size: 20px !important; margin-bottom: 2px; }
+    .kpi-card-glass { flex: 0 0 clamp(230px, 70vw, 300px); scroll-snap-align: start; min-height: 94px; padding: 14px; border-radius: 16px; }
+    .kpi-main-metric { font-size: clamp(20px, 6vw, 24px) !important; margin-bottom: 2px; }
     .kpi-desc { font-size: 10px !important; }
     .golden-trophy-badge { display: none !important; }
 
@@ -401,20 +435,21 @@ const styleSheet = `
     .mobile-subject-accordion-item {
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
-      border-radius: 18px;
+      border-radius: clamp(14px, 4vw, 18px);
       box-shadow: var(--card-shadow);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      overflow: hidden;
       box-sizing: border-box;
       transition: box-shadow 0.3s ease;
+      /* Keep visible to prevent absolute dropdown options list from being clipped */
+      overflow: visible; 
     }
 
     .mobile-subject-accordion-item:hover { box-shadow: var(--card-shadow-hover); }
     .mobile-subject-accordion-item.is-active { border-left: 3px solid #7c3aed; }
     .mobile-subject-accordion-item.is-graded { border-left: 3px solid #10b981; }
 
-    .mobile-accordion-closed-row { display: flex; justify-content: space-between; align-items: center; padding: 16px; min-height: 72px; cursor: pointer; user-select: none; box-sizing: border-box; }
+    .mobile-accordion-closed-row { display: flex; justify-content: space-between; align-items: center; padding: clamp(12px, 4vw, 16px); min-height: 72px; cursor: pointer; user-select: none; box-sizing: border-box; }
     .mobile-row-left { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
 
     .mobile-accordion-icon {
@@ -423,7 +458,7 @@ const styleSheet = `
     }
 
     .mobile-subject-info-block { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
-    .mobile-subject-name { font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mobile-subject-name { font-size: clamp(14px, 4vw, 15px); font-weight: 700; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .mobile-subject-meta-inline { font-size: 11px; color: var(--text-secondary); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .mobile-row-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
     .mobile-chevron-chevron { color: var(--text-tertiary); transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
@@ -434,8 +469,15 @@ const styleSheet = `
 
     .subject-form-panel { padding: 16px; margin-bottom: 16px; border-radius: 18px; }
     .subject-form { flex-direction: column; align-items: stretch; gap: 12px; }
-    .subject-input { width: 100% !important; }
-    .btn-subject-add { width: 100% !important; justify-content: center; }
+    
+    /* Responsive input scaling + Mobile iOS Auto-Zoom fix */
+    .subject-input { 
+      width: 100% !important; 
+      font-size: 16px !important; /* Forces iOS not to trigger automatic browser zoom on focus */
+      padding: 11px 14px !important; /* Tighter padding balancing larger text scale */
+    }
+    
+    .btn-subject-add { width: 100% !important; justify-content: center; min-height: 44px; }
 
     .mobile-add-subject-form-trigger {
       background: var(--btn-primary-bg);
@@ -452,6 +494,64 @@ const styleSheet = `
       gap: 8px;
       margin-bottom: 16px;
       box-shadow: 0 4px 14px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.25);
+      min-height: 44px; /* Accessible standard tap boundary */
+    }
+
+    /* Accessibility sizing optimizations for interactive items */
+    .dropdown-trigger-btn {
+      min-height: 44px;
+    }
+
+    .btn-destroy-subject {
+      min-width: 44px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dropdown-option-item {
+      padding: 12px 10px !important; /* Expanded touch standard */
+    }
+  }
+
+  /* Compressing spaces gracefully on ultra-small viewports (e.g. 320px - 360px) */
+  @media (max-width: 360px) {
+    .subjects-wrapper {
+      padding: 8px 8px;
+    }
+    .subjects-hero-header {
+      padding: 12px 14px !important;
+      border-radius: 14px !important;
+    }
+    .subjects-hero-header h1 {
+      font-size: 18px !important;
+    }
+    .mobile-accordion-closed-row {
+      padding: 12px 10px !important;
+    }
+    .mobile-row-left {
+      gap: 8px !important;
+    }
+    .mobile-subject-info-block {
+      gap: 0px !important;
+    }
+    .mobile-subject-name {
+      font-size: 14px !important;
+    }
+    .mobile-subject-meta-inline {
+      font-size: 10px !important;
+    }
+    .mobile-accordion-icon {
+      width: 32px !important;
+      height: 32px !important;
+    }
+    .kpi-card-glass {
+      flex: 0 0 82% !important;
+    }
+    .dropdown-trigger-btn {
+      padding: 8px 8px !important;
+      font-size: 12px !important;
     }
   }
 
@@ -806,7 +906,6 @@ const CustomGradeDropdown = memo(function CustomGradeDropdown({ value, onChange 
 const DesktopSubjectCard = memo(function DesktopSubjectCard({ subject, onUpdateGrade, onDelete }) {
   const isGraded = subject.grade_point !== null && subject.grade_point !== undefined
 
-  // Wrapper preserves function reference identity during prop changes
   const handleGradeChange = useCallback((val) => {
     onUpdateGrade(subject, val)
   }, [subject, onUpdateGrade])
@@ -860,7 +959,6 @@ const DesktopSubjectCard = memo(function DesktopSubjectCard({ subject, onUpdateG
 const MobileSubjectAccordionItem = memo(function MobileSubjectAccordionItem({ subject, isExpanded, onToggle, onUpdateGrade, onDelete }) {
   const isGraded = subject.grade_point !== null && subject.grade_point !== undefined
 
-  // Wrapper preserves function reference identity during prop changes
   const handleGradeChange = useCallback((val) => {
     onUpdateGrade(subject, val)
   }, [subject, onUpdateGrade])
