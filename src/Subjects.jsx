@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  GraduationCap, BookOpen, Award, Layers, Trash2, CalendarDays, Plus,
-  ChevronDown, Flame, CheckCircle, TrendingUp, Sparkles, School, Library
+  GraduationCap, BookOpen, Award, Layers, Trash2, Plus,
+  ChevronDown, School, Library, TrendingUp
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
 
@@ -31,6 +31,13 @@ const styleSheet = `
     --aurora-primary: rgba(139, 92, 246, 0.12);
     --aurora-secondary: rgba(236, 72, 153, 0.08);
     --aurora-tertiary: rgba(59, 130, 246, 0.08);
+    
+    /* Missing Variables defined for Dark Theme */
+    --input-text: #ffffff;
+    --accent-emerald: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-coral: #ef4444;
+    --sparkline-color: #8b5cf6;
   }
 
   body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
@@ -52,6 +59,13 @@ const styleSheet = `
     --aurora-primary: #ffe3d8;
     --aurora-secondary: #dce5ff;
     --aurora-tertiary: #eedcff;
+
+    /* Missing Variables defined for Light Theme */
+    --input-text: #1e1b4b;
+    --accent-emerald: #059669;
+    --accent-amber: #d97706;
+    --accent-coral: #dc2626;
+    --sparkline-color: #6366f1;
   }
 
   .subjects-wrapper {
@@ -475,7 +489,7 @@ function Subjects({ userId }) {
     return () => window.removeEventListener('resize', handleResize)
   }, [fetchSubjects])
 
-  async function addSubject(e) {
+  const addSubject = useCallback(async (e) => {
     e.preventDefault()
     if (!name.trim() || !credits) return
     const { error } = await supabase
@@ -488,7 +502,7 @@ function Subjects({ userId }) {
       setIsAddFormExpanded(false)
       fetchSubjects()
     }
-  }
+  }, [name, credits, faculty, userId, fetchSubjects])
 
   const updateGrade = useCallback(async (subject, value) => {
     const gp = value === '' ? null : parseFloat(value)
@@ -791,6 +805,12 @@ const CustomGradeDropdown = memo(function CustomGradeDropdown({ value, onChange 
 
 const DesktopSubjectCard = memo(function DesktopSubjectCard({ subject, onUpdateGrade, onDelete }) {
   const isGraded = subject.grade_point !== null && subject.grade_point !== undefined
+
+  // Wrapper preserves function reference identity during prop changes
+  const handleGradeChange = useCallback((val) => {
+    onUpdateGrade(subject, val)
+  }, [subject, onUpdateGrade])
+
   return (
     <motion.div
       className="premium-subject-card"
@@ -827,7 +847,7 @@ const DesktopSubjectCard = memo(function DesktopSubjectCard({ subject, onUpdateG
       <div className="card-grades-tray">
         <CustomGradeDropdown
           value={subject.grade_point}
-          onChange={(val) => onUpdateGrade(subject, val)}
+          onChange={handleGradeChange}
         />
         <button onClick={() => onDelete(subject.id)} className="btn-destroy-subject" title="Delete Course">
           <Trash2 size={16} />
@@ -839,6 +859,11 @@ const DesktopSubjectCard = memo(function DesktopSubjectCard({ subject, onUpdateG
 
 const MobileSubjectAccordionItem = memo(function MobileSubjectAccordionItem({ subject, isExpanded, onToggle, onUpdateGrade, onDelete }) {
   const isGraded = subject.grade_point !== null && subject.grade_point !== undefined
+
+  // Wrapper preserves function reference identity during prop changes
+  const handleGradeChange = useCallback((val) => {
+    onUpdateGrade(subject, val)
+  }, [subject, onUpdateGrade])
 
   return (
     <div className={`mobile-subject-accordion-item ${isExpanded ? 'is-active' : ''} ${isGraded ? 'is-graded' : ''}`}>
@@ -866,14 +891,6 @@ const MobileSubjectAccordionItem = memo(function MobileSubjectAccordionItem({ su
         </div>
       </div>
 
-      {/*
-        Performance fix: previously this animated height:0 -> 'auto', which forces
-        Framer Motion to remeasure scrollHeight on every single frame (a forced
-        synchronous layout read+write, i.e. layout thrashing). Instead, the drawer
-        content is mounted/unmounted (one cheap one-time reflow) and only opacity +
-        transform are animated, both of which run on the compositor thread with no
-        per-frame layout cost.
-      */}
       <AnimatePresence initial={false}>
         {isExpanded && (
           <motion.div
@@ -887,7 +904,7 @@ const MobileSubjectAccordionItem = memo(function MobileSubjectAccordionItem({ su
             <div className="mobile-drawer-controls">
               <CustomGradeDropdown
                 value={subject.grade_point}
-                onChange={(val) => onUpdateGrade(subject, val)}
+                onChange={handleGradeChange}
               />
               <button onClick={() => onDelete(subject.id)} className="btn-destroy-subject" title="Delete Course">
                 <Trash2 size={16} />
@@ -925,4 +942,4 @@ const SummaryCard = memo(function SummaryCard({ label, value, icon, desc, sparkl
   )
 })
 
-export default Subjects
+export default Subjects;
