@@ -8,7 +8,7 @@ import { supabase } from './lib/supabase'
 
 const ease = [0.22, 1, 0.36, 1]
 
-// Premium Theme Adaptive Glassmorphic Stylesheet (Unified with Overview) - Refined
+// Premium Theme Adaptive Glassmorphic Stylesheet (VisionOS / Linear Grade)
 const styleSheet = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
@@ -16,32 +16,36 @@ const styleSheet = `
     --atlas-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
     --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-    --canvas-bg: #08070c;
-    --canvas-bg-2: #0c0b14;
+    --canvas-bg: #050409;
+    --canvas-bg-2: #08070d;
     
     /* Unified Glass System */
-    --glass-bg: rgba(22, 21, 32, 0.55);
-    --glass-bg-elevated: rgba(28, 26, 40, 0.75);
+    --glass-bg: rgba(20, 18, 30, 0.45);
+    --glass-bg-elevated: rgba(28, 26, 40, 0.65);
+    --glass-bg-command: rgba(255, 255, 255, 0.03);
     --glass-border: rgba(255, 255, 255, 0.06);
-    --glass-border-strong: rgba(255, 255, 255, 0.1);
+    --glass-border-strong: rgba(255, 255, 255, 0.12);
+    --glass-highlight: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, transparent 40%);
     
     --text-primary: #ffffff;
     --text-secondary: #a1a1aa;
-    --text-tertiary: #71717a;
+    --text-tertiary: #6b7280;
     
     --input-bg: rgba(255, 255, 255, 0.03);
     --input-bg-hover: rgba(255, 255, 255, 0.06);
     --input-focus-border: #8b5cf6;
-    --input-focus-glow: rgba(139, 92, 246, 0.2);
+    --input-focus-glow: rgba(139, 92, 246, 0.25);
 
     --btn-primary-bg: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-    --btn-primary-glow: rgba(139, 92, 246, 0.35);
+    --btn-primary-glow: rgba(139, 92, 246, 0.4);
     
     /* Unified Soft Shadow System */
     --shadow-sm: 0 1px 2px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.05);
     --shadow-md: 0 4px 12px rgba(0,0,0,0.15), 0 12px 32px rgba(0,0,0,0.08);
-    --shadow-lg: 0 8px 24px rgba(0,0,0,0.15), 0 24px 48px rgba(0,0,0,0.15);
+    --shadow-lg: 0 24px 64px -12px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
+    --shadow-glow: 0 0 40px rgba(139, 92, 246, 0.15);
 
     --aurora-primary: rgba(139, 92, 246, 0.12);
     --aurora-secondary: rgba(236, 72, 153, 0.08);
@@ -61,12 +65,14 @@ const styleSheet = `
     --canvas-bg-2: #eef0f7;
     --glass-bg: rgba(255, 255, 255, 0.65);
     --glass-bg-elevated: rgba(255, 255, 255, 0.85);
+    --glass-bg-command: rgba(15, 23, 42, 0.02);
     --glass-border: rgba(15, 23, 42, 0.04);
     --glass-border-strong: rgba(15, 23, 42, 0.08);
+    --glass-highlight: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, transparent 40%);
     
     --text-primary: #18181b;
     --text-secondary: #52525b;
-    --text-tertiary: #71717a;
+    --text-tertiary: #94a3b8;
     
     --input-bg: rgba(255, 255, 255, 0.5);
     --input-bg-hover: rgba(255, 255, 255, 0.8);
@@ -74,11 +80,12 @@ const styleSheet = `
     --input-focus-glow: rgba(99, 102, 241, 0.12);
 
     --btn-primary-bg: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-    --btn-primary-glow: rgba(99, 102, 241, 0.2);
+    --btn-primary-glow: rgba(99, 102, 241, 0.25);
     
     --shadow-sm: 0 1px 2px rgba(31, 38, 135, 0.04), 0 2px 8px rgba(31, 38, 135, 0.03);
     --shadow-md: 0 4px 12px rgba(31, 38, 135, 0.05), 0 12px 32px rgba(31, 38, 135, 0.04);
-    --shadow-lg: 0 8px 24px rgba(31, 38, 135, 0.06), 0 24px 48px rgba(31, 38, 135, 0.05);
+    --shadow-lg: 0 24px 64px -12px rgba(31, 38, 135, 0.1), 0 0 0 1px rgba(255,255,255,0.5);
+    --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.1);
 
     --aurora-primary: rgba(255, 220, 200, 0.35);
     --aurora-secondary: rgba(210, 220, 255, 0.35);
@@ -109,8 +116,8 @@ const styleSheet = `
     width: 100%;
     margin: 0 auto;
     position: relative;
-    padding-block: clamp(20px, 4vw, 28px);
-    padding-inline: clamp(12px, 3vw, 24px);
+    padding-block: clamp(24px, 4vw, 32px);
+    padding-inline: clamp(16px, 3vw, 32px);
     box-sizing: border-box;
     touch-action: pan-y;
     overflow-x: clip;
@@ -130,15 +137,21 @@ const styleSheet = `
   .aurora-blur-sphere {
     position: fixed;
     border-radius: 50%;
-    filter: blur(140px);
+    filter: blur(120px);
     pointer-events: none;
     z-index: 0;
     will-change: transform;
     transition: background 0.6s var(--ease-premium);
+    animation: aurora-drift 20s ease-in-out infinite alternate;
   }
-  .sphere-primary { top: -10%; left: -15%; width: 600px; height: 600px; background: var(--aurora-primary); }
-  .sphere-secondary { bottom: -10%; right: -15%; width: 550px; height: 550px; background: var(--aurora-secondary); }
-  .sphere-tertiary { top: 40%; left: 40%; width: 450px; height: 450px; background: var(--aurora-tertiary); opacity: 0.5; }
+  .sphere-primary { top: -10%; left: -15%; width: 600px; height: 600px; background: var(--aurora-primary); animation-duration: 25s; }
+  .sphere-secondary { bottom: -10%; right: -15%; width: 550px; height: 550px; background: var(--aurora-secondary); animation-duration: 30s; animation-delay: -5s; }
+  .sphere-tertiary { top: 40%; left: 40%; width: 450px; height: 450px; background: var(--aurora-tertiary); opacity: 0.5; animation-duration: 35s; animation-delay: -10s; }
+
+  @keyframes aurora-drift {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(50px, -30px) scale(1.1); }
+  }
 
   /* ---------- Shared glass surface ---------- */
   .kpi-card-glass,
@@ -151,53 +164,62 @@ const styleSheet = `
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     box-shadow: var(--shadow-sm);
-    backdrop-filter: blur(20px) saturate(1.5);
-    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    backdrop-filter: blur(24px) saturate(1.8);
+    -webkit-backdrop-filter: blur(24px) saturate(1.8);
     position: relative;
     width: 100%;
     max-width: 100%;
-    border-radius: 18px;
+    border-radius: 24px;
   }
 
-  /* ---------- KPI Summary Grid ---------- */
+  /* ---------- KPI Summary Module ---------- */
   .stats-carousel-grid {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(24px) saturate(1.8);
+    -webkit-backdrop-filter: blur(24px) saturate(1.8);
+    border-radius: 24px;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: clamp(10px, 2vw, 14px);
-    margin-bottom: clamp(16px, 3vw, 24px);
+    gap: 0;
+    margin-bottom: clamp(20px, 3vw, 28px);
     z-index: 10;
     position: relative;
+    overflow: hidden;
   }
 
   .kpi-card-glass {
-    padding: 18px 20px;
-    min-height: 100px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    padding: 24px;
+    min-height: 110px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     overflow: hidden;
-    transition: box-shadow 0.3s var(--ease-premium), border-color 0.3s var(--ease-premium), transform 0.3s var(--ease-premium);
+    transition: background 0.3s var(--ease-premium);
     will-change: transform;
-    contain: layout paint;
+    border-right: 1px solid var(--glass-border);
   }
-  .kpi-card-glass:hover {
-    box-shadow: var(--shadow-md);
-    border-color: var(--glass-border-strong);
-    transform: translateY(-2px);
-  }
+  .kpi-card-glass:last-child { border-right: none; }
+  .kpi-card-glass:hover { background: var(--input-bg-hover); }
 
   .kpi-header-row { 
     display: flex; 
     justify-content: space-between; 
     align-items: center; 
     gap: 8px; 
-    margin-bottom: 8px; 
+    margin-bottom: 12px; 
   }
   .kpi-label {
     font-size: 11px;
     font-weight: 600;
     color: var(--text-secondary);
-    letter-spacing: 0.01em;
+    letter-spacing: 0.04em;
     line-height: 1.3;
     text-transform: uppercase;
     min-width: 0;
@@ -210,15 +232,14 @@ const styleSheet = `
     align-items: center; 
     justify-content: center;
     flex-shrink: 0;
-    background: rgba(139, 92, 246, 0.1);
-    box-shadow: 0 0 12px rgba(139, 92, 246, 0.1);
+    background: var(--input-bg);
   }
   .kpi-main-metric {
     font-size: 32px;
-    font-weight: 800;
+    font-weight: 700;
     color: var(--text-primary);
     line-height: 1;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     letter-spacing: -0.03em;
     font-variant-numeric: tabular-nums;
   }
@@ -229,7 +250,7 @@ const styleSheet = `
     gap: 8px; 
   }
   .kpi-desc { 
-    font-size: 10px; 
+    font-size: 11px; 
     color: var(--text-tertiary); 
     font-weight: 500; 
     max-width: 60%; 
@@ -240,60 +261,66 @@ const styleSheet = `
   .calendar-dashboard-layout {
     display: grid;
     grid-template-columns: 1.6fr 1fr;
-    gap: clamp(14px, 2.5vw, 20px);
+    gap: clamp(16px, 2.5vw, 24px);
     z-index: 10;
     position: relative;
   }
   .left-pane { 
     display: flex; 
     flex-direction: column; 
-    gap: clamp(14px, 2.5vw, 20px); 
+    gap: clamp(16px, 2.5vw, 24px); 
     min-width: 0; 
   }
   .right-pane { 
     display: flex; 
     flex-direction: column; 
-    gap: clamp(14px, 2.5vw, 20px); 
+    gap: clamp(16px, 2.5vw, 24px); 
     min-width: 0; 
   }
 
   /* ---------- Event Composer ---------- */
   .composer-card-glass { 
-    padding: 20px; 
+    padding: 8px; 
+    background: var(--glass-bg);
   }
   .composer-title { 
-    font-size: 15px; 
+    font-size: 16px; 
     font-weight: 700; 
-    margin: 0 0 14px 0; 
+    margin: 0 0 16px 0; 
     letter-spacing: -0.02em; 
+    padding-left: 12px;
   }
   .composer-form { 
     display: flex; 
-    gap: 8px; 
+    gap: 4px; 
     align-items: center; 
     flex-wrap: wrap; 
     width: 100%; 
+    background: var(--glass-bg-command);
+    border-radius: 16px;
+    padding: 4px;
   }
 
   .composer-input {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 10px;
-    padding: 10px 14px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    padding: 12px 16px;
     color: var(--text-primary);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     font-family: var(--atlas-font);
     box-sizing: border-box;
     min-width: 0;
-    transition: border-color 0.2s var(--ease-premium), box-shadow 0.2s var(--ease-premium), background 0.2s var(--ease-premium);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    transition: background 0.2s var(--ease-premium), box-shadow 0.2s var(--ease-premium);
     outline: none;
   }
-  .composer-input:hover { background: var(--glass-bg-elevated); border-color: var(--glass-border-strong); }
+  .composer-input:hover { background: var(--input-bg-hover); }
   .composer-input::placeholder { color: var(--text-tertiary); opacity: 1; }
-  .composer-input:focus { border-color: var(--input-focus-border); box-shadow: 0 0 0 4px var(--input-focus-glow); background: var(--glass-bg-elevated); }
+  .composer-input:focus { 
+    background: var(--input-bg); 
+    box-shadow: 0 0 0 2px var(--input-focus-glow); 
+  }
   .composer-input.title { flex: 2 1 180px; min-width: 0; }
   .composer-input.date-picker { flex: 1 1 130px; max-width: 150px; cursor: pointer; }
   .composer-input.time-picker { flex: 1 1 100px; max-width: 110px; cursor: pointer; }
@@ -304,20 +331,21 @@ const styleSheet = `
     background: var(--btn-primary-bg);
     color: #ffffff;
     border: none;
-    border-radius: 10px;
-    padding: 10px 20px;
-    font-size: 13px;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-size: 14px;
     font-weight: 600;
     font-family: var(--atlas-font);
     letter-spacing: -0.01em;
     cursor: pointer;
-    box-shadow: 0 4px 14px var(--btn-primary-glow), 0 1px 0 rgba(255,255,255,0.2) inset;
+    box-shadow: 0 4px 12px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.2);
     transition: transform 0.2s var(--ease-premium), box-shadow 0.2s var(--ease-premium), filter 0.2s var(--ease-premium);
     flex-shrink: 0;
     white-space: nowrap;
+    margin-left: auto;
   }
-  .btn-composer-add:hover { transform: translateY(-1px); box-shadow: 0 8px 20px var(--btn-primary-glow), 0 1px 0 rgba(255,255,255,0.2) inset; filter: brightness(1.08); }
-  .btn-composer-add:active { transform: scale(0.97); box-shadow: 0 2px 6px var(--btn-primary-glow), 0 1px 0 rgba(255,255,255,0.2) inset; }
+  .btn-composer-add:hover { transform: translateY(-1px); box-shadow: 0 8px 20px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.2); filter: brightness(1.08); }
+  .btn-composer-add:active { transform: scale(0.97); box-shadow: 0 2px 6px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.2); }
   .btn-composer-content { position: relative; z-index: 3; display: flex; align-items: center; gap: 6px; }
   .btn-ripple-layer { position: absolute; inset: 0; z-index: 2; overflow: hidden; border-radius: inherit; pointer-events: none; }
   .btn-ripple { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.32); transform: scale(0); animation: btn-ripple-expand 0.6s ease-out forwards; }
@@ -325,7 +353,7 @@ const styleSheet = `
 
   /* ---------- Weekly ribbon (Calendar card) ---------- */
   .calendar-nav-card {
-    padding: 20px;
+    padding: 24px;
     overflow: hidden;
   }
   .calendar-nav-header { 
@@ -333,62 +361,62 @@ const styleSheet = `
     justify-content: space-between; 
     align-items: center; 
     gap: 10px; 
-    margin-bottom: 16px; 
+    margin-bottom: 20px; 
   }
   .active-month-text {
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 700;
     letter-spacing: -0.03em;
     color: var(--text-primary);
     min-width: 0;
   }
 
-  .nav-controls-box { display: flex; gap: 6px; flex-shrink: 0; }
+  .nav-controls-box { display: flex; gap: 8px; flex-shrink: 0; }
   .btn-nav-arrow {
     background: var(--input-bg);
     border: 1px solid var(--glass-border);
     color: var(--text-primary);
-    width: 34px;
-    height: 34px;
-    border-radius: 9px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%; /* Circular for premium tactile feel */
     display: flex; 
     align-items: center; 
     justify-content: center;
     cursor: pointer;
-    transition: background 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium);
+    transition: background 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium), transform 0.2s var(--ease-premium);
   }
-  .btn-nav-arrow:hover { background: var(--input-bg-hover); border-color: var(--glass-border-strong); }
+  .btn-nav-arrow:hover { background: var(--input-bg-hover); border-color: var(--glass-border-strong); transform: translateY(-1px); }
 
   .week-days-ribbon {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: clamp(3px, 1.2vw, 8px);
+    gap: clamp(4px, 1.2vw, 8px);
   }
 
   .day-ribbon-card {
     background: var(--input-bg);
     border: 1px solid transparent;
-    border-radius: 12px;
-    padding: 10px 4px;
+    border-radius: 16px;
+    padding: 12px 4px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     cursor: pointer;
-    transition: background 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium), box-shadow 0.3s var(--ease-premium);
+    transition: all 0.3s var(--ease-spring);
     position: relative;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
     min-width: 0;
   }
-  .day-ribbon-card:hover { background: var(--input-bg-hover); border-color: var(--glass-border); }
+  .day-ribbon-card:hover { background: var(--input-bg-hover); border-color: var(--glass-border); transform: translateY(-2px); }
 
   .day-ribbon-card.is-today::after {
     content: '';
     position: absolute;
-    inset: -3px;
-    border-radius: 15px;
-    background: radial-gradient(circle, rgba(245, 158, 11, 0.16), transparent 70%);
+    inset: -4px;
+    border-radius: 20px;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.15), transparent 70%);
     animation: today-halo-pulse 3.2s ease-in-out infinite;
     z-index: -1;
   }
@@ -397,19 +425,20 @@ const styleSheet = `
   .day-ribbon-card.is-selected {
     background: var(--btn-primary-bg);
     border-color: transparent;
-    box-shadow: 0 4px 14px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.2);
+    box-shadow: 0 8px 24px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.25);
+    transform: translateY(-2px);
   }
 
   .day-label-text {
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.04em;
     white-space: nowrap;
   }
   .day-number-text { 
-    font-size: 18px; 
+    font-size: 20px; 
     font-weight: 700; 
     color: var(--text-primary); 
     letter-spacing: -0.02em; 
@@ -418,75 +447,77 @@ const styleSheet = `
   .day-ribbon-card.is-selected .day-number-text { color: #ffffff; }
 
   .today-glow-dot {
-    width: 4px; 
-    height: 4px;
+    width: 5px; 
+    height: 5px;
     background-color: var(--accent-amber);
     border-radius: 50%;
-    box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
     position: absolute;
-    bottom: 4px;
+    bottom: 6px;
   }
 
   /* ---------- Timeline & Event Feed ---------- */
-  .timeline-container { padding: 20px; }
+  .timeline-container { padding: 24px; }
   .timeline-axis { 
     position: relative; 
-    padding-left: clamp(20px, 4vw, 28px); 
-    margin-top: 14px; 
+    padding-left: clamp(24px, 4vw, 32px); 
+    margin-top: 20px; 
     min-width: 0; 
   }
   .timeline-axis::before {
     content: '';
     position: absolute;
-    top: 6px; 
-    bottom: 6px; 
-    left: 7px; 
+    top: 12px; 
+    bottom: 12px; 
+    left: 9px; 
     width: 2px;
-    background-image: repeating-linear-gradient(to bottom, var(--glass-border) 0px, var(--glass-border) 4px, transparent 4px, transparent 9px);
+    background-image: repeating-linear-gradient(to bottom, var(--glass-border) 0px, var(--glass-border) 4px, transparent 4px, transparent 10px);
   }
 
   .timeline-node-dot {
     position: absolute; 
     left: 4px; 
-    width: 8px; 
-    height: 8px;
+    width: 12px; 
+    height: 12px;
     border-radius: 50%;
-    background: var(--text-tertiary);
-    border: 2px solid var(--canvas-bg);
-    box-shadow: 0 0 0 3px var(--glass-border);
+    background: var(--canvas-bg);
+    border: 2px solid var(--text-tertiary);
     z-index: 2;
+    top: 4px;
   }
   .timeline-node-dot.active {
+    border-color: var(--accent-purple);
     background: var(--accent-purple);
-    box-shadow: 0 0 8px rgba(139, 92, 246, 0.4), 0 0 0 3px rgba(139, 92, 246, 0.18);
+    box-shadow: 0 0 12px rgba(167, 139, 250, 0.5);
   }
 
   .timeline-event-wrapper { 
     position: relative; 
-    margin-bottom: 20px; 
+    margin-bottom: 24px; 
     min-width: 0; 
   }
   .timeline-event-wrapper:last-child { margin-bottom: 0; }
   .timeline-time-col { 
-    font-size: 10px; 
+    font-size: 11px; 
     font-weight: 600; 
     color: var(--text-tertiary); 
     text-transform: uppercase; 
-    letter-spacing: 0.02em; 
-    margin-bottom: 6px; 
+    letter-spacing: 0.04em; 
+    margin-bottom: 8px; 
+    padding-left: 8px;
   }
 
   .event-card-tactile {
     background: var(--input-bg);
     border: 1px solid transparent;
-    border-radius: 12px;
-    padding: 12px 14px;
+    border-radius: 16px;
+    padding: 16px 18px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     min-width: 0;
-    transition: transform 0.25s var(--ease-premium), border-color 0.25s var(--ease-premium), box-shadow 0.3s var(--ease-premium), background 0.25s var(--ease-premium);
+    transition: all 0.3s var(--ease-premium);
   }
   .event-card-tactile:hover {
     transform: translateY(-2px);
@@ -496,27 +527,27 @@ const styleSheet = `
   }
 
   .event-title-main {
-    font-size: 13px; 
+    font-size: 14px; 
     font-weight: 600; 
     color: var(--text-primary); 
-    margin: 0 0 3px 0; 
+    margin: 0 0 4px 0; 
     letter-spacing: -0.01em;
     overflow-wrap: break-word;
     word-break: break-word;
   }
   .event-meta-info { 
-    font-size: 10px; 
+    font-size: 11px; 
     color: var(--text-tertiary); 
     display: flex; 
     align-items: center; 
-    gap: 5px; 
+    gap: 6px; 
     font-weight: 500; 
     flex-wrap: wrap; 
   }
   .meta-tag { 
     background: var(--glass-border); 
-    padding: 1px 6px; 
-    border-radius: 5px; 
+    padding: 2px 8px; 
+    border-radius: 6px; 
     font-weight: 500; 
   }
 
@@ -525,13 +556,13 @@ const styleSheet = `
     border: 1px solid transparent; 
     color: var(--text-tertiary);
     cursor: pointer; 
-    padding: 6px; 
-    border-radius: 8px;
+    padding: 8px; 
+    border-radius: 10px;
     display: flex; 
     align-items: center; 
     justify-content: center;
     flex-shrink: 0;
-    transition: background 0.2s var(--ease-premium), color 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium);
+    transition: all 0.2s var(--ease-premium);
   }
   .btn-delete-event:hover { 
     background: rgba(239, 68, 68, 0.1); 
@@ -541,8 +572,11 @@ const styleSheet = `
 
   /* ---------- AI Suggestions & Progress ---------- */
   .ai-assistant-card {
-    padding: 20px;
+    padding: 24px;
     overflow: hidden;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, var(--glass-bg) 60%);
+    border: 1px solid rgba(139, 92, 246, 0.15);
+    box-shadow: var(--shadow-md), var(--shadow-glow);
   }
 
   .ai-sparkle-icon { 
@@ -558,65 +592,66 @@ const styleSheet = `
   .ai-suggestion-box {
     background: var(--input-bg);
     border: 1px solid transparent;
-    border-radius: 12px;
-    padding: 12px;
-    margin-top: 12px;
+    border-radius: 14px;
+    padding: 14px;
+    margin-top: 14px;
     display: flex;
-    gap: 10px;
+    gap: 12px;
     align-items: flex-start;
-    transition: background 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium), transform 0.2s var(--ease-premium);
+    transition: all 0.3s var(--ease-premium);
   }
   .ai-suggestion-box:hover { 
     background: var(--input-bg-hover); 
     border-color: var(--glass-border); 
-    transform: translateY(-1px); 
+    transform: translateY(-2px); 
   }
   .ai-suggestion-box > div { min-width: 0; word-wrap: break-word; }
 
   .suggestion-bullet { 
-    width: 6px; 
-    height: 6px; 
+    width: 8px; 
+    height: 8px; 
     border-radius: 50%; 
-    margin-top: 5px; 
+    margin-top: 6px; 
     flex-shrink: 0; 
   }
 
   .month-radial-card {
-    padding: 16px 20px;
+    padding: 20px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: clamp(10px, 2.5vw, 16px);
+    gap: clamp(12px, 2.5vw, 18px);
   }
   .month-radial-card > div:first-child { min-width: 0; }
 
   /* ---------- Empty State ---------- */
   .empty-events-banner {
     text-align: center;
-    padding: 32px 16px;
-    border-radius: 14px;
+    padding: 48px 20px;
+    border-radius: 20px;
     border: 1px dashed var(--glass-border-strong);
     background: transparent;
     box-shadow: none;
   }
   .empty-icon-badge {
-    width: 40px; 
-    height: 40px; 
-    border-radius: 10px;
-    margin: 0 auto 12px auto;
+    width: 64px; 
+    height: 64px; 
+    border-radius: 20px;
+    margin: 0 auto 20px auto;
     display: flex; 
     align-items: center; 
     justify-content: center;
-    background: var(--input-bg);
-    color: var(--text-tertiary);
-    border: 1px solid var(--glass-border);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, transparent 100%);
+    color: var(--accent-purple);
+    border: 1px solid rgba(139, 92, 246, 0.1);
+    box-shadow: 0 0 24px rgba(139, 92, 246, 0.1);
   }
   .empty-banner-title { 
-    font-size: 13px; 
-    font-weight: 600; 
+    font-size: 16px; 
+    font-weight: 700; 
     color: var(--text-primary); 
-    margin: 0 0 3px 0; 
-    letter-spacing: -0.01em; 
+    margin: 0 0 6px 0; 
+    letter-spacing: -0.02em; 
   }
 
   /* ======================================================================
@@ -625,6 +660,8 @@ const styleSheet = `
   @media (min-width: 769px) and (max-width: 1024px) {
     .calendar-dashboard-layout { grid-template-columns: 1fr; }
     .stats-carousel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .kpi-card-glass:nth-child(2) { border-right: none; }
+    .kpi-card-glass:nth-child(1), .kpi-card-glass:nth-child(2) { border-bottom: 1px solid var(--glass-border); }
   }
 
   /* ======================================================================
@@ -632,57 +669,61 @@ const styleSheet = `
      ====================================================================== */
   @media (max-width: 768px) {
     .calendar-dashboard {
-      padding-bottom: calc(clamp(80px, 18vw, 100px) + env(safe-area-inset-bottom)) !important;
-      padding-inline: clamp(8px, 3vw, 16px) !important;
+      padding-bottom: calc(clamp(100px, 22vw, 120px) + env(safe-area-inset-bottom)) !important;
+      padding-inline: clamp(12px, 3vw, 16px) !important;
     }
 
     .stats-carousel-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: clamp(6px, 2vw, 10px);
-      margin-bottom: clamp(14px, 3vw, 18px);
+      gap: 0;
+      margin-bottom: clamp(16px, 3vw, 20px);
+      border-radius: 20px;
     }
     .kpi-card-glass { 
-      min-height: 90px; 
-      padding: 14px 16px; 
-      border-radius: 14px; 
+      min-height: 110px; 
+      padding: 18px;
+      border-radius: 0;
     }
-    .kpi-main-metric { font-size: 26px; margin-bottom: 2px; }
+    .kpi-card-glass:nth-child(1), .kpi-card-glass:nth-child(3) { border-right: 1px solid var(--glass-border); }
+    .kpi-card-glass:nth-child(1), .kpi-card-glass:nth-child(2) { border-bottom: 1px solid var(--glass-border); }
+    
+    .kpi-main-metric { font-size: 26px; margin-bottom: 4px; }
     .kpi-label { font-size: 10px; }
-    .kpi-desc { font-size: 9px; max-width: 100%; }
+    .kpi-desc { font-size: 10px; max-width: 100%; }
     .kpi-icon-wrapper { width: 28px; height: 28px; border-radius: 8px; }
 
     .calendar-dashboard-layout { 
       grid-template-columns: 1fr; 
-      gap: clamp(12px, 3vw, 18px); 
+      gap: clamp(14px, 3vw, 18px); 
     }
 
-    .day-ribbon-card { gap: 3px; padding: 8px 2px; }
-    .day-number-text { font-size: 15px; }
-    .day-label-text { font-size: 9px; }
-    .today-glow-dot { width: 3px; height: 3px; bottom: 3px; }
+    .day-ribbon-card { gap: 4px; padding: 10px 2px; }
+    .day-number-text { font-size: 16px; }
+    .day-label-text { font-size: 10px; }
+    .today-glow-dot { width: 4px; height: 4px; bottom: 4px; }
 
     .calendar-nav-card, .timeline-container, .ai-assistant-card { 
-      padding: 16px; 
-      border-radius: 16px; 
+      padding: 20px; 
+      border-radius: 20px; 
     }
-    .active-month-text { font-size: 16px; }
+    .active-month-text { font-size: 20px; }
     .composer-card-glass { display: none; }
-    .month-radial-card { padding: 14px 16px; }
+    .month-radial-card { padding: 18px 20px; }
 
     /* --- Floating Action Button --- */
     .mobile-floating-add-btn {
       position: fixed;
-      bottom: max(16px, env(safe-area-inset-bottom));
-      right: clamp(12px, 3vw, 20px);
-      width: clamp(48px, 12vw, 52px);
-      height: clamp(48px, 12vw, 52px);
-      border-radius: 14px;
+      bottom: max(20px, env(safe-area-inset-bottom));
+      right: clamp(16px, 4vw, 24px);
+      width: clamp(56px, 14vw, 60px);
+      height: clamp(56px, 14vw, 60px);
+      border-radius: 20px;
       background: var(--btn-primary-bg);
       display: flex; 
       align-items: center; 
       justify-content: center;
       color: #ffffff;
-      box-shadow: 0 6px 18px var(--btn-primary-glow), 0 1px 0 rgba(255,255,255,0.2) inset;
+      box-shadow: 0 12px 32px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.25);
       z-index: 99; 
       cursor: pointer; 
       border: none;
@@ -695,9 +736,9 @@ const styleSheet = `
       left: 0; 
       right: 0; 
       bottom: 0;
-      background: rgba(8, 7, 12, 0.85);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
+      background: rgba(5, 4, 9, 0.8);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
       z-index: 100;
       display: flex; 
       flex-direction: column; 
@@ -708,18 +749,18 @@ const styleSheet = `
       background: var(--glass-bg-elevated);
       border: 1px solid var(--glass-border-strong);
       border-bottom: none;
-      border-radius: 20px 20px 0 0;
-      padding: clamp(18px, 5vw, 24px) clamp(14px, 4vw, 20px);
-      padding-bottom: calc(clamp(18px, 5vw, 24px) + env(safe-area-inset-bottom));
+      border-radius: 28px 28px 0 0;
+      padding: clamp(24px, 6vw, 32px) clamp(16px, 5vw, 24px);
+      padding-bottom: calc(clamp(24px, 6vw, 32px) + env(safe-area-inset-bottom));
       display: flex; 
       flex-direction: column; 
-      gap: clamp(12px, 3vw, 16px);
+      gap: clamp(16px, 4vw, 20px);
       box-shadow: var(--shadow-lg);
     }
 
-    .composer-form { flex-direction: column; align-items: stretch; }
+    .composer-form { flex-direction: column; align-items: stretch; border-radius: 20px; padding: 6px; }
     .composer-input { width: 100% !important; max-width: 100% !important; }
-    .btn-composer-add { width: 100%; justify-content: center; }
+    .btn-composer-add { width: 100%; justify-content: center; margin-left: 0; }
   }
 
   @media (max-width: 340px) {
@@ -853,20 +894,20 @@ function CalendarWidget({ userId }) {
       <div className="aurora-blur-sphere sphere-secondary" />
       <div className="aurora-blur-sphere sphere-tertiary" />
 
-      {/* --- KPI Summary Grid --- */}
+      {/* --- KPI Summary Module --- */}
       <motion.div
         className="stats-carousel-grid"
         initial="hidden"
         animate="visible"
         variants={{
-          hidden: { opacity: 0 },
-          visible: { opacity: 1, transition: { staggerChildren: 0.04 } }
+          hidden: { opacity: 0, y: 20 },
+          visible: { opacity: 1, y: 0, transition: { staggerChildren: 0.06 } }
         }}
       >
         <SummaryCard
           label="Today's Events"
           value={todayEventsCount}
-          icon={<CalendarClock size={14} aria-hidden="true" />}
+          icon={<CalendarClock size={16} aria-hidden="true" />}
           desc="Due within 24 hours"
           sparklinePath="M0,15 C10,12 20,18 30,5 C40,2 50,14 60,8"
           accent="#f59e0b"
@@ -874,7 +915,7 @@ function CalendarWidget({ userId }) {
         <SummaryCard
           label="Upcoming"
           value={upcomingCount}
-          icon={<Clock3 size={14} aria-hidden="true" />}
+          icon={<Clock3 size={16} aria-hidden="true" />}
           desc="Scheduled events"
           sparklinePath="M0,8 C10,14 20,5 30,12 C40,16 50,2 60,10"
           accent="#60a5fa"
@@ -882,7 +923,7 @@ function CalendarWidget({ userId }) {
         <SummaryCard
           label="Focus Score"
           value="9.2"
-          icon={<Brain size={14} aria-hidden="true" />}
+          icon={<Brain size={16} aria-hidden="true" />}
           desc="Target: 9.5 scale"
           sparklinePath="M0,18 C10,15 20,10 30,10 C40,10 50,3 60,3"
           accent="#8b5cf6"
@@ -890,7 +931,7 @@ function CalendarWidget({ userId }) {
         <SummaryCard
           label="Accomplished"
           value={completedEventsCount}
-          icon={<CircleCheck size={14} aria-hidden="true" />}
+          icon={<CircleCheck size={16} aria-hidden="true" />}
           desc="Finished logs"
           sparklinePath="M0,4 C10,12 20,2 30,8 C40,14 50,2 60,15"
           accent="#10b981"
@@ -909,10 +950,10 @@ function CalendarWidget({ userId }) {
                 <motion.span
                   key={weekDates[0].toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   className="active-month-text"
-                  initial={{ opacity: 0, y: -6 }}
+                  initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6 }}
-                  transition={{ duration: 0.25, ease }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.3, ease }}
                 >
                   {weekDates[0].toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </motion.span>
@@ -921,22 +962,22 @@ function CalendarWidget({ userId }) {
                 <motion.button
                   onClick={() => shiftWeek(-1)}
                   className="btn-nav-arrow"
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.92 }}
-                  transition={{ type: 'spring', stiffness: 420, damping: 24 }}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                   aria-label="Previous week"
                 >
-                  <ChevronLeft size={16} aria-hidden="true" />
+                  <ChevronLeft size={18} aria-hidden="true" />
                 </motion.button>
                 <motion.button
                   onClick={() => shiftWeek(1)}
                   className="btn-nav-arrow"
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.92 }}
-                  transition={{ type: 'spring', stiffness: 420, damping: 24 }}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                   aria-label="Next week"
                 >
-                  <ChevronRight size={16} aria-hidden="true" />
+                  <ChevronRight size={18} aria-hidden="true" />
                 </motion.button>
               </div>
             </div>
@@ -945,10 +986,10 @@ function CalendarWidget({ userId }) {
               <motion.div
                 key={weekDates[0].toISOString().split('T')[0]}
                 className="week-days-ribbon"
-                initial={{ opacity: 0, x: shiftDirection > 0 ? 26 : -26 }}
+                initial={{ opacity: 0, x: shiftDirection > 0 ? 30 : -30 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: shiftDirection > 0 ? -26 : 26 }}
-                transition={{ duration: 0.3, ease }}
+                exit={{ opacity: 0, x: shiftDirection > 0 ? -30 : 30 }}
+                transition={{ duration: 0.35, ease }}
               >
                 {weekDates.map(d => {
                   const key = d.toISOString().split('T')[0]
@@ -963,8 +1004,8 @@ function CalendarWidget({ userId }) {
                       onKeyDown={(e) => handleDayKeyDown(e, key, isSelected)}
                       className={`day-ribbon-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}`}
                       animate={{ y: isSelected ? -3 : 0, scale: isSelected ? 1.03 : 1 }}
-                      transition={{ type: 'spring', stiffness: 340, damping: 22 }}
-                      whileTap={{ scale: 0.96 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                      whileTap={{ scale: 0.95 }}
                       role="button"
                       tabIndex={0}
                       aria-pressed={isSelected}
@@ -977,9 +1018,9 @@ function CalendarWidget({ userId }) {
                       {isToday && <div className="today-glow-dot" aria-hidden="true" />}
                       {dayEvents.length > 0 && !isToday && (
                         <div aria-hidden="true" style={{
-                          width: '4px', height: '4px', borderRadius: '50%',
+                          width: '5px', height: '5px', borderRadius: '50%',
                           background: isSelected ? '#ffffff' : 'var(--accent-purple)',
-                          marginTop: '3px'
+                          marginTop: '4px'
                         }} />
                       )}
                     </motion.div>
@@ -991,7 +1032,7 @@ function CalendarWidget({ userId }) {
 
           {/* Interactive selected day timeline view */}
           <div className="timeline-container">
-            <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 14px 0', letterSpacing: '-0.02em' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 16px 0', letterSpacing: '-0.03em' }}>
               {selectedDay ? (
                 new Date(selectedDay).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
               ) : (
@@ -1003,9 +1044,9 @@ function CalendarWidget({ userId }) {
               {selectedDay ? (
                 selectedEvents.length === 0 ? (
                   <div className="empty-events-banner">
-                    <div className="empty-icon-badge"><Clock3 size={20} aria-hidden="true" /></div>
+                    <div className="empty-icon-badge"><Clock3 size={28} aria-hidden="true" /></div>
                     <span className="empty-banner-title">Nothing Scheduled</span>
-                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>You have no events allocated for this day.</p>
+                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>You have no events allocated for this day.</p>
                   </div>
                 ) : (
                   selectedEvents.map((ev, index) => (
@@ -1028,7 +1069,7 @@ function CalendarWidget({ userId }) {
                           className="btn-delete-event"
                           aria-label={`Delete event: ${ev.title}`}
                         >
-                          <Trash2 size={15} aria-hidden="true" />
+                          <Trash2 size={16} aria-hidden="true" />
                         </button>
                       </div>
                     </div>
@@ -1037,7 +1078,7 @@ function CalendarWidget({ userId }) {
               ) : (
                 (eventsByDate[today] || []).length === 0 ? (
                   <div className="empty-events-banner">
-                    <div className="empty-icon-badge"><Clock3 size={20} aria-hidden="true" /></div>
+                    <div className="empty-icon-badge"><Clock3 size={28} aria-hidden="true" /></div>
                     <span className="empty-banner-title">No Events Scheduled Today</span>
                   </div>
                 ) : (
@@ -1061,7 +1102,7 @@ function CalendarWidget({ userId }) {
                           className="btn-delete-event"
                           aria-label={`Delete event: ${ev.title}`}
                         >
-                          <Trash2 size={15} aria-hidden="true" />
+                          <Trash2 size={16} aria-hidden="true" />
                         </button>
                       </div>
                     </div>
@@ -1104,13 +1145,13 @@ function CalendarWidget({ userId }) {
                 <motion.button
                   type="submit"
                   className="btn-composer-add"
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 24 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                   onPointerDown={(e) => spawnRipple(e, setComposerRipples)}
                   aria-label="Add event"
                 >
                   <span className="btn-composer-content">
-                    <Plus size={15} aria-hidden="true" />
+                    <Plus size={16} aria-hidden="true" />
                     <span>Add Event</span>
                   </span>
                   <span className="btn-ripple-layer">
@@ -1125,21 +1166,21 @@ function CalendarWidget({ userId }) {
 
           {/* AI Insights & suggestions */}
           <div className="ai-assistant-card">
-            <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '-0.02em' }}>
-              <span className="ai-sparkle-icon"><Sparkles size={15} color="var(--accent-amber)" aria-hidden="true" /></span>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '10px', letterSpacing: '-0.03em' }}>
+              <span className="ai-sparkle-icon"><Sparkles size={18} color="var(--accent-amber)" aria-hidden="true" /></span>
               <span>Atlas AI Suggestions</span>
             </h3>
 
-            <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.985 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
-              <div className="suggestion-bullet" aria-hidden="true" style={{ background: 'var(--accent-amber)', boxShadow: '0 0 6px rgba(245, 158, 11, 0.45)' }} />
-              <div style={{ fontSize: '12px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+            <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
+              <div className="suggestion-bullet" aria-hidden="true" style={{ background: 'var(--accent-amber)', boxShadow: '0 0 8px rgba(245, 158, 11, 0.5)' }} />
+              <div style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
                 You have <strong style={{ color: 'var(--text-primary)' }}>3 hours free</strong> in your afternoon slot. Schedule a focus session?
               </div>
             </motion.div>
 
-            <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.985 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
-              <div className="suggestion-bullet" aria-hidden="true" style={{ background: 'var(--accent-red)', boxShadow: '0 0 6px rgba(239, 68, 68, 0.4)' }} />
-              <div style={{ fontSize: '12px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+            <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
+              <div className="suggestion-bullet" aria-hidden="true" style={{ background: 'var(--accent-red)', boxShadow: '0 0 8px rgba(239, 68, 68, 0.5)' }} />
+              <div style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
                 Assignment due tomorrow. Ensure preparation notes are reviewed.
               </div>
             </motion.div>
@@ -1148,12 +1189,12 @@ function CalendarWidget({ userId }) {
           {/* Radial progress card */}
           <div className="month-radial-card">
             <div>
-              <h3 style={{ fontSize: '14px', fontWeight: 700, margin: '0 0 3px 0', letterSpacing: '-0.02em' }}>Month Completion</h3>
-              <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Based on overall metrics.</p>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>Month Completion</h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>Based on overall metrics.</p>
             </div>
 
-            <div style={{ position: 'relative', width: '64px', height: '64px', flexShrink: 0 }}>
-              <svg width="64" height="64" viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }} role="img" aria-label={`Month completion: ${monthProgressRate}%`}>
+            <div style={{ position: 'relative', width: '72px', height: '72px', flexShrink: 0 }}>
+              <svg width="72" height="72" viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }} role="img" aria-label={`Month completion: ${monthProgressRate}%`}>
                 <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
                 <motion.path
                   fill="none"
@@ -1172,7 +1213,7 @@ function CalendarWidget({ userId }) {
                   </linearGradient>
                 </defs>
               </svg>
-              <div aria-hidden="true" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
+              <div aria-hidden="true" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
                 {monthProgressRate}%
               </div>
             </div>
@@ -1189,12 +1230,12 @@ function CalendarWidget({ userId }) {
             className="mobile-floating-add-btn"
             onClick={() => setIsMobileDrawerOpen(true)}
             onPointerDown={(e) => spawnRipple(e, setFabRipples)}
-            animate={{ y: scrolled ? -3 : 0 }}
+            animate={{ y: scrolled ? -4 : 0 }}
             whileTap={{ scale: 0.9 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 22 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             aria-label="Add event"
           >
-            <Plus size={22} strokeWidth={2.5} aria-hidden="true" style={{ position: 'relative', zIndex: 3 }} />
+            <Plus size={26} strokeWidth={2.5} aria-hidden="true" style={{ position: 'relative', zIndex: 3 }} />
             <span className="btn-ripple-layer">
               {fabRipples.map((r) => (
                 <span key={r.id} className="btn-ripple" style={{ left: r.x, top: r.y, width: r.size, height: r.size }} />
@@ -1220,9 +1261,9 @@ function CalendarWidget({ userId }) {
                   initial={{ y: '100%' }}
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                  transition={{ type: 'spring', damping: 30, stiffness: 300 }}
                 >
-                  <h3 className="composer-title" style={{ margin: 0 }}>Add Event Node</h3>
+                  <h3 className="composer-title" style={{ margin: 0, padding: 0 }}>Add Event Node</h3>
 
                   <form onSubmit={addEvent} className="composer-form">
                     <input
@@ -1232,7 +1273,7 @@ function CalendarWidget({ userId }) {
                       className="composer-input"
                       aria-label="Event title"
                     />
-                    <div style={{ display: 'flex', gap: '10px', width: '100%', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '8px', width: '100%', flexWrap: 'wrap' }}>
                       <input
                         type="date"
                         value={date}
@@ -1250,7 +1291,7 @@ function CalendarWidget({ userId }) {
                         aria-label="Event time (optional)"
                       />
                     </div>
-                    <div style={{ display: 'flex', gap: '10px', width: '100%', marginTop: '10px' }}>
+                    <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '8px' }}>
                       <button
                         type="button"
                         onClick={() => setIsMobileDrawerOpen(false)}
@@ -1283,8 +1324,8 @@ function SummaryCard({ label, value, icon, desc, sparklinePath, accent }) {
     <motion.div
       className="kpi-card-glass"
       variants={{
-        hidden: { opacity: 0, y: 12 },
-        visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 120, damping: 16 } }
+        hidden: { opacity: 0, y: 15 },
+        visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 120, damping: 18 } }
       }}
       whileHover={{ y: -2, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
     >
