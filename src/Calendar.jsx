@@ -8,95 +8,89 @@ import { supabase } from './lib/supabase'
 
 const ease = [0.22, 1, 0.36, 1]
 
-// Premium Theme Adaptive Glassmorphic Stylesheet
-//
-// RESPONSIVE STRATEGY (read this before touching any rule below):
-// 1) The #1 cause of "clipped Saturday column" / "card cut off on the right"
-//    bugs in this file was CSS Grid's default track sizing: `1fr` really
-//    means `minmax(auto, 1fr)`, so a grid track will NEVER shrink below the
-//    intrinsic (min-content) width of what's inside it — even if that
-//    means the whole grid overflows its container. Every multi-column grid
-//    below now uses `minmax(0, 1fr)` instead of `1fr`, which allows tracks
-//    to compress all the way down when the viewport is narrow, so nothing
-//    pushes past the screen edge and gets clipped.
-// 2) All paddings/gaps that scale with screen size use clamp()/min()/max()
-//    instead of a single fixed px value, so spacing shrinks gracefully on
-//    320-360px phones and stays spacious on large phones/tablets, without
-//    needing separate breakpoint overrides for every increment.
-// 3) The floating action button is positioned with safe-area-aware
-//    clamp()/max() math so it can never sit outside the viewport or behind
-//    a gesture-navigation bar, regardless of device.
+// Premium Theme Adaptive Glassmorphic Stylesheet (Unified with Overview)
 const styleSheet = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
   :root {
-    --atlas-font: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    --atlas-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
 
-    --canvas-bg: #090810;
-    --glass-base: rgba(20, 18, 32, 0.56);
-    --glass-sheen-1: rgba(255, 255, 255, 0.045);
-    --glass-sheen-2: rgba(255, 255, 255, 0.012);
-    --glass-border: rgba(255, 255, 255, 0.09);
-    --glass-highlight: rgba(255, 255, 255, 0.10);
+    --canvas-bg: #08070c;
+    --canvas-bg-2: #0c0b14;
+    
+    /* Unified Glass System */
+    --glass-bg: rgba(22, 21, 32, 0.55);
+    --glass-bg-elevated: rgba(28, 26, 40, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.06);
+    --glass-border-strong: rgba(255, 255, 255, 0.1);
+    
     --text-primary: #ffffff;
-    --text-secondary: #94a3b8;
-    --text-tertiary: #64748b;
-    --input-bg: rgba(26, 23, 44, 0.6);
-    --input-border: rgba(255, 255, 255, 0.09);
-    --input-focus-border: #8b7cf6;
-    --input-focus-glow: rgba(139, 124, 246, 0.2);
+    --text-secondary: #a1a1aa;
+    --text-tertiary: #71717a;
+    
+    --input-bg: rgba(255, 255, 255, 0.03);
+    --input-bg-hover: rgba(255, 255, 255, 0.06);
+    --input-focus-border: #8b5cf6;
+    --input-focus-glow: rgba(139, 92, 246, 0.2);
 
-    --btn-primary-bg: linear-gradient(135deg, #9b87ff 0%, #6d5ef2 55%, #5a4de0 100%);
-    --btn-primary-glow: rgba(124, 108, 246, 0.32);
-    --card-shadow: 0 24px 48px -22px rgba(20, 10, 45, 0.55), 0 2px 0 rgba(255, 255, 255, 0.02) inset;
-    --card-shadow-hover: 0 30px 56px -20px rgba(28, 14, 60, 0.6), 0 2px 0 rgba(255, 255, 255, 0.03) inset;
+    --btn-primary-bg: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    --btn-primary-glow: rgba(139, 92, 246, 0.35);
+    
+    /* Unified Soft Shadow System */
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.15), 0 12px 32px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.15), 0 24px 48px rgba(0,0,0,0.15);
 
-    --aurora-primary: rgba(139, 92, 246, 0.10);
-    --aurora-secondary: rgba(96, 165, 250, 0.07);
-    --aurora-tertiary: rgba(167, 139, 250, 0.06);
-    --sparkline-color: #8b7cf6;
+    --aurora-primary: rgba(139, 92, 246, 0.12);
+    --aurora-secondary: rgba(236, 72, 153, 0.08);
+    --aurora-tertiary: rgba(59, 130, 246, 0.06);
 
-    --accent-purple: #8b5cf6;
-    --accent-purple-light: #a78bfa;
-    --accent-emerald: #10b981;
-    --accent-amber: #f59e0b;
-    --accent-red: #ef4444;
+    --accent-purple: #a78bfa;
+    --accent-pink: #ec4899;
+    --accent-gold: #f59e0b;
+    --accent-green: #10b981;
+    --accent-amber: #fbbf24;
     --accent-blue: #60a5fa;
+    --accent-red: #ef4444;
   }
 
   body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
-    --canvas-bg: #f8fafc;
-    --glass-base: rgba(255, 255, 255, 0.68);
-    --glass-sheen-1: rgba(255, 255, 255, 0.5);
-    --glass-sheen-2: rgba(255, 255, 255, 0.18);
-    --glass-border: rgba(15, 23, 42, 0.09);
-    --glass-highlight: rgba(255, 255, 255, 0.85);
-    --text-primary: #1e1b4b;
-    --text-secondary: #475569;
-    --text-tertiary: #94a3b8;
-    --input-bg: rgba(241, 245, 249, 0.75);
-    --input-border: rgba(15, 23, 42, 0.09);
-    --input-focus-border: #6d5ef2;
-    --input-focus-glow: rgba(109, 94, 242, 0.15);
+    --canvas-bg: #f8f9fc;
+    --canvas-bg-2: #eef0f7;
+    --glass-bg: rgba(255, 255, 255, 0.65);
+    --glass-bg-elevated: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(15, 23, 42, 0.04);
+    --glass-border-strong: rgba(15, 23, 42, 0.08);
+    
+    --text-primary: #18181b;
+    --text-secondary: #52525b;
+    --text-tertiary: #71717a;
+    
+    --input-bg: rgba(255, 255, 255, 0.5);
+    --input-bg-hover: rgba(255, 255, 255, 0.8);
+    --input-focus-border: #6366f1;
+    --input-focus-glow: rgba(99, 102, 241, 0.12);
 
-    --btn-primary-bg: linear-gradient(135deg, #8172f2 0%, #6152e8 100%);
-    --btn-primary-glow: rgba(97, 82, 232, 0.22);
-    --card-shadow: 0 16px 36px rgba(30, 20, 80, 0.06), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
-    --card-shadow-hover: 0 22px 44px rgba(30, 20, 80, 0.09), 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+    --btn-primary-bg: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    --btn-primary-glow: rgba(99, 102, 241, 0.2);
+    
+    --shadow-sm: 0 1px 2px rgba(31, 38, 135, 0.04), 0 2px 8px rgba(31, 38, 135, 0.03);
+    --shadow-md: 0 4px 12px rgba(31, 38, 135, 0.05), 0 12px 32px rgba(31, 38, 135, 0.04);
+    --shadow-lg: 0 8px 24px rgba(31, 38, 135, 0.06), 0 24px 48px rgba(31, 38, 135, 0.05);
 
-    --aurora-primary: #ffe9e0;
-    --aurora-secondary: #e4edff;
-    --aurora-tertiary: #f0e6ff;
-    --sparkline-color: #6152e8;
-    --accent-purple: #6d5ef2;
-    --accent-purple-light: #8172f2;
+    --aurora-primary: rgba(255, 220, 200, 0.35);
+    --aurora-secondary: rgba(210, 220, 255, 0.35);
+    --aurora-tertiary: rgba(230, 210, 255, 0.3);
+
+    --accent-purple: #6366f1;
+    --accent-pink: #ec4899;
+    --accent-gold: #d97706;
+    --accent-green: #059669;
     --accent-amber: #d97706;
   }
 
-  /* Kill the mobile blue tap-flash without touching focus accessibility.
-     Only the highlight color is removed here — real keyboard focus rings
-     are restored explicitly (:focus-visible) below on every interactive
-     element, per item 16 (accessibility must survive item 14's touch fix). */
   * {
     -webkit-tap-highlight-color: transparent;
   }
@@ -115,9 +109,6 @@ const styleSheet = `
     width: 100%;
     margin: 0 auto;
     position: relative;
-    /* Fluid inline padding: 14px on the narrowest phones, scaling with
-       viewport width, capped at 28px so large phones/tablets don't feel
-       like their content is glued to the edges (item 7). */
     padding-block: clamp(16px, 4vw, 24px);
     padding-inline: clamp(14px, 4vw, 28px);
     box-sizing: border-box;
@@ -125,6 +116,9 @@ const styleSheet = `
     overflow-x: clip;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   .calendar-dashboard,
@@ -132,34 +126,19 @@ const styleSheet = `
     box-sizing: border-box;
   }
 
-  /* ---------- Layered ambient background ---------- */
+  /* ---------- Ambient background ---------- */
   .aurora-blur-sphere {
-    position: absolute;
+    position: fixed;
     border-radius: 50%;
-    filter: blur(110px);
+    filter: blur(140px);
     pointer-events: none;
     z-index: 0;
-    transition: background 0.5s ease;
+    will-change: transform;
+    transition: background 0.6s var(--ease-premium);
   }
-  .sphere-primary { top: 5%; left: -10%; width: 450px; height: 450px; background: var(--aurora-primary); }
-  .sphere-secondary { bottom: 10%; right: -10%; width: 400px; height: 400px; background: var(--aurora-secondary); }
-  .sphere-tertiary { top: 38%; left: 38%; width: 340px; height: 340px; background: var(--aurora-tertiary); }
-
-  .calendar-noise-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    opacity: 0.028;
-    mix-blend-mode: overlay;
-    border-radius: inherit;
-    animation: noise-breathe 9s ease-in-out infinite;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-  @keyframes noise-breathe { 0%, 100% { opacity: 0.02; } 50% { opacity: 0.035; } }
-  @media (prefers-reduced-motion: reduce) {
-    .calendar-noise-overlay { animation: none; }
-  }
+  .sphere-primary { top: -10%; left: -15%; width: 600px; height: 600px; background: var(--aurora-primary); }
+  .sphere-secondary { bottom: -10%; right: -15%; width: 550px; height: 550px; background: var(--aurora-secondary); }
+  .sphere-tertiary { top: 40%; left: 40%; width: 450px; height: 450px; background: var(--aurora-tertiary); opacity: 0.5; }
 
   /* ---------- Shared glass surface ---------- */
   .kpi-card-glass,
@@ -169,90 +148,73 @@ const styleSheet = `
   .ai-assistant-card,
   .month-radial-card,
   .empty-events-banner {
-    background-color: var(--glass-base);
-    background-image: linear-gradient(165deg, var(--glass-sheen-1) 0%, var(--glass-sheen-2) 100%);
+    background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    box-shadow: var(--card-shadow);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
     position: relative;
-    /* Never let a card be wider than its column — this is what makes the
-       whole layout genuinely fluid instead of relying on fixed widths. */
     width: 100%;
     max-width: 100%;
-  }
-
-  .kpi-card-glass::before,
-  .composer-card-glass::before,
-  .calendar-nav-card::before,
-  .timeline-container::before,
-  .ai-assistant-card::before,
-  .month-radial-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 8%; right: 8%; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
-    pointer-events: none;
+    border-radius: 20px;
   }
 
   /* ---------- KPI Summary Grid ---------- */
   .stats-carousel-grid {
     display: grid;
-    /* minmax(0, 1fr) — NOT plain 1fr — so columns can shrink past their
-       content's min-content width on narrow phones instead of forcing
-       the grid (and the card inside it) to overflow the viewport. */
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: clamp(10px, 2.2vw, 18px);
+    gap: clamp(10px, 2.2vw, 16px);
     margin-bottom: clamp(20px, 4vw, 32px);
     z-index: 10;
     position: relative;
   }
 
   .kpi-card-glass {
-    border-radius: clamp(16px, 3vw, 22px);
-    padding: clamp(14px, 3.2vw, 20px);
-    min-height: 120px;
+    padding: 20px;
+    min-height: 108px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     overflow: hidden;
-    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, box-shadow 0.3s ease;
+    transition: box-shadow 0.3s var(--ease-premium), border-color 0.3s var(--ease-premium), transform 0.3s var(--ease-premium);
+    will-change: transform;
+    contain: layout paint;
   }
   .kpi-card-glass:hover {
-    transform: translateY(-4px);
-    border-color: rgba(139, 92, 246, 0.22);
-    box-shadow: var(--card-shadow-hover);
+    box-shadow: var(--shadow-md);
+    border-color: var(--glass-border-strong);
+    transform: translateY(-2px);
   }
 
   .kpi-header-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
   .kpi-label {
-    font-size: clamp(9px, 2.2vw, 10px);
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 500;
     color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    /* Labels wrap onto two lines on narrow cards ("TODAY'S EVENTS") —
-       keep them readable instead of overlapping the icon badge. */
+    letter-spacing: -0.01em;
     line-height: 1.3;
     min-width: 0;
   }
   .kpi-icon-wrapper {
-    width: clamp(24px, 6vw, 28px);
-    height: clamp(24px, 6vw, 28px);
-    border-radius: 9px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
+    background: rgba(139, 92, 246, 0.1);
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.1);
   }
   .kpi-main-metric {
-    font-size: clamp(20px, 5.5vw, 30px);
-    font-weight: 800;
+    font-size: 30px;
+    font-weight: 700;
     color: var(--text-primary);
     line-height: 1;
     margin-bottom: 6px;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
   }
   .kpi-desc-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; }
-  .kpi-desc { font-size: clamp(9px, 2vw, 11px); color: var(--text-tertiary); font-weight: 500; max-width: 60%; }
+  .kpi-desc { font-size: 11px; color: var(--text-tertiary); font-weight: 500; max-width: 65%; line-height: 1.4; }
 
   /* ---------- Double pane layout ---------- */
   .calendar-dashboard-layout {
@@ -266,25 +228,29 @@ const styleSheet = `
   .right-pane { display: flex; flex-direction: column; gap: clamp(16px, 3vw, 24px); min-width: 0; }
 
   /* ---------- Event Composer ---------- */
-  .composer-card-glass { border-radius: 24px; padding: 24px; }
-  .composer-title { font-size: 16px; font-weight: 700; margin: 0 0 16px 0; letter-spacing: -0.01em; }
-  .composer-form { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; width: 100%; }
+  .composer-card-glass { padding: 24px; }
+  .composer-title { font-size: 16px; font-weight: 700; margin: 0 0 16px 0; letter-spacing: -0.02em; }
+  .composer-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; width: 100%; }
 
   .composer-input {
-    background: var(--input-bg);
-    border: 1px solid var(--input-border);
-    border-radius: 13px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
     padding: 12px 16px;
     color: var(--text-primary);
     font-size: 14px;
     font-weight: 500;
+    font-family: var(--atlas-font);
     box-sizing: border-box;
     min-width: 0;
-    transition: border-color 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: border-color 0.2s var(--ease-premium), box-shadow 0.2s var(--ease-premium), background 0.2s var(--ease-premium);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     outline: none;
   }
-  .composer-input::placeholder { color: var(--text-secondary); opacity: 0.65; }
-  .composer-input:focus { border-color: var(--input-focus-border); box-shadow: 0 0 0 3px var(--input-focus-glow), inset 0 1px 2px rgba(0,0,0,0.06); }
+  .composer-input:hover { background: var(--glass-bg-elevated); border-color: var(--glass-border-strong); }
+  .composer-input::placeholder { color: var(--text-tertiary); opacity: 1; }
+  .composer-input:focus { border-color: var(--input-focus-border); box-shadow: 0 0 0 4px var(--input-focus-glow); background: var(--glass-bg-elevated); }
   .composer-input.title { flex: 2 1 200px; min-width: 0; }
   .composer-input.date-picker { flex: 1 1 140px; max-width: 160px; cursor: pointer; }
   .composer-input.time-picker { flex: 1 1 100px; max-width: 120px; cursor: pointer; }
@@ -295,88 +261,83 @@ const styleSheet = `
     background: var(--btn-primary-bg);
     color: #ffffff;
     border: none;
-    border-radius: 13px;
+    border-radius: 12px;
     padding: 12px 24px;
     font-size: 14px;
     font-weight: 600;
+    font-family: var(--atlas-font);
+    letter-spacing: -0.01em;
     cursor: pointer;
-    box-shadow: 0 8px 20px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.18);
-    transition: box-shadow 0.25s ease;
+    box-shadow: 0 4px 14px var(--btn-primary-glow), 0 1px 0 rgba(255,255,255,0.2) inset;
+    transition: transform 0.2s var(--ease-premium), box-shadow 0.2s var(--ease-premium), filter 0.2s var(--ease-premium);
     flex-shrink: 0;
     white-space: nowrap;
   }
-  .btn-composer-add::after {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 55%;
-    background: linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0));
-    z-index: 1; pointer-events: none;
-  }
-  .btn-composer-add:hover { box-shadow: 0 10px 26px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.22); }
-  .btn-composer-content { position: relative; z-index: 3; display: flex; align-items: center; gap: 8px; }
+  .btn-composer-add:hover { transform: translateY(-1px); box-shadow: 0 8px 20px var(--btn-primary-glow), 0 1px 0 rgba(255,255,255,0.2) inset; filter: brightness(1.08); }
+  .btn-composer-add:active { transform: scale(0.97); box-shadow: 0 2px 6px var(--btn-primary-glow), 0 1px 0 rgba(255,255,255,0.2) inset; }
+  .btn-composer-content { position: relative; z-index: 3; display: flex; align-items: center; gap: 6px; }
   .btn-ripple-layer { position: absolute; inset: 0; z-index: 2; overflow: hidden; border-radius: inherit; pointer-events: none; }
   .btn-ripple { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.32); transform: scale(0); animation: btn-ripple-expand 0.6s ease-out forwards; }
   @keyframes btn-ripple-expand { to { transform: scale(1); opacity: 0; } }
 
   /* ---------- Weekly ribbon (Calendar card) ---------- */
   .calendar-nav-card {
-    border-radius: clamp(18px, 3.5vw, 24px);
-    padding: clamp(16px, 4vw, 24px);
+    padding: 24px;
     overflow: hidden;
   }
-  .calendar-nav-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: clamp(14px, 3vw, 20px); }
+  .calendar-nav-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 20px; }
   .active-month-text {
-    font-size: clamp(16px, 4.5vw, 20px);
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
     color: var(--text-primary);
     min-width: 0;
   }
 
-  .nav-controls-box { display: flex; gap: 10px; flex-shrink: 0; }
+  .nav-controls-box { display: flex; gap: 8px; flex-shrink: 0; }
   .btn-nav-arrow {
     background: var(--input-bg);
-    border: 1px solid var(--input-border);
+    border: 1px solid var(--glass-border);
     color: var(--text-primary);
-    width: clamp(34px, 8vw, 38px);
-    height: clamp(34px, 8vw, 38px);
-    border-radius: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: background 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium);
   }
-  .btn-nav-arrow:hover { background: var(--glass-border); border-color: rgba(139, 92, 246, 0.25); }
+  .btn-nav-arrow:hover { background: var(--input-bg-hover); border-color: var(--glass-border-strong); }
 
   .week-days-ribbon {
     display: grid;
-    /* This is the fix for the clipped Saturday column: minmax(0, 1fr)
-       lets all seven day-cells compress evenly to fit any width instead
-       of overflowing past the last visible column. */
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: clamp(4px, 1.6vw, 12px);
+    gap: clamp(4px, 1.6vw, 10px);
   }
 
+  /* Eliminated "box-in-box" by using transparent default state with subtle hover */
   .day-ribbon-card {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--glass-border);
-    border-radius: clamp(12px, 3vw, 18px);
-    padding: clamp(8px, 2.4vw, 14px) clamp(2px, 1vw, 14px);
+    background: var(--input-bg);
+    border: 1px solid transparent;
+    border-radius: 14px;
+    padding: 12px 4px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: clamp(3px, 1vw, 8px);
+    gap: 6px;
     cursor: pointer;
-    transition: background 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease, box-shadow 0.3s ease;
+    transition: background 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium), box-shadow 0.3s var(--ease-premium);
     position: relative;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
     min-width: 0;
   }
-  .day-ribbon-card:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.12); }
+  .day-ribbon-card:hover { background: var(--input-bg-hover); border-color: var(--glass-border); }
 
   .day-ribbon-card.is-today::after {
     content: '';
     position: absolute;
     inset: -3px;
-    border-radius: 21px;
+    border-radius: 17px;
     background: radial-gradient(circle, rgba(245, 158, 11, 0.16), transparent 70%);
     animation: today-halo-pulse 3.2s ease-in-out infinite;
     z-index: -1;
@@ -385,33 +346,33 @@ const styleSheet = `
 
   .day-ribbon-card.is-selected {
     background: var(--btn-primary-bg);
-    border-color: rgba(255, 255, 255, 0.16);
-    box-shadow: 0 14px 30px -10px rgba(90, 60, 220, 0.35), inset 0 1px 0 rgba(255,255,255,0.14);
+    border-color: transparent;
+    box-shadow: 0 4px 14px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.2);
   }
 
   .day-label-text {
-    font-size: clamp(8.5px, 2.4vw, 11px);
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.02em;
     white-space: nowrap;
   }
-  .day-number-text { font-size: clamp(13px, 3.6vw, 20px); font-weight: 800; color: var(--text-primary); }
+  .day-number-text { font-size: 20px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
   .day-ribbon-card.is-selected .day-label-text,
   .day-ribbon-card.is-selected .day-number-text { color: #ffffff; }
 
   .today-glow-dot {
-    width: 6px; height: 6px;
+    width: 5px; height: 5px;
     background-color: var(--accent-amber);
     border-radius: 50%;
     box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
     position: absolute;
-    bottom: 8px;
+    bottom: 6px;
   }
 
   /* ---------- Timeline & Event Feed ---------- */
-  .timeline-container { border-radius: clamp(18px, 3.5vw, 24px); padding: clamp(16px, 4vw, 24px); }
+  .timeline-container { padding: 24px; }
   .timeline-axis { position: relative; padding-left: clamp(22px, 5vw, 30px); margin-top: 16px; min-width: 0; }
   .timeline-axis::before {
     content: '';
@@ -429,55 +390,54 @@ const styleSheet = `
     z-index: 2;
   }
   .timeline-node-dot.active {
-    background: var(--accent-purple-light);
-    box-shadow: 0 0 8px rgba(167, 139, 250, 0.4), 0 0 0 3px rgba(167, 139, 250, 0.18);
+    background: var(--accent-purple);
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.4), 0 0 0 3px rgba(139, 92, 246, 0.18);
   }
 
-  .timeline-event-wrapper { position: relative; margin-bottom: 26px; min-width: 0; }
+  .timeline-event-wrapper { position: relative; margin-bottom: 24px; min-width: 0; }
   .timeline-event-wrapper:last-child { margin-bottom: 0; }
-  .timeline-time-col { font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .timeline-time-col { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 8px; }
 
+  /* Eliminated "box-in-box" by using transparent default state with subtle hover */
   .event-card-tactile {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--glass-border);
-    border-radius: clamp(14px, 3vw, 18px);
-    padding: clamp(12px, 3vw, 16px) clamp(14px, 3.5vw, 20px);
+    background: var(--input-bg);
+    border: 1px solid transparent;
+    border-radius: 14px;
+    padding: 14px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 10px;
     min-width: 0;
-    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, box-shadow 0.3s ease, background 0.25s ease;
+    transition: transform 0.25s var(--ease-premium), border-color 0.25s var(--ease-premium), box-shadow 0.3s var(--ease-premium), background 0.25s var(--ease-premium);
   }
   .event-card-tactile:hover {
     transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.12);
-    box-shadow: var(--card-shadow-hover);
-    background: rgba(255, 255, 255, 0.045);
+    border-color: var(--glass-border);
+    box-shadow: var(--shadow-md);
+    background: var(--input-bg-hover);
   }
 
   .event-title-main {
-    font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;
+    font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 0 0 4px 0; letter-spacing: -0.01em;
     overflow-wrap: break-word;
     word-break: break-word;
   }
-  .event-meta-info { font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; font-weight: 500; flex-wrap: wrap; }
-  .meta-tag { background: var(--input-bg); padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+  .event-meta-info { font-size: 11px; color: var(--text-tertiary); display: flex; align-items: center; gap: 6px; font-weight: 500; flex-wrap: wrap; }
+  .meta-tag { background: var(--glass-border); padding: 2px 8px; border-radius: 6px; font-weight: 500; }
 
   .btn-delete-event {
-    background: none; border: none; color: var(--text-tertiary);
-    cursor: pointer; padding: 8px; border-radius: 8px;
+    background: transparent; border: 1px solid transparent; color: var(--text-tertiary);
+    cursor: pointer; padding: 8px; border-radius: 9px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
-    transition: background 0.2s ease, color 0.2s ease;
+    transition: background 0.2s var(--ease-premium), color 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium);
   }
-  .btn-delete-event:hover { background: rgba(239, 68, 68, 0.09); color: var(--accent-red); }
+  .btn-delete-event:hover { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); border-color: rgba(239, 68, 68, 0.2); }
 
   /* ---------- AI Suggestions & Progress ---------- */
   .ai-assistant-card {
-    background-image: linear-gradient(150deg, rgba(139, 92, 246, 0.08) 0%, rgba(96, 165, 250, 0.04) 60%, transparent 100%);
-    border-radius: clamp(18px, 3.5vw, 24px);
-    padding: clamp(16px, 4vw, 24px);
+    padding: 24px;
     overflow: hidden;
   }
 
@@ -487,24 +447,25 @@ const styleSheet = `
     50% { transform: scale(1.15) rotate(8deg); opacity: 1; }
   }
 
+  /* Eliminated "box-in-box" by using transparent default state with subtle hover */
   .ai-suggestion-box {
-    background: rgba(22, 21, 34, 0.42);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
+    background: var(--input-bg);
+    border: 1px solid transparent;
+    border-radius: 14px;
     padding: 14px;
-    margin-top: 16px;
+    margin-top: 14px;
     display: flex;
     gap: 12px;
     align-items: flex-start;
-    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease;
+    transition: background 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium), transform 0.2s var(--ease-premium);
   }
+  .ai-suggestion-box:hover { background: var(--input-bg-hover); border-color: var(--glass-border); transform: translateY(-1px); }
   .ai-suggestion-box > div { min-width: 0; word-wrap: break-word; }
 
   .suggestion-bullet { width: 6px; height: 6px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
 
   .month-radial-card {
-    border-radius: clamp(18px, 3.5vw, 24px);
-    padding: clamp(16px, 4vw, 24px);
+    padding: 20px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -515,24 +476,24 @@ const styleSheet = `
   /* ---------- Empty State ---------- */
   .empty-events-banner {
     text-align: center;
-    padding: clamp(28px, 6vw, 44px) 16px;
-    border-radius: clamp(16px, 3.5vw, 22px);
-    border: 1px dashed var(--glass-border);
+    padding: 40px 16px;
+    border-radius: 16px;
+    border: 1px dashed var(--glass-border-strong);
+    background: transparent;
+    box-shadow: none;
   }
   .empty-icon-badge {
-    width: 46px; height: 46px; border-radius: 50%;
+    width: 44px; height: 44px; border-radius: 12px;
     margin: 0 auto 14px auto;
     display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.16), rgba(96, 165, 250, 0.08));
-    color: var(--text-secondary);
-    box-shadow: inset 0 1px 1px rgba(255,255,255,0.08);
+    background: var(--input-bg);
+    color: var(--text-tertiary);
+    border: 1px solid var(--glass-border);
   }
-  .empty-banner-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0; letter-spacing: -0.01em; }
+  .empty-banner-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 0 0 4px 0; letter-spacing: -0.01em; }
 
   /* ======================================================================
-     TABLET (769px – 1024px): collapse to a single column but keep the
-     desktop-style KPI 2x2 grid and full composer, since there's still
-     plenty of width to work with.
+     TABLET (769px – 1024px)
      ====================================================================== */
   @media (min-width: 769px) and (max-width: 1024px) {
     .calendar-dashboard-layout { grid-template-columns: 1fr; }
@@ -540,16 +501,10 @@ const styleSheet = `
   }
 
   /* ======================================================================
-     MOBILE (<= 768px): everything below is layout/visual only — no
-     functionality changes. Rebuilt so the reference phone layout (the
-     "correct" screenshot) is treated as the target proportions, and
-     everything narrower intelligently compresses padding/gaps/type
-     rather than clipping content (item 2).
+     MOBILE (<= 768px)
      ====================================================================== */
   @media (max-width: 768px) {
     .calendar-dashboard {
-      /* Room for the fixed FAB plus the device's own gesture-nav inset,
-         so the last timeline card is never hidden behind either. */
       padding-bottom: calc(clamp(96px, 22vw, 120px) + env(safe-area-inset-bottom)) !important;
     }
 
@@ -558,47 +513,43 @@ const styleSheet = `
       gap: clamp(8px, 2.6vw, 10px);
       margin-bottom: clamp(16px, 4vw, 20px);
     }
-    .kpi-card-glass { min-height: 95px; padding: clamp(12px, 3.4vw, 14px); border-radius: clamp(14px, 3.5vw, 18px); }
-    .kpi-main-metric { font-size: clamp(19px, 5.6vw, 22px); margin-bottom: 2px; }
-    .kpi-label { font-size: clamp(8.5px, 2.4vw, 9px); }
-    .kpi-desc { font-size: clamp(8.5px, 2.2vw, 9px); max-width: 100%; }
+    .kpi-card-glass { min-height: 98px; padding: 16px; border-radius: 16px; }
+    .kpi-main-metric { font-size: 24px; margin-bottom: 2px; }
+    .kpi-label { font-size: 11px; }
+    .kpi-desc { font-size: 10px; max-width: 100%; }
+    .kpi-icon-wrapper { width: 26px; height: 26px; border-radius: 8px; }
 
     .calendar-dashboard-layout { grid-template-columns: 1fr; gap: clamp(14px, 3.5vw, 20px); }
 
-    .day-ribbon-card { gap: clamp(2px, 1vw, 4px); }
+    .day-ribbon-card { gap: 4px; padding: 10px 2px; }
+    .day-number-text { font-size: 16px; }
+    .day-label-text { font-size: 10px; }
     .today-glow-dot { width: 4px; height: 4px; bottom: 4px; }
 
+    .calendar-nav-card, .timeline-container, .ai-assistant-card { padding: 20px; border-radius: 18px; }
+    .active-month-text { font-size: 18px; }
     .composer-card-glass { display: none; }
-    .month-radial-card { padding: clamp(14px, 4vw, 18px) clamp(16px, 4.5vw, 20px); }
+    .month-radial-card { padding: 18px 20px; }
 
-    /* --- Floating Action Button ---
-       Fixed to the viewport, sized and positioned entirely with fluid
-       units so it can never be clipped or hidden by gesture bars:
-       - max(20px, env(safe-area-inset-bottom)) keeps it above Android's
-         3-button/gesture nav and the iPhone home indicator alike.
-       - clamp(16px, 4vw, 28px) keeps its right margin proportional to
-         screen width instead of a single fixed value that can crowd a
-         320px screen or look stranded on a large one.
-       - The button's own diameter is also clamp()-based so it stays a
-         comfortable 44dp+ touch target on every device. */
+    /* --- Floating Action Button --- */
     .mobile-floating-add-btn {
       position: fixed;
       bottom: max(20px, env(safe-area-inset-bottom));
       right: clamp(16px, 4vw, 28px);
-      width: clamp(52px, 14vw, 58px);
-      height: clamp(52px, 14vw, 58px);
-      border-radius: 50%;
+      width: clamp(52px, 14vw, 56px);
+      height: clamp(52px, 14vw, 56px);
+      border-radius: 16px;
       background: var(--btn-primary-bg);
       display: flex; align-items: center; justify-content: center;
       color: #ffffff;
-      box-shadow: 0 6px 16px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.18);
+      box-shadow: 0 6px 18px var(--btn-primary-glow), 0 1px 0 rgba(255,255,255,0.2) inset;
       z-index: 99; cursor: pointer; border: none;
       overflow: hidden;
     }
 
     .mobile-drawer-sheet {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(9, 8, 16, 0.85);
+      background: rgba(8, 7, 12, 0.85);
       backdrop-filter: blur(25px);
       -webkit-backdrop-filter: blur(25px);
       z-index: 100;
@@ -606,14 +557,14 @@ const styleSheet = `
     }
 
     .mobile-drawer-body {
-      background-color: var(--glass-base);
-      background-image: linear-gradient(165deg, var(--glass-sheen-1) 0%, var(--glass-sheen-2) 100%);
-      border-top: 1px solid var(--glass-border);
-      border-radius: 28px 28px 0 0;
+      background: var(--glass-bg-elevated);
+      border: 1px solid var(--glass-border-strong);
+      border-bottom: none;
+      border-radius: 24px 24px 0 0;
       padding: clamp(22px, 6vw, 30px) clamp(16px, 5vw, 24px);
-      /* Keep the sheet's own controls clear of the home-indicator area. */
       padding-bottom: calc(clamp(22px, 6vw, 30px) + env(safe-area-inset-bottom));
       display: flex; flex-direction: column; gap: clamp(14px, 4vw, 20px);
+      box-shadow: var(--shadow-lg);
     }
 
     .composer-form { flex-direction: column; align-items: stretch; }
@@ -621,10 +572,6 @@ const styleSheet = `
     .btn-composer-add { width: 100%; justify-content: center; }
   }
 
-  /* Extra-narrow phones (Fold cover screens, small Android devices) get a
-     little more headroom shaved off automatically via the clamp()s above;
-     this block only nudges the couple of values that still read as too
-     tight at the very bottom of the range. */
   @media (max-width: 340px) {
     .day-ribbon-card { padding-inline: 2px; }
     .day-label-text { letter-spacing: 0.02em; }
@@ -716,9 +663,6 @@ function CalendarWidget({ userId }) {
     }, 650)
   }
 
-  // Keyboard support for the day cells: they're clickable divs (for the
-  // tap/press animation styling), so Enter/Space need to be wired up
-  // manually to match native <button> behavior for keyboard users.
   function handleDayKeyDown(e, key, isSelected) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
@@ -758,7 +702,6 @@ function CalendarWidget({ userId }) {
       <div className="aurora-blur-sphere sphere-primary" />
       <div className="aurora-blur-sphere sphere-secondary" />
       <div className="aurora-blur-sphere sphere-tertiary" />
-      <div className="calendar-noise-overlay" aria-hidden="true" />
 
       {/* --- KPI Summary Grid --- */}
       <motion.div
@@ -767,13 +710,13 @@ function CalendarWidget({ userId }) {
         animate="visible"
         variants={{
           hidden: { opacity: 0 },
-          visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+          visible: { opacity: 1, transition: { staggerChildren: 0.04 } }
         }}
       >
         <SummaryCard
           label="Today's Events"
           value={todayEventsCount}
-          icon={<CalendarClock size={15} aria-hidden="true" />}
+          icon={<CalendarClock size={14} aria-hidden="true" />}
           desc="Due within 24 hours"
           sparklinePath="M0,15 C10,12 20,18 30,5 C40,2 50,14 60,8"
           accent="#f59e0b"
@@ -781,7 +724,7 @@ function CalendarWidget({ userId }) {
         <SummaryCard
           label="Upcoming"
           value={upcomingCount}
-          icon={<Clock3 size={15} aria-hidden="true" />}
+          icon={<Clock3 size={14} aria-hidden="true" />}
           desc="Scheduled events"
           sparklinePath="M0,8 C10,14 20,5 30,12 C40,16 50,2 60,10"
           accent="#60a5fa"
@@ -789,7 +732,7 @@ function CalendarWidget({ userId }) {
         <SummaryCard
           label="Focus Score"
           value="9.2"
-          icon={<Brain size={15} aria-hidden="true" />}
+          icon={<Brain size={14} aria-hidden="true" />}
           desc="Target: 9.5 scale"
           sparklinePath="M0,18 C10,15 20,10 30,10 C40,10 50,3 60,3"
           accent="#8b5cf6"
@@ -797,7 +740,7 @@ function CalendarWidget({ userId }) {
         <SummaryCard
           label="Accomplished"
           value={completedEventsCount}
-          icon={<CircleCheck size={15} aria-hidden="true" />}
+          icon={<CircleCheck size={14} aria-hidden="true" />}
           desc="Finished logs"
           sparklinePath="M0,4 C10,12 20,2 30,8 C40,14 50,2 60,15"
           accent="#10b981"
@@ -885,7 +828,7 @@ function CalendarWidget({ userId }) {
                       {dayEvents.length > 0 && !isToday && (
                         <div aria-hidden="true" style={{
                           width: '5px', height: '5px', borderRadius: '50%',
-                          background: isSelected ? '#ffffff' : 'var(--accent-purple-light)',
+                          background: isSelected ? '#ffffff' : 'var(--accent-purple)',
                           marginTop: '4px'
                         }} />
                       )}
@@ -898,7 +841,7 @@ function CalendarWidget({ userId }) {
 
           {/* Interactive selected day timeline view */}
           <div className="timeline-container">
-            <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 16px 0' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 16px 0', letterSpacing: '-0.02em' }}>
               {selectedDay ? (
                 new Date(selectedDay).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
               ) : (
@@ -912,7 +855,7 @@ function CalendarWidget({ userId }) {
                   <div className="empty-events-banner">
                     <div className="empty-icon-badge"><Clock3 size={20} aria-hidden="true" /></div>
                     <span className="empty-banner-title">Nothing Scheduled</span>
-                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>You have no events allocated for this day.</p>
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>You have no events allocated for this day.</p>
                   </div>
                 ) : (
                   selectedEvents.map((ev, index) => (
@@ -1032,21 +975,21 @@ function CalendarWidget({ userId }) {
 
           {/* AI Insights & suggestions */}
           <div className="ai-assistant-card">
-            <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '-0.02em' }}>
               <span className="ai-sparkle-icon"><Sparkles size={16} color="var(--accent-amber)" aria-hidden="true" /></span>
               <span>Atlas AI Suggestions</span>
             </h3>
 
             <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.985 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
               <div className="suggestion-bullet" aria-hidden="true" style={{ background: 'var(--accent-amber)', boxShadow: '0 0 6px rgba(245, 158, 11, 0.45)' }} />
-              <div style={{ fontSize: '12px', lineHeight: 1.55 }}>
-                You have <strong>3 hours free</strong> in your afternoon slot. Schedule a focus session?
+              <div style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+                You have <strong style={{ color: 'var(--text-primary)' }}>3 hours free</strong> in your afternoon slot. Schedule a focus session?
               </div>
             </motion.div>
 
             <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.985 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
               <div className="suggestion-bullet" aria-hidden="true" style={{ background: 'var(--accent-red)', boxShadow: '0 0 6px rgba(239, 68, 68, 0.4)' }} />
-              <div style={{ fontSize: '12px', lineHeight: 1.55 }}>
+              <div style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
                 Assignment due tomorrow. Ensure preparation notes are reviewed.
               </div>
             </motion.div>
@@ -1055,8 +998,8 @@ function CalendarWidget({ userId }) {
           {/* Radial progress card */}
           <div className="month-radial-card">
             <div>
-              <h3 style={{ fontSize: '14px', fontWeight: 700, margin: '0 0 4px 0' }}>Month Completion</h3>
-              <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Based on overall metrics.</p>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>Month Completion</h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>Based on overall metrics.</p>
             </div>
 
             <div style={{ position: 'relative', width: '68px', height: '68px', flexShrink: 0 }}>
@@ -1079,7 +1022,7 @@ function CalendarWidget({ userId }) {
                   </linearGradient>
                 </defs>
               </svg>
-              <div aria-hidden="true" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '12px', fontWeight: 800 }}>
+              <div aria-hidden="true" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
                 {monthProgressRate}%
               </div>
             </div>
@@ -1162,7 +1105,7 @@ function CalendarWidget({ userId }) {
                         type="button"
                         onClick={() => setIsMobileDrawerOpen(false)}
                         className="composer-input"
-                        style={{ flex: 1, border: '1px solid var(--glass-border)', background: 'none' }}
+                        style={{ flex: 1, border: '1px solid var(--glass-border)', background: 'var(--input-bg)', justifyContent: 'center', cursor: 'pointer' }}
                         aria-label="Cancel adding event"
                       >
                         Cancel
@@ -1190,14 +1133,14 @@ function SummaryCard({ label, value, icon, desc, sparklinePath, accent }) {
     <motion.div
       className="kpi-card-glass"
       variants={{
-        hidden: { opacity: 0, y: 15 },
-        visible: { opacity: 1, y: 0, transition: { type: 'spring' } }
+        hidden: { opacity: 0, y: 12 },
+        visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 120, damping: 16 } }
       }}
-      whileHover={{ y: -4, transition: { duration: 0.25 } }}
+      whileHover={{ y: -2, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
     >
       <div className="kpi-header-row">
         <span className="kpi-label">{label}</span>
-        <span className="kpi-icon-wrapper" style={{ background: accentColor + '22', color: accentColor }}>{icon}</span>
+        <span className="kpi-icon-wrapper" style={{ background: accentColor + '1a', color: accentColor, boxShadow: `0 0 12px ${accentColor}1a` }}>{icon}</span>
       </div>
       <div className="kpi-main-metric">{value}</div>
       <div className="kpi-desc-row">
