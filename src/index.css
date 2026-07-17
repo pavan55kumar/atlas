@@ -111,23 +111,24 @@ button {
 }
 
 
-html,
-body,
-#root {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
+/* Remove Android blue tap highlight */
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+/* Or target only interactive elements */
+button,
+a,
+input,
+textarea,
+select,
+div,
+span {
+  -webkit-tap-highlight-color: transparent;
 }
-
-img,
-svg,
-canvas,
-video {
-  max-width: 100%;
+[role="button"],
+.motion-button,
+button {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
 }
