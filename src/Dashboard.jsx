@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion ,AnimatePresence  } from 'framer-motion'
-
+import { App } from '@capacitor/app'
 import { Sun, Moon, LogOut, Search, Menu } from 'lucide-react'
 import Sidebar from './Sidebar'
 import Overview from './Overview'
@@ -52,6 +52,34 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
     window.addEventListener('keydown', handleKey)
     return function () { window.removeEventListener('keydown', handleKey) }
   }, [])
+  useEffect(() => {
+  let listener
+
+  App.addListener('backButton', () => {
+    if (searchOpen) {
+      setSearchOpen(false)
+      return
+    }
+
+    if (mobileNavOpen) {
+      setMobileNavOpen(false)
+      return
+    }
+
+    if (page !== 'overview') {
+      setPage('overview')
+      return
+    }
+
+    App.exitApp()
+  }).then(l => {
+    listener = l
+  })
+
+  return () => {
+    listener?.remove()
+  }
+}, [page, searchOpen, mobileNavOpen])
 
   const displayName = user.email.split('@')[0].split('.')[0]
   const hour = new Date().getHours()
