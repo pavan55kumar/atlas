@@ -8,7 +8,7 @@ import { supabase } from './lib/supabase'
 
 const ease = [0.22, 1, 0.36, 1]
 
-// Premium Theme Adaptive Glassmorphic Stylesheet (Unified with Overview)
+// Premium Theme Adaptive Glassmorphic Stylesheet (Unified with Overview) - Refined
 const styleSheet = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
@@ -105,12 +105,12 @@ const styleSheet = `
   .calendar-dashboard {
     font-family: var(--atlas-font);
     color: var(--text-primary);
-    max-width: 1100px;
+    max-width: 1280px;
     width: 100%;
     margin: 0 auto;
     position: relative;
-    padding-block: clamp(16px, 4vw, 24px);
-    padding-inline: clamp(14px, 4vw, 28px);
+    padding-block: clamp(20px, 4vw, 28px);
+    padding-inline: clamp(12px, 3vw, 24px);
     box-sizing: border-box;
     touch-action: pan-y;
     overflow-x: clip;
@@ -156,22 +156,22 @@ const styleSheet = `
     position: relative;
     width: 100%;
     max-width: 100%;
-    border-radius: 20px;
+    border-radius: 18px;
   }
 
   /* ---------- KPI Summary Grid ---------- */
   .stats-carousel-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: clamp(10px, 2.2vw, 16px);
-    margin-bottom: clamp(20px, 4vw, 32px);
+    gap: clamp(10px, 2vw, 14px);
+    margin-bottom: clamp(16px, 3vw, 24px);
     z-index: 10;
     position: relative;
   }
 
   .kpi-card-glass {
-    padding: 20px;
-    min-height: 108px;
+    padding: 18px 20px;
+    min-height: 100px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -186,59 +186,102 @@ const styleSheet = `
     transform: translateY(-2px);
   }
 
-  .kpi-header-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .kpi-header-row { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    gap: 8px; 
+    margin-bottom: 8px; 
+  }
   .kpi-label {
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 600;
     color: var(--text-secondary);
-    letter-spacing: -0.01em;
+    letter-spacing: 0.01em;
     line-height: 1.3;
+    text-transform: uppercase;
     min-width: 0;
   }
   .kpi-icon-wrapper {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
     flex-shrink: 0;
     background: rgba(139, 92, 246, 0.1);
     box-shadow: 0 0 12px rgba(139, 92, 246, 0.1);
   }
   .kpi-main-metric {
-    font-size: 30px;
-    font-weight: 700;
+    font-size: 32px;
+    font-weight: 800;
     color: var(--text-primary);
     line-height: 1;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     letter-spacing: -0.03em;
     font-variant-numeric: tabular-nums;
   }
-  .kpi-desc-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; }
-  .kpi-desc { font-size: 11px; color: var(--text-tertiary); font-weight: 500; max-width: 65%; line-height: 1.4; }
+  .kpi-desc-row { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: flex-end; 
+    gap: 8px; 
+  }
+  .kpi-desc { 
+    font-size: 10px; 
+    color: var(--text-tertiary); 
+    font-weight: 500; 
+    max-width: 60%; 
+    line-height: 1.4; 
+  }
 
   /* ---------- Double pane layout ---------- */
   .calendar-dashboard-layout {
     display: grid;
     grid-template-columns: 1.6fr 1fr;
-    gap: clamp(16px, 3vw, 24px);
+    gap: clamp(14px, 2.5vw, 20px);
     z-index: 10;
     position: relative;
   }
-  .left-pane { display: flex; flex-direction: column; gap: clamp(16px, 3vw, 24px); min-width: 0; }
-  .right-pane { display: flex; flex-direction: column; gap: clamp(16px, 3vw, 24px); min-width: 0; }
+  .left-pane { 
+    display: flex; 
+    flex-direction: column; 
+    gap: clamp(14px, 2.5vw, 20px); 
+    min-width: 0; 
+  }
+  .right-pane { 
+    display: flex; 
+    flex-direction: column; 
+    gap: clamp(14px, 2.5vw, 20px); 
+    min-width: 0; 
+  }
 
   /* ---------- Event Composer ---------- */
-  .composer-card-glass { padding: 24px; }
-  .composer-title { font-size: 16px; font-weight: 700; margin: 0 0 16px 0; letter-spacing: -0.02em; }
-  .composer-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; width: 100%; }
+  .composer-card-glass { 
+    padding: 20px; 
+  }
+  .composer-title { 
+    font-size: 15px; 
+    font-weight: 700; 
+    margin: 0 0 14px 0; 
+    letter-spacing: -0.02em; 
+  }
+  .composer-form { 
+    display: flex; 
+    gap: 8px; 
+    align-items: center; 
+    flex-wrap: wrap; 
+    width: 100%; 
+  }
 
   .composer-input {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    padding: 12px 16px;
+    border-radius: 10px;
+    padding: 10px 14px;
     color: var(--text-primary);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     font-family: var(--atlas-font);
     box-sizing: border-box;
@@ -251,9 +294,9 @@ const styleSheet = `
   .composer-input:hover { background: var(--glass-bg-elevated); border-color: var(--glass-border-strong); }
   .composer-input::placeholder { color: var(--text-tertiary); opacity: 1; }
   .composer-input:focus { border-color: var(--input-focus-border); box-shadow: 0 0 0 4px var(--input-focus-glow); background: var(--glass-bg-elevated); }
-  .composer-input.title { flex: 2 1 200px; min-width: 0; }
-  .composer-input.date-picker { flex: 1 1 140px; max-width: 160px; cursor: pointer; }
-  .composer-input.time-picker { flex: 1 1 100px; max-width: 120px; cursor: pointer; }
+  .composer-input.title { flex: 2 1 180px; min-width: 0; }
+  .composer-input.date-picker { flex: 1 1 130px; max-width: 150px; cursor: pointer; }
+  .composer-input.time-picker { flex: 1 1 100px; max-width: 110px; cursor: pointer; }
 
   .btn-composer-add {
     position: relative;
@@ -261,9 +304,9 @@ const styleSheet = `
     background: var(--btn-primary-bg);
     color: #ffffff;
     border: none;
-    border-radius: 12px;
-    padding: 12px 24px;
-    font-size: 14px;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 13px;
     font-weight: 600;
     font-family: var(--atlas-font);
     letter-spacing: -0.01em;
@@ -282,27 +325,35 @@ const styleSheet = `
 
   /* ---------- Weekly ribbon (Calendar card) ---------- */
   .calendar-nav-card {
-    padding: 24px;
+    padding: 20px;
     overflow: hidden;
   }
-  .calendar-nav-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .calendar-nav-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    gap: 10px; 
+    margin-bottom: 16px; 
+  }
   .active-month-text {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
     letter-spacing: -0.03em;
     color: var(--text-primary);
     min-width: 0;
   }
 
-  .nav-controls-box { display: flex; gap: 8px; flex-shrink: 0; }
+  .nav-controls-box { display: flex; gap: 6px; flex-shrink: 0; }
   .btn-nav-arrow {
     background: var(--input-bg);
     border: 1px solid var(--glass-border);
     color: var(--text-primary);
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
     cursor: pointer;
     transition: background 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium);
   }
@@ -311,19 +362,18 @@ const styleSheet = `
   .week-days-ribbon {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: clamp(4px, 1.6vw, 10px);
+    gap: clamp(3px, 1.2vw, 8px);
   }
 
-  /* Eliminated "box-in-box" by using transparent default state with subtle hover */
   .day-ribbon-card {
     background: var(--input-bg);
     border: 1px solid transparent;
-    border-radius: 14px;
-    padding: 12px 4px;
+    border-radius: 12px;
+    padding: 10px 4px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     cursor: pointer;
     transition: background 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium), box-shadow 0.3s var(--ease-premium);
     position: relative;
@@ -337,7 +387,7 @@ const styleSheet = `
     content: '';
     position: absolute;
     inset: -3px;
-    border-radius: 17px;
+    border-radius: 15px;
     background: radial-gradient(circle, rgba(245, 158, 11, 0.16), transparent 70%);
     animation: today-halo-pulse 3.2s ease-in-out infinite;
     z-index: -1;
@@ -351,38 +401,55 @@ const styleSheet = `
   }
 
   .day-label-text {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.02em;
     white-space: nowrap;
   }
-  .day-number-text { font-size: 20px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
+  .day-number-text { 
+    font-size: 18px; 
+    font-weight: 700; 
+    color: var(--text-primary); 
+    letter-spacing: -0.02em; 
+  }
   .day-ribbon-card.is-selected .day-label-text,
   .day-ribbon-card.is-selected .day-number-text { color: #ffffff; }
 
   .today-glow-dot {
-    width: 5px; height: 5px;
+    width: 4px; 
+    height: 4px;
     background-color: var(--accent-amber);
     border-radius: 50%;
     box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
     position: absolute;
-    bottom: 6px;
+    bottom: 4px;
   }
 
   /* ---------- Timeline & Event Feed ---------- */
-  .timeline-container { padding: 24px; }
-  .timeline-axis { position: relative; padding-left: clamp(22px, 5vw, 30px); margin-top: 16px; min-width: 0; }
+  .timeline-container { padding: 20px; }
+  .timeline-axis { 
+    position: relative; 
+    padding-left: clamp(20px, 4vw, 28px); 
+    margin-top: 14px; 
+    min-width: 0; 
+  }
   .timeline-axis::before {
     content: '';
     position: absolute;
-    top: 6px; bottom: 6px; left: 7px; width: 2px;
+    top: 6px; 
+    bottom: 6px; 
+    left: 7px; 
+    width: 2px;
     background-image: repeating-linear-gradient(to bottom, var(--glass-border) 0px, var(--glass-border) 4px, transparent 4px, transparent 9px);
   }
 
   .timeline-node-dot {
-    position: absolute; left: 4px; width: 8px; height: 8px;
+    position: absolute; 
+    left: 4px; 
+    width: 8px; 
+    height: 8px;
     border-radius: 50%;
     background: var(--text-tertiary);
     border: 2px solid var(--canvas-bg);
@@ -394,20 +461,30 @@ const styleSheet = `
     box-shadow: 0 0 8px rgba(139, 92, 246, 0.4), 0 0 0 3px rgba(139, 92, 246, 0.18);
   }
 
-  .timeline-event-wrapper { position: relative; margin-bottom: 24px; min-width: 0; }
+  .timeline-event-wrapper { 
+    position: relative; 
+    margin-bottom: 20px; 
+    min-width: 0; 
+  }
   .timeline-event-wrapper:last-child { margin-bottom: 0; }
-  .timeline-time-col { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 8px; }
+  .timeline-time-col { 
+    font-size: 10px; 
+    font-weight: 600; 
+    color: var(--text-tertiary); 
+    text-transform: uppercase; 
+    letter-spacing: 0.02em; 
+    margin-bottom: 6px; 
+  }
 
-  /* Eliminated "box-in-box" by using transparent default state with subtle hover */
   .event-card-tactile {
     background: var(--input-bg);
     border: 1px solid transparent;
-    border-radius: 14px;
-    padding: 14px 16px;
+    border-radius: 12px;
+    padding: 12px 14px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     min-width: 0;
     transition: transform 0.25s var(--ease-premium), border-color 0.25s var(--ease-premium), box-shadow 0.3s var(--ease-premium), background 0.25s var(--ease-premium);
   }
@@ -419,78 +496,128 @@ const styleSheet = `
   }
 
   .event-title-main {
-    font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 0 0 4px 0; letter-spacing: -0.01em;
+    font-size: 13px; 
+    font-weight: 600; 
+    color: var(--text-primary); 
+    margin: 0 0 3px 0; 
+    letter-spacing: -0.01em;
     overflow-wrap: break-word;
     word-break: break-word;
   }
-  .event-meta-info { font-size: 11px; color: var(--text-tertiary); display: flex; align-items: center; gap: 6px; font-weight: 500; flex-wrap: wrap; }
-  .meta-tag { background: var(--glass-border); padding: 2px 8px; border-radius: 6px; font-weight: 500; }
+  .event-meta-info { 
+    font-size: 10px; 
+    color: var(--text-tertiary); 
+    display: flex; 
+    align-items: center; 
+    gap: 5px; 
+    font-weight: 500; 
+    flex-wrap: wrap; 
+  }
+  .meta-tag { 
+    background: var(--glass-border); 
+    padding: 1px 6px; 
+    border-radius: 5px; 
+    font-weight: 500; 
+  }
 
   .btn-delete-event {
-    background: transparent; border: 1px solid transparent; color: var(--text-tertiary);
-    cursor: pointer; padding: 8px; border-radius: 9px;
-    display: flex; align-items: center; justify-content: center;
+    background: transparent; 
+    border: 1px solid transparent; 
+    color: var(--text-tertiary);
+    cursor: pointer; 
+    padding: 6px; 
+    border-radius: 8px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
     flex-shrink: 0;
     transition: background 0.2s var(--ease-premium), color 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium);
   }
-  .btn-delete-event:hover { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); border-color: rgba(239, 68, 68, 0.2); }
+  .btn-delete-event:hover { 
+    background: rgba(239, 68, 68, 0.1); 
+    color: var(--accent-red); 
+    border-color: rgba(239, 68, 68, 0.2); 
+  }
 
   /* ---------- AI Suggestions & Progress ---------- */
   .ai-assistant-card {
-    padding: 24px;
+    padding: 20px;
     overflow: hidden;
   }
 
-  .ai-sparkle-icon { display: inline-flex; animation: ai-sparkle-twinkle 2.6s ease-in-out infinite; transform-origin: center; }
+  .ai-sparkle-icon { 
+    display: inline-flex; 
+    animation: ai-sparkle-twinkle 2.6s ease-in-out infinite; 
+    transform-origin: center; 
+  }
   @keyframes ai-sparkle-twinkle {
     0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.85; }
     50% { transform: scale(1.15) rotate(8deg); opacity: 1; }
   }
 
-  /* Eliminated "box-in-box" by using transparent default state with subtle hover */
   .ai-suggestion-box {
     background: var(--input-bg);
     border: 1px solid transparent;
-    border-radius: 14px;
-    padding: 14px;
-    margin-top: 14px;
+    border-radius: 12px;
+    padding: 12px;
+    margin-top: 12px;
     display: flex;
-    gap: 12px;
+    gap: 10px;
     align-items: flex-start;
     transition: background 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium), transform 0.2s var(--ease-premium);
   }
-  .ai-suggestion-box:hover { background: var(--input-bg-hover); border-color: var(--glass-border); transform: translateY(-1px); }
+  .ai-suggestion-box:hover { 
+    background: var(--input-bg-hover); 
+    border-color: var(--glass-border); 
+    transform: translateY(-1px); 
+  }
   .ai-suggestion-box > div { min-width: 0; word-wrap: break-word; }
 
-  .suggestion-bullet { width: 6px; height: 6px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+  .suggestion-bullet { 
+    width: 6px; 
+    height: 6px; 
+    border-radius: 50%; 
+    margin-top: 5px; 
+    flex-shrink: 0; 
+  }
 
   .month-radial-card {
-    padding: 20px 24px;
+    padding: 16px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: clamp(12px, 3vw, 18px);
+    gap: clamp(10px, 2.5vw, 16px);
   }
   .month-radial-card > div:first-child { min-width: 0; }
 
   /* ---------- Empty State ---------- */
   .empty-events-banner {
     text-align: center;
-    padding: 40px 16px;
-    border-radius: 16px;
+    padding: 32px 16px;
+    border-radius: 14px;
     border: 1px dashed var(--glass-border-strong);
     background: transparent;
     box-shadow: none;
   }
   .empty-icon-badge {
-    width: 44px; height: 44px; border-radius: 12px;
-    margin: 0 auto 14px auto;
-    display: flex; align-items: center; justify-content: center;
+    width: 40px; 
+    height: 40px; 
+    border-radius: 10px;
+    margin: 0 auto 12px auto;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
     background: var(--input-bg);
     color: var(--text-tertiary);
     border: 1px solid var(--glass-border);
   }
-  .empty-banner-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 0 0 4px 0; letter-spacing: -0.01em; }
+  .empty-banner-title { 
+    font-size: 13px; 
+    font-weight: 600; 
+    color: var(--text-primary); 
+    margin: 0 0 3px 0; 
+    letter-spacing: -0.01em; 
+  }
 
   /* ======================================================================
      TABLET (769px – 1024px)
@@ -505,65 +632,88 @@ const styleSheet = `
      ====================================================================== */
   @media (max-width: 768px) {
     .calendar-dashboard {
-      padding-bottom: calc(clamp(96px, 22vw, 120px) + env(safe-area-inset-bottom)) !important;
+      padding-bottom: calc(clamp(80px, 18vw, 100px) + env(safe-area-inset-bottom)) !important;
+      padding-inline: clamp(8px, 3vw, 16px) !important;
     }
 
     .stats-carousel-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: clamp(8px, 2.6vw, 10px);
-      margin-bottom: clamp(16px, 4vw, 20px);
+      gap: clamp(6px, 2vw, 10px);
+      margin-bottom: clamp(14px, 3vw, 18px);
     }
-    .kpi-card-glass { min-height: 98px; padding: 16px; border-radius: 16px; }
-    .kpi-main-metric { font-size: 24px; margin-bottom: 2px; }
-    .kpi-label { font-size: 11px; }
-    .kpi-desc { font-size: 10px; max-width: 100%; }
-    .kpi-icon-wrapper { width: 26px; height: 26px; border-radius: 8px; }
+    .kpi-card-glass { 
+      min-height: 90px; 
+      padding: 14px 16px; 
+      border-radius: 14px; 
+    }
+    .kpi-main-metric { font-size: 26px; margin-bottom: 2px; }
+    .kpi-label { font-size: 10px; }
+    .kpi-desc { font-size: 9px; max-width: 100%; }
+    .kpi-icon-wrapper { width: 28px; height: 28px; border-radius: 8px; }
 
-    .calendar-dashboard-layout { grid-template-columns: 1fr; gap: clamp(14px, 3.5vw, 20px); }
+    .calendar-dashboard-layout { 
+      grid-template-columns: 1fr; 
+      gap: clamp(12px, 3vw, 18px); 
+    }
 
-    .day-ribbon-card { gap: 4px; padding: 10px 2px; }
-    .day-number-text { font-size: 16px; }
-    .day-label-text { font-size: 10px; }
-    .today-glow-dot { width: 4px; height: 4px; bottom: 4px; }
+    .day-ribbon-card { gap: 3px; padding: 8px 2px; }
+    .day-number-text { font-size: 15px; }
+    .day-label-text { font-size: 9px; }
+    .today-glow-dot { width: 3px; height: 3px; bottom: 3px; }
 
-    .calendar-nav-card, .timeline-container, .ai-assistant-card { padding: 20px; border-radius: 18px; }
-    .active-month-text { font-size: 18px; }
+    .calendar-nav-card, .timeline-container, .ai-assistant-card { 
+      padding: 16px; 
+      border-radius: 16px; 
+    }
+    .active-month-text { font-size: 16px; }
     .composer-card-glass { display: none; }
-    .month-radial-card { padding: 18px 20px; }
+    .month-radial-card { padding: 14px 16px; }
 
     /* --- Floating Action Button --- */
     .mobile-floating-add-btn {
       position: fixed;
-      bottom: max(20px, env(safe-area-inset-bottom));
-      right: clamp(16px, 4vw, 28px);
-      width: clamp(52px, 14vw, 56px);
-      height: clamp(52px, 14vw, 56px);
-      border-radius: 16px;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      right: clamp(12px, 3vw, 20px);
+      width: clamp(48px, 12vw, 52px);
+      height: clamp(48px, 12vw, 52px);
+      border-radius: 14px;
       background: var(--btn-primary-bg);
-      display: flex; align-items: center; justify-content: center;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
       color: #ffffff;
       box-shadow: 0 6px 18px var(--btn-primary-glow), 0 1px 0 rgba(255,255,255,0.2) inset;
-      z-index: 99; cursor: pointer; border: none;
+      z-index: 99; 
+      cursor: pointer; 
+      border: none;
       overflow: hidden;
     }
 
     .mobile-drawer-sheet {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      right: 0; 
+      bottom: 0;
       background: rgba(8, 7, 12, 0.85);
       backdrop-filter: blur(25px);
       -webkit-backdrop-filter: blur(25px);
       z-index: 100;
-      display: flex; flex-direction: column; justify-content: flex-end;
+      display: flex; 
+      flex-direction: column; 
+      justify-content: flex-end;
     }
 
     .mobile-drawer-body {
       background: var(--glass-bg-elevated);
       border: 1px solid var(--glass-border-strong);
       border-bottom: none;
-      border-radius: 24px 24px 0 0;
-      padding: clamp(22px, 6vw, 30px) clamp(16px, 5vw, 24px);
-      padding-bottom: calc(clamp(22px, 6vw, 30px) + env(safe-area-inset-bottom));
-      display: flex; flex-direction: column; gap: clamp(14px, 4vw, 20px);
+      border-radius: 20px 20px 0 0;
+      padding: clamp(18px, 5vw, 24px) clamp(14px, 4vw, 20px);
+      padding-bottom: calc(clamp(18px, 5vw, 24px) + env(safe-area-inset-bottom));
+      display: flex; 
+      flex-direction: column; 
+      gap: clamp(12px, 3vw, 16px);
       box-shadow: var(--shadow-lg);
     }
 
@@ -827,9 +977,9 @@ function CalendarWidget({ userId }) {
                       {isToday && <div className="today-glow-dot" aria-hidden="true" />}
                       {dayEvents.length > 0 && !isToday && (
                         <div aria-hidden="true" style={{
-                          width: '5px', height: '5px', borderRadius: '50%',
+                          width: '4px', height: '4px', borderRadius: '50%',
                           background: isSelected ? '#ffffff' : 'var(--accent-purple)',
-                          marginTop: '4px'
+                          marginTop: '3px'
                         }} />
                       )}
                     </motion.div>
@@ -841,7 +991,7 @@ function CalendarWidget({ userId }) {
 
           {/* Interactive selected day timeline view */}
           <div className="timeline-container">
-            <h3 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 16px 0', letterSpacing: '-0.02em' }}>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 14px 0', letterSpacing: '-0.02em' }}>
               {selectedDay ? (
                 new Date(selectedDay).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
               ) : (
@@ -855,7 +1005,7 @@ function CalendarWidget({ userId }) {
                   <div className="empty-events-banner">
                     <div className="empty-icon-badge"><Clock3 size={20} aria-hidden="true" /></div>
                     <span className="empty-banner-title">Nothing Scheduled</span>
-                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>You have no events allocated for this day.</p>
+                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>You have no events allocated for this day.</p>
                   </div>
                 ) : (
                   selectedEvents.map((ev, index) => (
@@ -878,7 +1028,7 @@ function CalendarWidget({ userId }) {
                           className="btn-delete-event"
                           aria-label={`Delete event: ${ev.title}`}
                         >
-                          <Trash2 size={16} aria-hidden="true" />
+                          <Trash2 size={15} aria-hidden="true" />
                         </button>
                       </div>
                     </div>
@@ -911,7 +1061,7 @@ function CalendarWidget({ userId }) {
                           className="btn-delete-event"
                           aria-label={`Delete event: ${ev.title}`}
                         >
-                          <Trash2 size={16} aria-hidden="true" />
+                          <Trash2 size={15} aria-hidden="true" />
                         </button>
                       </div>
                     </div>
@@ -960,7 +1110,7 @@ function CalendarWidget({ userId }) {
                   aria-label="Add event"
                 >
                   <span className="btn-composer-content">
-                    <Plus size={16} aria-hidden="true" />
+                    <Plus size={15} aria-hidden="true" />
                     <span>Add Event</span>
                   </span>
                   <span className="btn-ripple-layer">
@@ -975,21 +1125,21 @@ function CalendarWidget({ userId }) {
 
           {/* AI Insights & suggestions */}
           <div className="ai-assistant-card">
-            <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '-0.02em' }}>
-              <span className="ai-sparkle-icon"><Sparkles size={16} color="var(--accent-amber)" aria-hidden="true" /></span>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '-0.02em' }}>
+              <span className="ai-sparkle-icon"><Sparkles size={15} color="var(--accent-amber)" aria-hidden="true" /></span>
               <span>Atlas AI Suggestions</span>
             </h3>
 
             <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.985 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
               <div className="suggestion-bullet" aria-hidden="true" style={{ background: 'var(--accent-amber)', boxShadow: '0 0 6px rgba(245, 158, 11, 0.45)' }} />
-              <div style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+              <div style={{ fontSize: '12px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
                 You have <strong style={{ color: 'var(--text-primary)' }}>3 hours free</strong> in your afternoon slot. Schedule a focus session?
               </div>
             </motion.div>
 
             <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.985 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
               <div className="suggestion-bullet" aria-hidden="true" style={{ background: 'var(--accent-red)', boxShadow: '0 0 6px rgba(239, 68, 68, 0.4)' }} />
-              <div style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+              <div style={{ fontSize: '12px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
                 Assignment due tomorrow. Ensure preparation notes are reviewed.
               </div>
             </motion.div>
@@ -998,12 +1148,12 @@ function CalendarWidget({ userId }) {
           {/* Radial progress card */}
           <div className="month-radial-card">
             <div>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>Month Completion</h3>
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>Based on overall metrics.</p>
+              <h3 style={{ fontSize: '14px', fontWeight: 700, margin: '0 0 3px 0', letterSpacing: '-0.02em' }}>Month Completion</h3>
+              <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Based on overall metrics.</p>
             </div>
 
-            <div style={{ position: 'relative', width: '68px', height: '68px', flexShrink: 0 }}>
-              <svg width="68" height="68" viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }} role="img" aria-label={`Month completion: ${monthProgressRate}%`}>
+            <div style={{ position: 'relative', width: '64px', height: '64px', flexShrink: 0 }}>
+              <svg width="64" height="64" viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }} role="img" aria-label={`Month completion: ${monthProgressRate}%`}>
                 <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
                 <motion.path
                   fill="none"
@@ -1022,7 +1172,7 @@ function CalendarWidget({ userId }) {
                   </linearGradient>
                 </defs>
               </svg>
-              <div aria-hidden="true" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+              <div aria-hidden="true" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
                 {monthProgressRate}%
               </div>
             </div>
@@ -1044,7 +1194,7 @@ function CalendarWidget({ userId }) {
             transition={{ type: 'spring', stiffness: 380, damping: 22 }}
             aria-label="Add event"
           >
-            <Plus size={24} strokeWidth={2.5} aria-hidden="true" style={{ position: 'relative', zIndex: 3 }} />
+            <Plus size={22} strokeWidth={2.5} aria-hidden="true" style={{ position: 'relative', zIndex: 3 }} />
             <span className="btn-ripple-layer">
               {fabRipples.map((r) => (
                 <span key={r.id} className="btn-ripple" style={{ left: r.x, top: r.y, width: r.size, height: r.size }} />
