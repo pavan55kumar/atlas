@@ -8,7 +8,6 @@ import { supabase } from './lib/supabase'
 
 const ease = [0.22, 1, 0.36, 1]
 
-// Premium Theme Adaptive Glassmorphic Stylesheet (VisionOS / Linear Grade)
 const styleSheet = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
