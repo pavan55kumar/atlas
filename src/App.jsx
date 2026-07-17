@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import Auth from './Auth'
 import Dashboard from './Dashboard'
+import { BrowserRouter } from 'react-router-dom'
 
 function App() {
   const [theme, setTheme] = useState('dark')
