@@ -1,107 +1,73 @@
 import { useEffect, useState, useCallback, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  GraduationCap, BookOpen, Award, Layers, Trash2, Plus,
-  ChevronDown, School, Library, TrendingUp
+  GraduationCap, BookOpen, Award, Layers, Trash2, CalendarDays, Plus,
+  ChevronDown, Flame, CheckCircle, TrendingUp, Sparkles, School, Library
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
 
-const EASE = [0.22, 1, 0.36, 1]
-
 const styleSheet = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-
+  
   :root {
     --atlas-font: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+
     --canvas-bg: #090810;
     --glass-bg: rgba(18, 16, 30, 0.65);
-    --glass-border: rgba(255, 255, 255, 0.05);
-    --glass-border-glow: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(236, 72, 153, 0.3) 100%);
+    --glass-border: rgba(255, 255, 255, 0.06);
+    --glass-border-glow: linear-gradient(135deg, rgba(139, 92, 246, 0.35) 0%, rgba(236, 72, 153, 0.35) 100%);
     --text-primary: #ffffff;
     --text-secondary: #94a3b8;
     --text-tertiary: #64748b;
     --input-bg: rgba(26, 23, 44, 0.6);
-    --input-border: rgba(255, 255, 255, 0.06);
+    --input-border: rgba(255, 255, 255, 0.07);
     --input-focus-border: #8b5cf6;
-    --input-focus-glow: rgba(139, 92, 246, 0.25);
-    --btn-primary-bg: linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #ec4899 100%);
-    --btn-primary-glow: rgba(139, 92, 246, 0.4);
-    --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    --card-shadow-hover: 0 32px 64px -14px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.07);
-    --aurora-primary: rgba(139, 92, 246, 0.12);
-    --aurora-secondary: rgba(236, 72, 153, 0.08);
-    --aurora-tertiary: rgba(59, 130, 246, 0.08);
-    
-    /* Variable Theme Overrides */
-    --input-text: #ffffff;
-    --accent-emerald: #10b981;
-    --accent-amber: #f59e0b;
-    --accent-coral: #ef4444;
-    --sparkline-color: #8b5cf6;
+    --input-focus-glow: rgba(139, 92, 246, 0.28);
+
+    --btn-primary-bg: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    --btn-primary-glow: rgba(139, 92, 246, 0.45);
+    --card-shadow: 0 20px 45px -14px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --card-shadow-hover: 0 26px 55px -14px rgba(0, 0, 0, 0.6), 0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+    --aurora-primary: rgba(139, 92, 246, 0.13);
+    --aurora-secondary: rgba(236, 72, 153, 0.09);
+    --aurora-tertiary: rgba(59, 130, 246, 0.09);
   }
 
   body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
     --canvas-bg: #f8fafc;
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(15, 23, 42, 0.06);
-    --glass-border-glow: linear-gradient(135deg, rgba(92, 71, 245, 0.15) 0%, rgba(224, 83, 93, 0.15) 100%);
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(15, 23, 42, 0.07);
+    --glass-border-glow: linear-gradient(135deg, rgba(92, 71, 245, 0.18) 0%, rgba(224, 83, 93, 0.18) 100%);
     --text-primary: #1e1b4b;
     --text-secondary: #475569;
     --text-tertiary: #94a3b8;
-    --input-bg: rgba(241, 245, 249, 0.75);
-    --input-border: rgba(15, 23, 42, 0.08);
+    --input-bg: rgba(241, 245, 249, 0.78);
+    --input-border: rgba(15, 23, 42, 0.09);
     --input-focus-border: #6366f1;
-    --input-focus-glow: rgba(99, 102, 241, 0.15);
-    --btn-primary-bg: linear-gradient(135deg, #6366f1 0%, #818cf8 50%, #a855f7 100%);
-    --btn-primary-glow: rgba(99, 102, 241, 0.2);
-    --card-shadow: 0 15px 35px rgba(31, 38, 135, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-    --card-shadow-hover: 0 20px 45px rgba(31, 38, 135, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    --input-focus-glow: rgba(99, 102, 241, 0.18);
+
+    --btn-primary-bg: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    --btn-primary-glow: rgba(99, 102, 241, 0.25);
+    --card-shadow: 0 12px 32px rgba(31, 38, 135, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    --card-shadow-hover: 0 18px 42px rgba(31, 38, 135, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+
     --aurora-primary: #ffe3d8;
     --aurora-secondary: #dce5ff;
     --aurora-tertiary: #eedcff;
-
-    --input-text: #1e1b4b;
-    --accent-emerald: #059669;
-    --accent-amber: #d97706;
-    --accent-coral: #dc2626;
-    --sparkline-color: #6366f1;
-  }
-
-  /* --- Global Responsiveness & Zoom Controls --- */
-  a, button, input, select, textarea, [role="button"], 
-  .mobile-accordion-closed-row, .dropdown-trigger-btn, 
-  .dropdown-option-item, .mobile-add-subject-form-trigger,
-  .premium-subject-card, .mobile-subject-accordion-item,
-  .btn-destroy-subject {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    touch-action: manipulation; /* Prevents double-tap zoom delay */
-  }
-
-  .mobile-accordion-closed-row, 
-  .dropdown-trigger-btn, 
-  .dropdown-option-item, 
-  .mobile-add-subject-form-trigger, 
-  .btn-subject-add, 
-  .btn-destroy-subject,
-  .semester-pill,
-  .sgpa-badge-glowing,
-  .kpi-card-glass {
-    user-select: none;
-    -webkit-user-select: none;
   }
 
   .subjects-wrapper {
-  font-family: var(--atlas-font);
-  color: var(--text-primary);
-  max-width: 1100px;
-  width: 100%;
-  margin: 0 auto;
-  position: relative;
-  padding: clamp(10px, 3vw, 20px) clamp(12px, 4vw, 24px);
-  box-sizing: border-box;
-  overflow-x: clip; /* or hidden */
-}
+    font-family: var(--atlas-font);
+    color: var(--text-primary);
+    max-width: 1100px;
+    margin: 0 auto;
+    position: relative;
+    padding: 20px 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
 
   .aurora-blur-sphere {
     position: absolute;
@@ -119,58 +85,55 @@ const styleSheet = `
   .subjects-hero-header {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: clamp(16px, 3vw, 24px);
-    padding: clamp(20px, 4vw, 32px) clamp(24px, 5vw, 40px);
-    margin-bottom: clamp(16px, 4vw, 32px);
+    border-radius: 26px;
+    padding: 32px 40px;
+    margin-bottom: 28px;
     box-shadow: var(--card-shadow);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
     z-index: 10;
+    flex-wrap: wrap;
+    gap: 16px;
   }
 
-  .hero-info-area h1 { 
-    font-size: clamp(24px, 5vw, 32px); 
-    font-weight: 800; 
-    margin: 0 0 6px 0; 
-    letter-spacing: -0.02em; 
-    color: var(--text-primary); 
-  }
-  
-  .hero-info-area p { font-size: 14px; color: var(--text-secondary); margin: 0; font-weight: 500; }
-  .hero-meta-badges { display: flex; align-items: center; gap: 12px; }
+  .hero-info-area h1 { font-size: 30px; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; color: var(--text-primary); }
+  .hero-info-area p { font-size: 13.5px; color: var(--text-secondary); margin: 0; font-weight: 500; }
+  .hero-meta-badges { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
   .semester-pill {
-    background: rgba(139, 92, 246, 0.1);
-    border: 1px solid rgba(139, 92, 246, 0.18);
-    color: #8b5cf6;
-    font-size: 11px;
+    background: rgba(139, 92, 246, 0.12);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    color: #a78bfa;
+    font-size: 10.5px;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    padding: 7px 15px;
+    padding: 7px 14px;
     border-radius: 100px;
-    backdrop-filter: blur(6px);
+    white-space: nowrap;
+    box-shadow: 0 0 0 1px rgba(139,92,246,0.06), 0 4px 14px rgba(139,92,246,0.12);
   }
 
   .sgpa-badge-glowing {
     background: linear-gradient(135deg, #ffeaa7 0%, #e1b12c 100%);
-    color: #0c0b11;
+    color: #16130a;
     font-size: 12px;
     font-weight: 800;
-    padding: 6px 16px;
+    padding: 7px 16px;
     border-radius: 100px;
-    box-shadow: 0 4px 14px rgba(225, 177, 44, 0.35), inset 0 1px 0 rgba(255,255,255,0.4);
+    box-shadow: 0 4px 16px rgba(225, 177, 44, 0.35), inset 0 1px 0 rgba(255,255,255,0.4);
+    white-space: nowrap;
   }
 
   .stats-carousel-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: clamp(8px, 2vw, 16px);
-    margin-bottom: clamp(16px, 4vw, 32px);
+    gap: 14px;
+    margin-bottom: 28px;
     z-index: 10;
     position: relative;
   }
@@ -178,40 +141,40 @@ const styleSheet = `
   .kpi-card-glass {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: clamp(16px, 3.5vw, 22px);
-    padding: clamp(14px, 3vw, 20px);
+    border-radius: 20px;
+    padding: 20px;
     box-shadow: var(--card-shadow);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: clamp(94px, 15vh, 120px);
+    min-height: 118px;
     position: relative;
     overflow: hidden;
-    transition: box-shadow 0.3s ease;
+    box-sizing: border-box;
+    transition: box-shadow 0.3s var(--ease-premium), border-color 0.3s var(--ease-premium);
   }
 
-  .kpi-card-glass:hover { box-shadow: var(--card-shadow-hover); }
-
   .kpi-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .kpi-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; }
-  .kpi-icon-wrapper { color: var(--text-secondary); opacity: 0.8; }
-  .kpi-main-metric { font-size: clamp(20px, 6vw, 28px); font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 6px; }
-  .kpi-desc-row { display: flex; justify-content: space-between; align-items: flex-end; }
-  .kpi-desc { font-size: 11px; color: var(--text-tertiary); font-weight: 500; max-width: 60%; }
+  .kpi-label { font-size: 10.5px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.07em; }
+  .kpi-icon-wrapper { color: var(--text-secondary); opacity: 0.85; display: flex; }
+  .kpi-main-metric { font-size: 27px; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 6px; letter-spacing: -0.01em; }
+  .kpi-desc-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; }
+  .kpi-desc { font-size: 10.5px; color: var(--text-tertiary); font-weight: 500; max-width: 60%; line-height: 1.4; }
 
   .subject-form-panel {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: clamp(16px, 3vw, 24px);
-    padding: clamp(16px, 4vw, 24px);
-    margin-bottom: clamp(16px, 4vw, 32px);
+    border-radius: 24px;
+    padding: 24px;
+    margin-bottom: 28px;
     box-shadow: var(--card-shadow);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     z-index: 10;
     position: relative;
+    box-sizing: border-box;
   }
 
   .subject-form { display: flex; gap: 12px; align-items: center; width: 100%; }
@@ -220,48 +183,48 @@ const styleSheet = `
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     border-radius: 14px;
-    padding: 14px 18px;
-    color: var(--input-text);
-    font-size: 14px;
+    padding: 13px 17px;
+    color: var(--text-primary);
+    font-size: 13.5px;
     font-weight: 500;
     box-sizing: border-box;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: border-color 0.2s var(--ease-premium), box-shadow 0.2s var(--ease-premium);
   }
 
-  .subject-input::placeholder { color: var(--text-secondary); opacity: 0.6; }
-  .subject-input:focus { outline: none; border-color: var(--input-focus-border); background: var(--input-bg); box-shadow: 0 0 0 3px var(--input-focus-glow); }
+  .subject-input::placeholder { color: var(--text-secondary); opacity: 0.65; }
+  .subject-input:focus { outline: none; border-color: var(--input-focus-border); box-shadow: 0 0 0 3px var(--input-focus-glow); }
+
   .subject-input.name { flex: 2; min-width: 200px; }
   .subject-input.credits { width: 100px; min-width: 80px; }
   .subject-input.faculty { flex: 1.2; min-width: 150px; }
 
   .btn-subject-add {
+    position: relative;
     background: var(--btn-primary-bg);
     color: #ffffff;
     border: none;
     border-radius: 14px;
-    padding: 14px 24px;
-    font-size: 14px;
-    font-weight: 600;
+    padding: 13px 24px;
+    font-size: 13.5px;
+    font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 6px 16px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.25);
-    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 6px 18px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.25);
+    transition: transform 0.2s var(--ease-premium), box-shadow 0.2s var(--ease-premium);
     display: flex;
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
     white-space: nowrap;
+    overflow: hidden;
   }
 
-  .btn-subject-add:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 26px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.3);
-    filter: brightness(1.05);
-  }
+  .btn-subject-add:hover { transform: translateY(-1px); box-shadow: 0 10px 26px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.3); }
+  .btn-subject-add:active { transform: translateY(0) scale(0.98); }
 
   .subjects-dashboard-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    gap: 18px;
     z-index: 10;
     position: relative;
   }
@@ -269,31 +232,30 @@ const styleSheet = `
   .premium-subject-card {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: clamp(18px, 3vw, 24px);
-    padding: clamp(18px, 3vw, 24px);
+    border-radius: 22px;
+    padding: 22px;
     box-shadow: var(--card-shadow);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: clamp(200px, 25vh, 220px);
+    min-height: 212px;
     position: relative;
     overflow: visible;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    transition: box-shadow 0.3s var(--ease-premium), border-color 0.3s var(--ease-premium);
   }
 
   .premium-subject-card:hover {
-    border-image: var(--glass-border-glow) 1;
-    border-radius: clamp(18px, 3vw, 24px);
     box-shadow: var(--card-shadow-hover);
+    border-color: rgba(139, 92, 246, 0.25);
   }
 
   .card-top-header { display: flex; justify-content: space-between; align-items: flex-start; z-index: 2; position: relative; }
 
   .academic-brand-icon {
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     background: var(--input-bg);
     border: 1px solid var(--glass-border);
     border-radius: 12px;
@@ -301,39 +263,45 @@ const styleSheet = `
     align-items: center;
     justify-content: center;
     color: #8b5cf6;
+    flex-shrink: 0;
   }
 
   .academic-completetion-chip {
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     padding: 4px 10px;
     border-radius: 100px;
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--accent-emerald);
-    border: 1px solid rgba(16, 185, 129, 0.15);
+    background: rgba(16, 185, 129, 0.12);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.2);
     white-space: nowrap;
   }
 
   .academic-pending-chip {
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     padding: 4px 10px;
     border-radius: 100px;
-    background: rgba(245, 158, 11, 0.1);
-    color: var(--accent-amber);
-    border: 1px solid rgba(245, 158, 11, 0.15);
+    background: rgba(245, 158, 11, 0.12);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.2);
     white-space: nowrap;
   }
 
   .card-text-body { margin: 16px 0; z-index: 2; position: relative; }
-  .card-subject-name { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0 0 6px 0; line-height: 1.3; letter-spacing: -0.01em; }
-  .card-subject-meta { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; font-weight: 500; }
+
+  .card-subject-name { font-size: 17px; font-weight: 700; color: var(--text-primary); margin: 0 0 6px 0; line-height: 1.3; }
+
+  .card-subject-meta { font-size: 11.5px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; font-weight: 500; flex-wrap: wrap; }
+
   .card-credits-indicator { background: var(--input-bg); padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+
   .card-divider-line { height: 1px; background: var(--glass-border); margin-bottom: 16px; z-index: 2; position: relative; }
+
   .card-grades-tray { display: flex; align-items: center; justify-content: space-between; gap: 12px; z-index: 20; position: relative; }
 
   .custom-dropdown-container { position: relative; width: 120px; z-index: 30; }
@@ -344,20 +312,20 @@ const styleSheet = `
     border: 1px solid var(--input-border);
     border-radius: 10px;
     padding: 8px 12px;
-    color: var(--input-text);
-    font-size: 13px;
+    color: var(--text-primary);
+    font-size: 12.5px;
     font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: border-color 0.2s var(--ease-premium), box-shadow 0.2s var(--ease-premium);
     box-sizing: border-box;
     outline: none;
   }
 
   .dropdown-trigger-btn:focus { border-color: var(--input-focus-border); box-shadow: 0 0 0 3px var(--input-focus-glow); }
-  .dropdown-chevron { color: var(--text-secondary); transition: transform 0.25s ease; }
+  .dropdown-chevron { color: var(--text-secondary); transition: transform 0.25s var(--ease-premium); }
   .dropdown-chevron.open { transform: rotate(180deg); }
 
   .dropdown-options-list {
@@ -373,13 +341,21 @@ const styleSheet = `
     padding: 6px;
     margin: 0;
     list-style: none;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
     box-sizing: border-box;
     z-index: 100;
-    will-change: opacity, transform;
   }
 
-  .dropdown-option-item { padding: 8px 10px; font-size: 12px; font-weight: 600; color: var(--text-secondary); border-radius: 8px; cursor: pointer; transition: all 0.15s ease; }
+  .dropdown-option-item {
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
   .dropdown-option-item:hover { background: var(--input-bg); color: var(--text-primary); }
   .dropdown-option-item.selected { background: var(--btn-primary-bg); color: #ffffff; }
 
@@ -395,63 +371,98 @@ const styleSheet = `
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: background 0.2s var(--ease-premium), color 0.2s var(--ease-premium);
+    flex-shrink: 0;
   }
 
-  .btn-destroy-subject:hover { background: rgba(239, 68, 68, 0.08); color: var(--accent-coral); }
+  .btn-destroy-subject:hover { background: rgba(239, 68, 68, 0.1); color: #f87171; }
 
   .dashboard-empty-state {
     text-align: center;
-    padding: 60px 20px;
-    border-radius: 28px;
+    padding: 56px 20px;
+    border-radius: 26px;
     border: 1.5px dashed var(--glass-border);
     background: var(--glass-bg);
     backdrop-filter: blur(20px);
     z-index: 10;
     position: relative;
+    box-sizing: border-box;
   }
 
-  .empty-banner-title { font-size: 20px; font-weight: 700; color: var(--text-primary); margin: 16px 0 6px 0; }
-  .empty-banner-subtitle { font-size: 14px; color: var(--text-secondary); max-width: 340px; margin: 0 auto; line-height: 1.5; }
+  .empty-banner-title { font-size: 19px; font-weight: 700; color: var(--text-primary); margin: 16px 0 6px 0; }
+  .empty-banner-subtitle { font-size: 13.5px; color: var(--text-secondary); max-width: 340px; margin: 0 auto; line-height: 1.5; }
 
-  /* =========================================================================
-     MOBILE SECURE RENDERING - ULTRA-COMPACT RESPONSIVE UX
-     ========================================================================= */
+  /* --- Performance-friendly accordion: CSS grid-rows technique, no JS height measurement --- */
+  .mobile-accordion-drawer-grid {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.28s var(--ease-premium);
+  }
+  .mobile-accordion-drawer-grid.is-open { grid-template-rows: 1fr; }
+
+  .mobile-accordion-drawer-inner {
+    overflow: hidden;
+    min-height: 0;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+  }
+  .mobile-accordion-drawer-grid.is-open .mobile-accordion-drawer-inner {
+    opacity: 1;
+    transition: opacity 0.22s ease 0.06s;
+  }
+
   @media (max-width: 768px) {
     .subjects-hero-header { padding: 16px 20px; margin-bottom: 16px; border-radius: 18px; flex-direction: row; align-items: center; gap: 12px; }
-    .subjects-hero-header h1 { font-size: clamp(20px, 5.5vw, 24px) !important; }
+    .subjects-hero-header h1 { font-size: 20px !important; }
     .subjects-hero-header p { display: none; }
 
-    .stats-carousel-grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding-bottom: 4px; margin-bottom: 16px; -webkit-overflow-scrolling: touch; }
+    .stats-carousel-grid {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      gap: 10px;
+      padding-bottom: 4px;
+      margin-bottom: 16px;
+      -webkit-overflow-scrolling: touch;
+    }
+
     .stats-carousel-grid::-webkit-scrollbar { display: none; }
 
-    .kpi-card-glass { flex: 0 0 clamp(230px, 70vw, 300px); scroll-snap-align: start; min-height: 94px; padding: 14px; border-radius: 16px; }
-    .kpi-main-metric { font-size: clamp(20px, 6vw, 24px) !important; margin-bottom: 2px; }
+    .kpi-card-glass { flex: 0 0 70%; scroll-snap-align: start; min-height: 92px; padding: 14px; border-radius: 15px; }
+    .kpi-main-metric { font-size: 20px !important; margin-bottom: 2px; }
     .kpi-desc { font-size: 10px !important; }
     .golden-trophy-badge { display: none !important; }
 
     .subjects-dashboard-grid { display: none; }
 
-    .mobile-accordion-list-container { display: flex; flex-direction: column; gap: 10px; z-index: 10; position: relative; }
+    .mobile-accordion-list-container { display: flex; flex-direction: column; gap: 8px; z-index: 10; position: relative; }
 
     .mobile-subject-accordion-item {
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
-      border-radius: clamp(14px, 4vw, 18px);
+      border-radius: 17px;
       box-shadow: var(--card-shadow);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
+      overflow: hidden;
       box-sizing: border-box;
-      transition: box-shadow 0.3s ease;
-      /* Keep visible to prevent absolute dropdown options list from being clipped */
-      overflow: visible; 
+      transition: border-color 0.25s var(--ease-premium);
     }
 
-    .mobile-subject-accordion-item:hover { box-shadow: var(--card-shadow-hover); }
-    .mobile-subject-accordion-item.is-active { border-left: 3px solid #7c3aed; }
+    .mobile-subject-accordion-item.is-active { border-left: 3px solid #8b5cf6; }
     .mobile-subject-accordion-item.is-graded { border-left: 3px solid #10b981; }
 
-    .mobile-accordion-closed-row { display: flex; justify-content: space-between; align-items: center; padding: clamp(12px, 4vw, 16px); min-height: 72px; cursor: pointer; user-select: none; box-sizing: border-box; }
+    .mobile-accordion-closed-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      min-height: 72px;
+      cursor: pointer;
+      user-select: none;
+      box-sizing: border-box;
+    }
+
     .mobile-row-left { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
 
     .mobile-accordion-icon {
@@ -460,100 +471,37 @@ const styleSheet = `
     }
 
     .mobile-subject-info-block { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
-    .mobile-subject-name { font-size: clamp(14px, 4vw, 15px); font-weight: 700; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mobile-subject-name { font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .mobile-subject-meta-inline { font-size: 11px; color: var(--text-secondary); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
     .mobile-row-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    .mobile-chevron-chevron { color: var(--text-tertiary); transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
+
+    .mobile-chevron-chevron { color: var(--text-tertiary); transition: transform 0.25s var(--ease-premium); }
     .mobile-chevron-chevron.is-open { transform: rotate(180deg); }
 
-    .mobile-accordion-drawer-body { padding: 0 16px 16px 16px; border-top: 1px solid var(--glass-border); will-change: opacity, transform; }
+    .mobile-accordion-drawer-body { padding: 0 16px 16px 16px; border-top: 1px solid var(--glass-border); }
     .mobile-drawer-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 14px; }
 
-    .subject-form-panel { padding: 16px; margin-bottom: 16px; border-radius: 18px; }
+    .subject-form-panel { padding: 16px; margin-bottom: 16px; border-radius: 17px; }
     .subject-form { flex-direction: column; align-items: stretch; gap: 12px; }
-    
-    /* Responsive input scaling + Mobile iOS Auto-Zoom fix */
-    .subject-input { 
-      width: 100% !important; 
-      font-size: 16px !important; /* Forces iOS not to trigger automatic browser zoom on focus */
-      padding: 11px 14px !important; /* Tighter padding balancing larger text scale */
-    }
-    
-    .btn-subject-add { width: 100% !important; justify-content: center; min-height: 44px; }
+    .subject-input { width: 100% !important; }
+    .btn-subject-add { width: 100% !important; justify-content: center; }
 
     .mobile-add-subject-form-trigger {
       background: var(--btn-primary-bg);
-      border-radius: 16px;
+      border-radius: 15px;
       padding: 13px;
       text-align: center;
       color: #ffffff;
       font-weight: 700;
-      font-size: 14px;
+      font-size: 13.5px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       margin-bottom: 16px;
-      box-shadow: 0 4px 14px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.25);
-      min-height: 44px; /* Accessible standard tap boundary */
-    }
-
-    /* Accessibility sizing optimizations for interactive items */
-    .dropdown-trigger-btn {
-      min-height: 44px;
-    }
-
-    .btn-destroy-subject {
-      min-width: 44px;
-      min-height: 44px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .dropdown-option-item {
-      padding: 12px 10px !important; /* Expanded touch standard */
-    }
-  }
-
-  /* Compressing spaces gracefully on ultra-small viewports (e.g. 320px - 360px) */
-  @media (max-width: 360px) {
-    .subjects-wrapper {
-      padding: 8px 8px;
-    }
-    .subjects-hero-header {
-      padding: 12px 14px !important;
-      border-radius: 14px !important;
-    }
-    .subjects-hero-header h1 {
-      font-size: 18px !important;
-    }
-    .mobile-accordion-closed-row {
-      padding: 12px 10px !important;
-    }
-    .mobile-row-left {
-      gap: 8px !important;
-    }
-    .mobile-subject-info-block {
-      gap: 0px !important;
-    }
-    .mobile-subject-name {
-      font-size: 14px !important;
-    }
-    .mobile-subject-meta-inline {
-      font-size: 10px !important;
-    }
-    .mobile-accordion-icon {
-      width: 32px !important;
-      height: 32px !important;
-    }
-    .kpi-card-glass {
-      flex: 0 0 82% !important;
-    }
-    .dropdown-trigger-btn {
-      padding: 8px 8px !important;
-      font-size: 12px !important;
+      box-shadow: 0 6px 16px var(--btn-primary-glow);
     }
   }
 
@@ -564,15 +512,29 @@ const styleSheet = `
   }
 `;
 
+function fieldsEqual(a, b) {
+  return a.id === b.id && a.name === b.name && a.credits === b.credits &&
+    a.faculty === b.faculty && a.grade_point === b.grade_point
+}
+
 function Subjects({ userId }) {
   const [subjects, setSubjects] = useState([])
   const [name, setName] = useState('')
   const [credits, setCredits] = useState('')
   const [faculty, setFaculty] = useState('')
   const [loading, setLoading] = useState(true)
+
   const [isMobile, setIsMobile] = useState(false)
   const [expandedSubjectId, setExpandedSubjectId] = useState(null)
   const [isAddFormExpanded, setIsAddFormExpanded] = useState(false)
+
+  useEffect(() => {
+    fetchSubjects()
+    const handleResize = () => setIsMobile(window.innerWidth <= 768)
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const fetchSubjects = useCallback(async () => {
     const { data, error } = await supabase
@@ -583,15 +545,7 @@ function Subjects({ userId }) {
     setLoading(false)
   }, [])
 
-  useEffect(() => {
-    fetchSubjects()
-    const handleResize = () => setIsMobile(window.innerWidth <= 768)
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [fetchSubjects])
-
-  const addSubject = useCallback(async (e) => {
+  async function addSubject(e) {
     e.preventDefault()
     if (!name.trim() || !credits) return
     const { error } = await supabase
@@ -604,7 +558,7 @@ function Subjects({ userId }) {
       setIsAddFormExpanded(false)
       fetchSubjects()
     }
-  }, [name, credits, faculty, userId, fetchSubjects])
+  }
 
   const updateGrade = useCallback(async (subject, value) => {
     const gp = value === '' ? null : parseFloat(value)
@@ -660,7 +614,10 @@ function Subjects({ userId }) {
         className="stats-carousel-grid"
         initial="hidden"
         animate="visible"
-        variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } }}
+        variants={{
+          hidden: { opacity: 0 },
+          visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+        }}
       >
         <SummaryCard
           label="Subjects"
@@ -681,7 +638,7 @@ function Subjects({ userId }) {
         <motion.div
           className="kpi-card-glass"
           variants={{ hidden: { opacity: 0, y: 15 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' } } }}
-          whileHover={{ y: -4, transition: { duration: 0.2, ease: EASE } }}
+          whileHover={{ y: -4, transition: { duration: 0.2 } }}
         >
           <div className="kpi-header-row">
             <span className="kpi-label">Cumulative SGPA</span>
@@ -694,7 +651,7 @@ function Subjects({ userId }) {
           </div>
           <div className="kpi-desc-row">
             <span className="kpi-desc">Based on evaluated modules.</span>
-            <div className="golden-trophy-badge" style={{ width: '28px', height: '28px', top: 'unset', right: '12px', bottom: '12px' }}>
+            <div className="golden-trophy-badge" style={{ position: 'absolute', width: '28px', height: '28px', top: 'unset', right: '12px', bottom: '12px', borderRadius: '50%', background: 'radial-gradient(circle, #ffeaa7 0%, #e1b12c 100%)', boxShadow: '0 4px 12px rgba(225, 177, 44, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <GraduationCap size={14} color="#0c0b11" strokeWidth={2.5} />
             </div>
           </div>
@@ -812,6 +769,7 @@ function Subjects({ userId }) {
       {loading ? (
         <p style={{ color: 'var(--text-secondary)', fontSize: '13px', textAlign: 'center' }}>Loading subjects...</p>
       ) : subjects.length === 0 ? (
+
         <div className="dashboard-empty-state">
           <GraduationCap size={48} color="var(--accent-purple)" opacity="0.8" style={{ margin: '0 auto' }} />
           <h4 className="empty-banner-title">No subjects added yet</h4>
@@ -819,6 +777,7 @@ function Subjects({ userId }) {
             Create subjects and allocate credit values above to activate your dashboard.
           </p>
         </div>
+
       ) : !isMobile ? (
         <motion.div
           className="subjects-dashboard-grid"
@@ -827,13 +786,18 @@ function Subjects({ userId }) {
           variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.08 } } }}
         >
           {subjects.map((s) => (
-            <DesktopSubjectCard key={s.id} subject={s} onUpdateGrade={updateGrade} onDelete={deleteSubject} />
+            <PremiumSubjectCard
+              key={s.id}
+              subject={s}
+              onUpdateGrade={updateGrade}
+              onDelete={deleteSubject}
+            />
           ))}
         </motion.div>
       ) : (
         <div className="mobile-accordion-list-container">
           {subjects.map((s) => (
-            <MobileSubjectAccordionItem
+            <MobileAccordionItem
               key={s.id}
               subject={s}
               isExpanded={expandedSubjectId === s.id}
@@ -848,8 +812,115 @@ function Subjects({ userId }) {
   )
 }
 
-const CustomGradeDropdown = memo(function CustomGradeDropdown({ value, onChange }) {
-  const [isOpen, setIsOpen] = useState(false)
+/* Memoized desktop card — only re-renders when this subject's own fields change */
+const PremiumSubjectCard = memo(function PremiumSubjectCard({ subject: s, onUpdateGrade, onDelete }) {
+  const isGraded = s.grade_point !== null && s.grade_point !== undefined
+
+  return (
+    <motion.div
+      className="premium-subject-card"
+      variants={{
+        hidden: { opacity: 0, y: 20, scale: 0.95 },
+        visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 80 } }
+      }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+    >
+      <div className="card-top-header">
+        <div className="academic-brand-icon">
+          <School size={18} />
+        </div>
+        <span className={isGraded ? 'academic-completetion-chip' : 'academic-pending-chip'}>
+          {isGraded ? 'Graded' : 'Active'}
+        </span>
+      </div>
+
+      <div className="card-text-body">
+        <h4 className="card-subject-name">{s.name}</h4>
+        <div className="card-subject-meta">
+          <span className="card-credits-indicator">{s.credits} Credits</span>
+          {s.faculty && (
+            <>
+              <span>·</span>
+              <span>{s.faculty}</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="card-divider-line" />
+
+      <div className="card-grades-tray">
+        <CustomGradeDropdown
+          value={s.grade_point}
+          onChange={(val) => onUpdateGrade(s, val)}
+        />
+        <button onClick={() => onDelete(s.id)} className="btn-destroy-subject" title="Delete Course">
+          <Trash2 size={16} />
+        </button>
+      </div>
+    </motion.div>
+  )
+}, function areEqual(prev, next) {
+  return fieldsEqual(prev.subject, next.subject) &&
+    prev.onUpdateGrade === next.onUpdateGrade &&
+    prev.onDelete === next.onDelete
+})
+
+/* Memoized mobile accordion item — uses CSS grid-template-rows instead of animating height:auto,
+   avoiding Framer Motion's per-frame scrollHeight measurement (the source of the lag). */
+const MobileAccordionItem = memo(function MobileAccordionItem({ subject: s, isExpanded, onToggle, onUpdateGrade, onDelete }) {
+  const isGraded = s.grade_point !== null && s.grade_point !== undefined
+
+  return (
+    <div className={`mobile-subject-accordion-item ${isExpanded ? 'is-active' : ''} ${isGraded ? 'is-graded' : ''}`}>
+      <div className="mobile-accordion-closed-row" onClick={() => onToggle(s.id)}>
+        <div className="mobile-row-left">
+          <div className="mobile-accordion-icon">
+            <Library size={16} />
+          </div>
+          <div className="mobile-subject-info-block">
+            <h4 className="mobile-subject-name">{s.name}</h4>
+            <div className="mobile-subject-meta-inline">
+              {s.credits} Credits {s.faculty ? `· ${s.faculty}` : ''}
+            </div>
+          </div>
+        </div>
+
+        <div className="mobile-row-right">
+          <span className={isGraded ? 'academic-completetion-chip' : 'academic-pending-chip'}>
+            {isGraded ? `GP: ${s.grade_point}` : 'Active'}
+          </span>
+          <ChevronDown size={16} className={`mobile-chevron-chevron ${isExpanded ? 'is-open' : ''}`} />
+        </div>
+      </div>
+
+      <div className={`mobile-accordion-drawer-grid ${isExpanded ? 'is-open' : ''}`}>
+        <div className="mobile-accordion-drawer-inner">
+          <div className="mobile-accordion-drawer-body">
+            <div className="mobile-drawer-controls">
+              <CustomGradeDropdown
+                value={s.grade_point}
+                onChange={(val) => onUpdateGrade(s, val)}
+              />
+              <button onClick={() => onDelete(s.id)} className="btn-destroy-subject" title="Delete Course">
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}, function areEqual(prev, next) {
+  return fieldsEqual(prev.subject, next.subject) &&
+    prev.isExpanded === next.isExpanded &&
+    prev.onToggle === next.onToggle &&
+    prev.onUpdateGrade === next.onUpdateGrade &&
+    prev.onDelete === next.onDelete
+})
+
+function CustomGradeDropdown({ value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
   const grades = [
     { label: 'Grade', val: '' },
     { label: '10.0 (O)', val: '10' },
@@ -859,9 +930,9 @@ const CustomGradeDropdown = memo(function CustomGradeDropdown({ value, onChange 
     { label: '6.0 (B)', val: '6' },
     { label: '5.0 (C)', val: '5' },
     { label: '0.0 (F)', val: '0' }
-  ]
+  ];
 
-  const currentLabel = grades.find(g => g.val === (value?.toString() || ''))?.label || 'Grade'
+  const currentLabel = grades.find(g => g.val === (value?.toString() || ''))?.label || 'Grade';
 
   return (
     <div className="custom-dropdown-container">
@@ -878,20 +949,21 @@ const CustomGradeDropdown = memo(function CustomGradeDropdown({ value, onChange 
         {isOpen && (
           <>
             <div className="dropdown-click-outside-overlay" onClick={() => setIsOpen(false)} />
+
             <motion.ul
               className="dropdown-options-list"
-              initial={{ opacity: 0, y: -8, scale: 0.97 }}
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.97 }}
-              transition={{ duration: 0.16, ease: EASE }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             >
               {grades.map((g) => (
                 <li
                   key={g.val}
                   className={`dropdown-option-item ${value?.toString() === g.val ? 'selected' : ''}`}
                   onClick={() => {
-                    onChange(g.val)
-                    setIsOpen(false)
+                    onChange(g.val);
+                    setIsOpen(false);
                   }}
                 >
                   {g.label}
@@ -902,130 +974,15 @@ const CustomGradeDropdown = memo(function CustomGradeDropdown({ value, onChange 
         )}
       </AnimatePresence>
     </div>
-  )
-})
+  );
+}
 
-const DesktopSubjectCard = memo(function DesktopSubjectCard({ subject, onUpdateGrade, onDelete }) {
-  const isGraded = subject.grade_point !== null && subject.grade_point !== undefined
-
-  const handleGradeChange = useCallback((val) => {
-    onUpdateGrade(subject, val)
-  }, [subject, onUpdateGrade])
-
-  return (
-    <motion.div
-      className="premium-subject-card"
-      variants={{
-        hidden: { opacity: 0, y: 20, scale: 0.95 },
-        visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 80 } }
-      }}
-      whileHover={{ y: -4, transition: { duration: 0.2, ease: EASE } }}
-    >
-      <div className="card-top-header">
-        <div className="academic-brand-icon">
-          <School size={18} />
-        </div>
-        <span className={isGraded ? 'academic-completetion-chip' : 'academic-pending-chip'}>
-          {isGraded ? 'Graded' : 'Active'}
-        </span>
-      </div>
-
-      <div className="card-text-body">
-        <h4 className="card-subject-name">{subject.name}</h4>
-        <div className="card-subject-meta">
-          <span className="card-credits-indicator">{subject.credits} Credits</span>
-          {subject.faculty && (
-            <>
-              <span>·</span>
-              <span>{subject.faculty}</span>
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="card-divider-line" />
-
-      <div className="card-grades-tray">
-        <CustomGradeDropdown
-          value={subject.grade_point}
-          onChange={handleGradeChange}
-        />
-        <button onClick={() => onDelete(subject.id)} className="btn-destroy-subject" title="Delete Course">
-          <Trash2 size={16} />
-        </button>
-      </div>
-    </motion.div>
-  )
-})
-
-const MobileSubjectAccordionItem = memo(function MobileSubjectAccordionItem({ subject, isExpanded, onToggle, onUpdateGrade, onDelete }) {
-  const isGraded = subject.grade_point !== null && subject.grade_point !== undefined
-
-  const handleGradeChange = useCallback((val) => {
-    onUpdateGrade(subject, val)
-  }, [subject, onUpdateGrade])
-
-  return (
-    <div className={`mobile-subject-accordion-item ${isExpanded ? 'is-active' : ''} ${isGraded ? 'is-graded' : ''}`}>
-      <div className="mobile-accordion-closed-row" onClick={() => onToggle(subject.id)}>
-        <div className="mobile-row-left">
-          <div className="mobile-accordion-icon">
-            <Library size={18} />
-          </div>
-          <div className="mobile-subject-info-block">
-            <h4 className="mobile-subject-name">{subject.name}</h4>
-            <div className="mobile-subject-meta-inline">
-              {subject.credits} Credits {subject.faculty ? `· ${subject.faculty}` : ''}
-            </div>
-          </div>
-        </div>
-
-        <div className="mobile-row-right">
-          <span className={isGraded ? 'academic-completetion-chip' : 'academic-pending-chip'}>
-            {isGraded ? `GP: ${subject.grade_point}` : 'Active'}
-          </span>
-          <ChevronDown
-            size={16}
-            className={`mobile-chevron-chevron ${isExpanded ? 'is-open' : ''}`}
-          />
-        </div>
-      </div>
-
-      <AnimatePresence initial={false}>
-        {isExpanded && (
-          <motion.div
-            key="drawer"
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.18, ease: EASE }}
-            className="mobile-accordion-drawer-body"
-          >
-            <div className="mobile-drawer-controls">
-              <CustomGradeDropdown
-                value={subject.grade_point}
-                onChange={handleGradeChange}
-              />
-              <button onClick={() => onDelete(subject.id)} className="btn-destroy-subject" title="Delete Course">
-                <Trash2 size={16} />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-})
-
-const SummaryCard = memo(function SummaryCard({ label, value, icon, desc, sparklinePath }) {
+function SummaryCard({ label, value, icon, desc, sparklinePath }) {
   return (
     <motion.div
       className="kpi-card-glass"
-      variants={{
-        hidden: { opacity: 0, y: 15 },
-        visible: { opacity: 1, y: 0, transition: { type: 'spring' } }
-      }}
-      whileHover={{ y: -4, transition: { duration: 0.2, ease: EASE } }}
+      variants={{ hidden: { opacity: 0, y: 15 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' } } }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
     >
       <div className="kpi-header-row">
         <span className="kpi-label">{label}</span>
@@ -1035,11 +992,11 @@ const SummaryCard = memo(function SummaryCard({ label, value, icon, desc, sparkl
       <div className="kpi-desc-row">
         <span className="kpi-desc">{desc}</span>
         <svg width="60" height="20" viewBox="0 0 60 20" fill="none" style={{ opacity: 0.7 }}>
-          <path d={sparklinePath} stroke="var(--sparkline-color)" strokeWidth="2" strokeLinecap="round" />
+          <path d={sparklinePath} stroke="var(--sparkline-color, #8b5cf6)" strokeWidth="2" strokeLinecap="round" />
         </svg>
       </div>
     </motion.div>
   )
-})
+}
 
 export default Subjects;
