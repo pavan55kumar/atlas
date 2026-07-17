@@ -132,25 +132,38 @@ const styleSheet = `
     box-sizing: border-box;
   }
 
+  /* CRITICAL FIX: Neutralize any inherited :active scaling from global CSS */
+  .calendar-dashboard:active,
+  .calendar-dashboard-layout:active,
+  .stats-carousel-grid:active,
+  .left-pane:active,
+  .right-pane:active,
+  .calendar-nav-card:active,
+  .timeline-container:active,
+  .composer-card-glass:active,
+  .ai-assistant-card:active,
+  .month-radial-card:active,
+  .empty-events-banner:active,
+  .week-days-ribbon:active,
+  .nav-controls-box:active,
+  .timeline-axis:active,
+  .composer-form:active {
+    transform: none !important;
+  }
+
   /* ---------- Ambient background ---------- */
+  /* CRITICAL FIX: Removed animation to prevent constant backdrop-filter repaints */
   .aurora-blur-sphere {
     position: fixed;
     border-radius: 50%;
     filter: blur(120px);
     pointer-events: none;
     z-index: 0;
-    will-change: transform;
     transition: background 0.6s var(--ease-premium);
-    animation: aurora-drift 20s ease-in-out infinite alternate;
   }
-  .sphere-primary { top: -10%; left: -15%; width: 600px; height: 600px; background: var(--aurora-primary); animation-duration: 25s; }
-  .sphere-secondary { bottom: -10%; right: -15%; width: 550px; height: 550px; background: var(--aurora-secondary); animation-duration: 30s; animation-delay: -5s; }
-  .sphere-tertiary { top: 40%; left: 40%; width: 450px; height: 450px; background: var(--aurora-tertiary); opacity: 0.5; animation-duration: 35s; animation-delay: -10s; }
-
-  @keyframes aurora-drift {
-    0% { transform: translate(0, 0) scale(1); }
-    100% { transform: translate(50px, -30px) scale(1.1); }
-  }
+  .sphere-primary { top: -10%; left: -15%; width: 600px; height: 600px; background: var(--aurora-primary); }
+  .sphere-secondary { bottom: -10%; right: -15%; width: 550px; height: 550px; background: var(--aurora-secondary); }
+  .sphere-tertiary { top: 40%; left: 40%; width: 450px; height: 450px; background: var(--aurora-tertiary); opacity: 0.5; }
 
   /* ---------- Shared glass surface ---------- */
   .kpi-card-glass,
@@ -169,6 +182,7 @@ const styleSheet = `
     width: 100%;
     max-width: 100%;
     border-radius: 24px;
+    contain: layout paint; /* Isolate rendering to prevent repaint propagation */
   }
 
   /* ---------- KPI Summary Module ---------- */
@@ -186,6 +200,7 @@ const styleSheet = `
     z-index: 10;
     position: relative;
     overflow: hidden;
+    contain: layout paint;
   }
 
   .kpi-card-glass {
@@ -201,7 +216,6 @@ const styleSheet = `
     justify-content: space-between;
     overflow: hidden;
     transition: background-color 0.3s var(--ease-premium);
-    will-change: transform;
     border-right: 1px solid var(--glass-border);
   }
   .kpi-card-glass:last-child { border-right: none; }
@@ -281,6 +295,7 @@ const styleSheet = `
   .composer-card-glass { 
     padding: 8px; 
     background: var(--glass-bg);
+    contain: layout paint;
   }
   .composer-title { 
     font-size: 16px; 
@@ -306,7 +321,7 @@ const styleSheet = `
     border-radius: 12px;
     padding: 12px 16px;
     color: var(--text-primary);
-    font-size: 16px; /* Optimized to prevent default iOS viewport tap scaling */
+    font-size: 14px;
     font-weight: 500;
     font-family: var(--atlas-font);
     box-sizing: border-box;
@@ -338,13 +353,14 @@ const styleSheet = `
     letter-spacing: -0.01em;
     cursor: pointer;
     box-shadow: 0 4px 12px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.2);
-    /* Removed conflicting CSS transform transition */
     transition: box-shadow 0.2s var(--ease-premium), filter 0.2s var(--ease-premium);
     flex-shrink: 0;
     white-space: nowrap;
     margin-left: auto;
+    will-change: transform;
   }
   .btn-composer-add:hover { box-shadow: 0 8px 20px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.2); filter: brightness(1.08); }
+  .btn-composer-add:active { box-shadow: 0 2px 6px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.2); }
   .btn-composer-content { position: relative; z-index: 3; display: flex; align-items: center; gap: 6px; }
   .btn-ripple-layer { position: absolute; inset: 0; z-index: 2; overflow: hidden; border-radius: inherit; pointer-events: none; }
   .btn-ripple { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.32); transform: scale(0); animation: btn-ripple-expand 0.6s ease-out forwards; }
@@ -354,6 +370,7 @@ const styleSheet = `
   .calendar-nav-card {
     padding: 24px;
     overflow: hidden;
+    contain: layout paint;
   }
   .calendar-nav-header { 
     display: flex; 
@@ -377,12 +394,11 @@ const styleSheet = `
     color: var(--text-primary);
     width: 36px;
     height: 36px;
-    border-radius: 50%; /* Circular for premium tactile feel */
+    border-radius: 50%;
     display: flex; 
     align-items: center; 
     justify-content: center;
     cursor: pointer;
-    /* Removed transform transition to eliminate conflicting physics during tap states */
     transition: background-color 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium);
     will-change: transform;
   }
@@ -404,7 +420,6 @@ const styleSheet = `
     align-items: center;
     gap: 6px;
     cursor: pointer;
-    /* Removed transform transition to prevent layout shifts/shaking during gesture responses */
     transition: background-color 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium), box-shadow 0.3s var(--ease-premium);
     will-change: transform;
     position: relative;
@@ -420,10 +435,8 @@ const styleSheet = `
     inset: -4px;
     border-radius: 20px;
     background: radial-gradient(circle, rgba(245, 158, 11, 0.15), transparent 70%);
-    animation: today-halo-pulse 3.2s ease-in-out infinite;
     z-index: -1;
   }
-  @keyframes today-halo-pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
 
   .day-ribbon-card.is-selected {
     background: var(--btn-primary-bg);
@@ -459,7 +472,7 @@ const styleSheet = `
   }
 
   /* ---------- Timeline & Event Feed ---------- */
-  .timeline-container { padding: 24px; }
+  .timeline-container { padding: 24px; contain: layout paint; }
   .timeline-axis { 
     position: relative; 
     padding-left: clamp(24px, 4vw, 32px); 
@@ -519,7 +532,6 @@ const styleSheet = `
     align-items: center;
     gap: 12px;
     min-width: 0;
-    /* Removed transform transition to prevent layout jumps/flickers */
     transition: background-color 0.3s var(--ease-premium), border-color 0.3s var(--ease-premium), box-shadow 0.3s var(--ease-premium);
     will-change: transform;
   }
@@ -566,6 +578,7 @@ const styleSheet = `
     justify-content: center;
     flex-shrink: 0;
     transition: background-color 0.2s var(--ease-premium), color 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium);
+    will-change: transform;
   }
   .btn-delete-event:hover { 
     background: rgba(239, 68, 68, 0.1); 
@@ -580,6 +593,7 @@ const styleSheet = `
     background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, var(--glass-bg) 60%);
     border: 1px solid rgba(139, 92, 246, 0.15);
     box-shadow: var(--shadow-md), var(--shadow-glow);
+    contain: layout paint;
   }
 
   .ai-sparkle-icon { 
@@ -601,7 +615,6 @@ const styleSheet = `
     display: flex;
     gap: 12px;
     align-items: flex-start;
-    /* Removed transform transition to prevent layout shaking during interaction */
     transition: background-color 0.3s var(--ease-premium), border-color 0.3s var(--ease-premium);
     will-change: transform;
   }
@@ -625,6 +638,7 @@ const styleSheet = `
     align-items: center;
     justify-content: space-between;
     gap: clamp(12px, 2.5vw, 18px);
+    contain: layout paint;
   }
   .month-radial-card > div:first-child { min-width: 0; }
 
@@ -732,6 +746,7 @@ const styleSheet = `
       cursor: pointer; 
       border: none;
       overflow: hidden;
+      will-change: transform;
     }
 
     .mobile-drawer-sheet {
@@ -784,21 +799,26 @@ function getWeekDates(anchor) {
   })
 }
 
+function spawnRipple(e, setter) {
+  const btn = e.currentTarget
+  const rect = btn.getBoundingClientRect()
+  const size = Math.max(rect.width, rect.height) * 1.4
+  const x = e.clientX - rect.left - size / 2
+  const y = e.clientY - rect.top - size / 2
+  const id = Date.now() + Math.random()
+  setter((prev) => [...prev, { id, x, y, size }])
+  setTimeout(() => {
+    setter((prev) => prev.filter((r) => r.id !== id))
+  }, 650)
+}
+
 function CalendarWidget({ userId }) {
   const [events, setEvents] = useState([])
-  const [title, setTitle] = useState('')
-  const [date, setDate] = useState('')
-  const [time, setTime] = useState('')
   const [loading, setLoading] = useState(true)
   const [weekAnchor, setWeekAnchor] = useState(new Date())
   const [selectedDay, setSelectedDay] = useState(null)
   const [shiftDirection, setShiftDirection] = useState(1)
-
   const [isMobile, setIsMobile] = useState(false)
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
-  const [composerRipples, setComposerRipples] = useState([])
-  const [fabRipples, setFabRipples] = useState([])
 
   const fetchEvents = useCallback(async () => {
     const { data, error } = await supabase
@@ -815,51 +835,23 @@ function CalendarWidget({ userId }) {
     const handleResize = () => setIsMobile(window.innerWidth <= 768)
     handleResize()
     window.addEventListener('resize', handleResize)
-
-    const handleScroll = () => setScrolled(window.scrollY > 40)
-    window.addEventListener('scroll', handleScroll, { passive: true })
-
-    return () => {
-      window.removeEventListener('resize', handleResize)
-      window.removeEventListener('scroll', handleScroll)
-    }
+    return () => window.removeEventListener('resize', handleResize)
   }, [fetchEvents])
 
-  const addEvent = useCallback(async (e) => {
-    e.preventDefault()
+  const addEvent = useCallback(async ({ title, date, time }) => {
     if (!title.trim() || !date) return
     const { error } = await supabase
       .from('calendar_events')
       .insert([{ title, user_id: userId, event_date: date, event_time: time || null }])
     if (!error) {
-      setTitle('')
-      setDate('')
-      setTime('')
-      setIsMobileDrawerOpen(false)
       fetchEvents()
     }
-  }, [title, date, time, userId, fetchEvents])
+  }, [userId, fetchEvents])
 
   const deleteEvent = useCallback(async (id) => {
     await supabase.from('calendar_events').delete().eq('id', id)
     fetchEvents()
   }, [fetchEvents])
-
-  const spawnRipple = useCallback((e, setter) => {
-    const btn = e.currentTarget
-    const rect = btn.getBoundingClientRect()
-    const size = Math.max(rect.width, rect.height) * 1.4
-    const x = e.clientX - rect.left - size / 2
-    const y = e.clientY - rect.top - size / 2
-    const id = Date.now() + Math.random()
-    setter((prev) => [...prev, { id, x, y, size }])
-    setTimeout(() => {
-      setter((prev) => prev.filter((r) => r.id !== id))
-    }, 650)
-  }, [])
-
-  const handleComposerRipple = useCallback((e) => spawnRipple(e, setComposerRipples), [spawnRipple])
-  const handleFabRipple = useCallback((e) => spawnRipple(e, setFabRipples), [spawnRipple])
 
   const handleDayKeyDown = useCallback((e, key, isSelected) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -869,15 +861,16 @@ function CalendarWidget({ userId }) {
   }, [])
 
   const shiftWeek = useCallback((delta) => {
-    const d = new Date(weekAnchor)
-    d.setDate(d.getDate() + delta * 7)
+    setWeekAnchor(prev => {
+      const d = new Date(prev)
+      d.setDate(d.getDate() + delta * 7)
+      return d
+    })
     setShiftDirection(delta)
-    setWeekAnchor(d)
     setSelectedDay(null)
-  }, [weekAnchor])
+  }, [])
 
   const today = useMemo(() => new Date().toISOString().split('T')[0], [])
-  
   const weekDates = useMemo(() => getWeekDates(weekAnchor), [weekAnchor])
 
   const eventsByDate = useMemo(() => {
@@ -934,37 +927,94 @@ function CalendarWidget({ userId }) {
         <RightPane 
           isMobile={isMobile}
           addEvent={addEvent}
-          title={title}
-          setTitle={setTitle}
-          date={date}
-          setDate={setDate}
-          time={time}
-          setTime={setTime}
-          handleComposerRipple={handleComposerRipple}
-          composerRipples={composerRipples}
           monthProgressRate={monthProgressRate}
         />
       </div>
 
       {isMobile && (
-        <MobileFAB 
-          setIsMobileDrawerOpen={setIsMobileDrawerOpen}
-          handleFabRipple={handleFabRipple}
-          fabRipples={fabRipples}
-          scrolled={scrolled}
-          isMobileDrawerOpen={isMobileDrawerOpen}
-          addEvent={addEvent}
-          title={title}
-          setTitle={setTitle}
-          date={date}
-          setDate={setDate}
-          time={time}
-          setTime={setTime}
-        />
+        <FloatingActionButton addEvent={addEvent} />
       )}
     </div>
   )
 }
+
+const EventForm = memo(function EventForm({ addEvent, onCancel }) {
+  const [title, setTitle] = useState('')
+  const [date, setDate] = useState('')
+  const [time, setTime] = useState('')
+  const [ripples, setRipples] = useState([])
+
+  const handleRipple = useCallback((e) => {
+    spawnRipple(e, setRipples)
+  }, [])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!title.trim() || !date) return
+    await addEvent({ title, date, time })
+    setTitle('')
+    setDate('')
+    setTime('')
+    if (onCancel) onCancel()
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="composer-form">
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Event title..."
+        className="composer-input title"
+        aria-label="Event title"
+      />
+      <input
+        type="date"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
+        className="composer-input date-picker"
+        aria-label="Event date"
+      />
+      <input
+        type="time"
+        value={time}
+        onChange={(e) => setTime(e.target.value)}
+        className="composer-input time-picker"
+        aria-label="Event time (optional)"
+      />
+      <motion.button
+        type="submit"
+        className="btn-composer-add"
+        whileTap={{ scale: 0.95 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+        onPointerDown={handleRipple}
+        aria-label="Add event"
+      >
+        <span className="btn-composer-content">
+          <Plus size={16} aria-hidden="true" />
+          <span>Add Event</span>
+        </span>
+        <span className="btn-ripple-layer">
+          {ripples.map((r) => (
+            <span key={r.id} className="btn-ripple" style={{ left: r.x, top: r.y, width: r.size, height: r.size }} />
+          ))}
+        </span>
+      </motion.button>
+      {onCancel && (
+        <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '8px' }}>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="composer-input"
+            style={{ flex: 1, border: '1px solid var(--glass-border)', background: 'var(--input-bg)', justifyContent: 'center', cursor: 'pointer' }}
+            aria-label="Cancel adding event"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+    </form>
+  )
+})
 
 const KpiSummary = memo(function KpiSummary({ todayEventsCount, upcomingCount, completedEventsCount }) {
   return (
@@ -1034,7 +1084,7 @@ const WeekRibbon = memo(function WeekRibbon({ weekDates, today, eventsByDate, se
             onClick={() => shiftWeek(-1)}
             className="btn-nav-arrow"
             whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.98 }}
+            whileTap={{ scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             aria-label="Previous week"
           >
@@ -1044,7 +1094,7 @@ const WeekRibbon = memo(function WeekRibbon({ weekDates, today, eventsByDate, se
             onClick={() => shiftWeek(1)}
             className="btn-nav-arrow"
             whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.98 }}
+            whileTap={{ scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             aria-label="Next week"
           >
@@ -1053,52 +1103,50 @@ const WeekRibbon = memo(function WeekRibbon({ weekDates, today, eventsByDate, se
         </div>
       </div>
 
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={weekDates[0].toISOString().split('T')[0]}
-          className="week-days-ribbon"
-          initial={{ opacity: 0, x: shiftDirection > 0 ? 30 : -30 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: shiftDirection > 0 ? -30 : 30 }}
-          transition={{ duration: 0.35, ease }}
-        >
-          {weekDates.map(d => {
-            const key = d.toISOString().split('T')[0]
-            const isToday = key === today
-            const dayEvents = eventsByDate[key] || []
-            const isSelected = selectedDay === key
-            const fullLabel = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-            return (
-              <motion.div
-                key={key}
-                onClick={() => setSelectedDay(isSelected ? null : key)}
-                onKeyDown={(e) => handleDayKeyDown(e, key, isSelected)}
-                className={`day-ribbon-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}`}
-                animate={{ y: isSelected ? -3 : 0, scale: isSelected ? 1.03 : 1 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                whileTap={{ scale: 0.98 }}
-                role="button"
-                tabIndex={0}
-                aria-pressed={isSelected}
-                aria-label={`${fullLabel}${isToday ? ' (today)' : ''}${dayEvents.length ? `, ${dayEvents.length} event${dayEvents.length > 1 ? 's' : ''}` : ''}`}
-              >
-                <span className="day-label-text">
-                  {d.toLocaleDateString('en-US', { weekday: 'short' })}
-                </span>
-                <span className="day-number-text">{d.getDate()}</span>
-                {isToday && <div className="today-glow-dot" aria-hidden="true" />}
-                {dayEvents.length > 0 && !isToday && (
-                  <div aria-hidden="true" style={{
-                    width: '5px', height: '5px', borderRadius: '50%',
-                    background: isSelected ? '#ffffff' : 'var(--accent-purple)',
-                    marginTop: '4px'
-                  }} />
-                )}
-              </motion.div>
-            )
-          })}
-        </motion.div>
-      </AnimatePresence>
+      {/* Simplified animation to prevent layout reflows */}
+      <motion.div
+        key={weekDates[0].toISOString().split('T')[0]}
+        className="week-days-ribbon"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
+      >
+        {weekDates.map(d => {
+          const key = d.toISOString().split('T')[0]
+          const isToday = key === today
+          const dayEvents = eventsByDate[key] || []
+          const isSelected = selectedDay === key
+          const fullLabel = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+          return (
+            <motion.div
+              key={key}
+              onClick={() => setSelectedDay(isSelected ? null : key)}
+              onKeyDown={(e) => handleDayKeyDown(e, key, isSelected)}
+              className={`day-ribbon-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}`}
+             animate={{ y: isSelected ? -3 : 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              whileTap={{ scale: 0.95 }}
+              role="button"
+              tabIndex={0}
+              aria-pressed={isSelected}
+              aria-label={`${fullLabel}${isToday ? ' (today)' : ''}${dayEvents.length ? `, ${dayEvents.length} event${dayEvents.length > 1 ? 's' : ''}` : ''}`}
+            >
+              <span className="day-label-text">
+                {d.toLocaleDateString('en-US', { weekday: 'short' })}
+              </span>
+              <span className="day-number-text">{d.getDate()}</span>
+              {isToday && <div className="today-glow-dot" aria-hidden="true" />}
+              {dayEvents.length > 0 && !isToday && (
+                <div aria-hidden="true" style={{
+                  width: '5px', height: '5px', borderRadius: '50%',
+                  background: isSelected ? '#ffffff' : 'var(--accent-purple)',
+                  marginTop: '4px'
+                }} />
+              )}
+            </motion.div>
+          )
+        })}
+      </motion.div>
     </div>
   )
 })
@@ -1138,13 +1186,14 @@ const Timeline = memo(function Timeline({ selectedDay, selectedEvents, eventsByD
                       <span>Active timeline</span>
                     </div>
                   </div>
-                  <button
+                  <motion.button
                     onClick={() => deleteEvent(ev.id)}
                     className="btn-delete-event"
                     aria-label={`Delete event: ${ev.title}`}
+                    whileTap={{ scale: 0.9 }}
                   >
                     <Trash2 size={16} aria-hidden="true" />
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             ))
@@ -1171,13 +1220,14 @@ const Timeline = memo(function Timeline({ selectedDay, selectedEvents, eventsByD
                       <span>Active timeline</span>
                     </div>
                   </div>
-                  <button
+                  <motion.button
                     onClick={() => deleteEvent(ev.id)}
                     className="btn-delete-event"
                     aria-label={`Delete event: ${ev.title}`}
+                    whileTap={{ scale: 0.9 }}
                   >
                     <Trash2 size={16} aria-hidden="true" />
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             ))
@@ -1188,53 +1238,13 @@ const Timeline = memo(function Timeline({ selectedDay, selectedEvents, eventsByD
   )
 })
 
-const RightPane = memo(function RightPane({ isMobile, addEvent, title, setTitle, date, setDate, time, setTime, handleComposerRipple, composerRipples, monthProgressRate }) {
+const RightPane = memo(function RightPane({ isMobile, addEvent, monthProgressRate }) {
   return (
     <div className="right-pane">
       {!isMobile && (
         <div className="composer-card-glass">
           <h3 className="composer-title">Create Schedule Node</h3>
-          <form onSubmit={addEvent} className="composer-form">
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Event title..."
-              className="composer-input title"
-              aria-label="Event title"
-            />
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="composer-input date-picker"
-              aria-label="Event date"
-            />
-            <input
-              type="time"
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-              className="composer-input time-picker"
-              aria-label="Event time (optional)"
-            />
-            <motion.button
-              type="submit"
-              className="btn-composer-add"
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-              onPointerDown={handleComposerRipple}
-              aria-label="Add event"
-            >
-              <span className="btn-composer-content">
-                <Plus size={16} aria-hidden="true" />
-                <span>Add Event</span>
-              </span>
-              <span className="btn-ripple-layer">
-                {composerRipples.map((r) => (
-                  <span key={r.id} className="btn-ripple" style={{ left: r.x, top: r.y, width: r.size, height: r.size }} />
-                ))}
-              </span>
-            </motion.button>
-          </form>
+          <EventForm addEvent={addEvent} />
         </div>
       )}
 
@@ -1294,7 +1304,21 @@ const RightPane = memo(function RightPane({ isMobile, addEvent, title, setTitle,
   )
 })
 
-const MobileFAB = memo(function MobileFAB({ setIsMobileDrawerOpen, handleFabRipple, fabRipples, scrolled, isMobileDrawerOpen, addEvent, title, setTitle, date, setDate, time, setTime }) {
+const FloatingActionButton = memo(function FloatingActionButton({ addEvent }) {
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const [fabRipples, setFabRipples] = useState([])
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 40)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const handleFabRipple = useCallback((e) => {
+    spawnRipple(e, setFabRipples)
+  }, [])
+
   return (
     <>
       <motion.button
@@ -1302,7 +1326,7 @@ const MobileFAB = memo(function MobileFAB({ setIsMobileDrawerOpen, handleFabRipp
         onClick={() => setIsMobileDrawerOpen(true)}
         onPointerDown={handleFabRipple}
         animate={{ y: scrolled ? -4 : 0 }}
-        whileTap={{ scale: 0.98 }}
+        whileTap={{ scale: 0.9 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
         aria-label="Add event"
       >
@@ -1335,48 +1359,7 @@ const MobileFAB = memo(function MobileFAB({ setIsMobileDrawerOpen, handleFabRipp
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             >
               <h3 className="composer-title" style={{ margin: 0, padding: 0 }}>Add Event Node</h3>
-
-              <form onSubmit={addEvent} className="composer-form">
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Event title..."
-                  className="composer-input"
-                  aria-label="Event title"
-                />
-                <div style={{ display: 'flex', gap: '8px', width: '100%', flexWrap: 'wrap' }}>
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="composer-input"
-                    style={{ flex: '1 1 130px', minWidth: 0 }}
-                    aria-label="Event date"
-                  />
-                  <input
-                    type="time"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    className="composer-input"
-                    style={{ flex: '1 1 110px', minWidth: 0 }}
-                    aria-label="Event time (optional)"
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '8px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setIsMobileDrawerOpen(false)}
-                    className="composer-input"
-                    style={{ flex: 1, border: '1px solid var(--glass-border)', background: 'var(--input-bg)', justifyContent: 'center', cursor: 'pointer' }}
-                    aria-label="Cancel adding event"
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn-composer-add" style={{ flex: 2, justifyContent: 'center' }} aria-label="Add event">
-                    <span className="btn-composer-content" style={{ justifyContent: 'center', width: '100%' }}>Add Event</span>
-                  </button>
-                </div>
-              </form>
+              <EventForm addEvent={addEvent} onCancel={() => setIsMobileDrawerOpen(false)} />
             </motion.div>
           </motion.div>
         )}

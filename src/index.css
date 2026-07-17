@@ -110,9 +110,7 @@ button {
   background: var(--text-muted);
 }
 
-button:active {
-  transform: translateY(0) scale(0.97);
-}
+
 html,
 body,
 #root {
