@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useMemo, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Clock3, Sparkles, Brain, CircleCheck,
@@ -200,7 +200,7 @@ const styleSheet = `
     flex-direction: column;
     justify-content: space-between;
     overflow: hidden;
-    transition: background 0.3s var(--ease-premium);
+    transition: background-color 0.3s var(--ease-premium);
     will-change: transform;
     border-right: 1px solid var(--glass-border);
   }
@@ -311,7 +311,7 @@ const styleSheet = `
     font-family: var(--atlas-font);
     box-sizing: border-box;
     min-width: 0;
-    transition: background 0.2s var(--ease-premium), box-shadow 0.2s var(--ease-premium);
+    transition: background-color 0.2s var(--ease-premium), box-shadow 0.2s var(--ease-premium);
     outline: none;
   }
   .composer-input:hover { background: var(--input-bg-hover); }
@@ -382,7 +382,8 @@ const styleSheet = `
     align-items: center; 
     justify-content: center;
     cursor: pointer;
-    transition: background 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium), transform 0.2s var(--ease-premium);
+    transition: background-color 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium), transform 0.2s var(--ease-premium);
+    will-change: transform;
   }
   .btn-nav-arrow:hover { background: var(--input-bg-hover); border-color: var(--glass-border-strong); transform: translateY(-1px); }
 
@@ -402,7 +403,8 @@ const styleSheet = `
     align-items: center;
     gap: 6px;
     cursor: pointer;
-    transition: all 0.3s var(--ease-spring);
+    transition: transform 0.3s var(--ease-spring), background-color 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium), box-shadow 0.3s var(--ease-premium);
+    will-change: transform;
     position: relative;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
@@ -516,7 +518,8 @@ const styleSheet = `
     align-items: center;
     gap: 12px;
     min-width: 0;
-    transition: all 0.3s var(--ease-premium);
+    transition: transform 0.3s var(--ease-premium), background-color 0.3s var(--ease-premium), border-color 0.3s var(--ease-premium), box-shadow 0.3s var(--ease-premium);
+    will-change: transform;
   }
   .event-card-tactile:hover {
     transform: translateY(-2px);
@@ -561,7 +564,7 @@ const styleSheet = `
     align-items: center; 
     justify-content: center;
     flex-shrink: 0;
-    transition: all 0.2s var(--ease-premium);
+    transition: background-color 0.2s var(--ease-premium), color 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium);
   }
   .btn-delete-event:hover { 
     background: rgba(239, 68, 68, 0.1); 
@@ -597,7 +600,8 @@ const styleSheet = `
     display: flex;
     gap: 12px;
     align-items: flex-start;
-    transition: all 0.3s var(--ease-premium);
+    transition: transform 0.3s var(--ease-premium), background-color 0.3s var(--ease-premium), border-color 0.3s var(--ease-premium);
+    will-change: transform;
   }
   .ai-suggestion-box:hover { 
     background: var(--input-bg-hover); 
@@ -795,6 +799,16 @@ function CalendarWidget({ userId }) {
   const [composerRipples, setComposerRipples] = useState([])
   const [fabRipples, setFabRipples] = useState([])
 
+  const fetchEvents = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('calendar_events')
+      .select('*')
+      .order('event_date', { ascending: true })
+      .order('event_time', { ascending: true })
+    if (!error) setEvents(data)
+    setLoading(false)
+  }, [])
+
   useEffect(() => {
     fetchEvents()
     const handleResize = () => setIsMobile(window.innerWidth <= 768)
@@ -808,19 +822,9 @@ function CalendarWidget({ userId }) {
       window.removeEventListener('resize', handleResize)
       window.removeEventListener('scroll', handleScroll)
     }
-  }, [])
+  }, [fetchEvents])
 
-  async function fetchEvents() {
-    const { data, error } = await supabase
-      .from('calendar_events')
-      .select('*')
-      .order('event_date', { ascending: true })
-      .order('event_time', { ascending: true })
-    if (!error) setEvents(data)
-    setLoading(false)
-  }
-
-  async function addEvent(e) {
+  const addEvent = useCallback(async (e) => {
     e.preventDefault()
     if (!title.trim() || !date) return
     const { error } = await supabase
@@ -833,14 +837,14 @@ function CalendarWidget({ userId }) {
       setIsMobileDrawerOpen(false)
       fetchEvents()
     }
-  }
+  }, [title, date, time, userId, fetchEvents])
 
-  async function deleteEvent(id) {
+  const deleteEvent = useCallback(async (id) => {
     await supabase.from('calendar_events').delete().eq('id', id)
     fetchEvents()
-  }
+  }, [fetchEvents])
 
-  function spawnRipple(e, setter) {
+  const spawnRipple = useCallback((e, setter) => {
     const btn = e.currentTarget
     const rect = btn.getBoundingClientRect()
     const size = Math.max(rect.width, rect.height) * 1.4
@@ -851,40 +855,46 @@ function CalendarWidget({ userId }) {
     setTimeout(() => {
       setter((prev) => prev.filter((r) => r.id !== id))
     }, 650)
-  }
+  }, [])
 
-  function handleDayKeyDown(e, key, isSelected) {
+  const handleComposerRipple = useCallback((e) => spawnRipple(e, setComposerRipples), [spawnRipple])
+  const handleFabRipple = useCallback((e) => spawnRipple(e, setFabRipples), [spawnRipple])
+
+  const handleDayKeyDown = useCallback((e, key, isSelected) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       setSelectedDay(isSelected ? null : key)
     }
-  }
+  }, [])
 
-  const today = new Date().toISOString().split('T')[0]
-  const weekDates = getWeekDates(weekAnchor)
-  const eventsByDate = {}
-  events.forEach(ev => {
-    if (!eventsByDate[ev.event_date]) eventsByDate[ev.event_date] = []
-    eventsByDate[ev.event_date].push(ev)
-  })
-
-  function shiftWeek(delta) {
+  const shiftWeek = useCallback((delta) => {
     const d = new Date(weekAnchor)
     d.setDate(d.getDate() + delta * 7)
     setShiftDirection(delta)
     setWeekAnchor(d)
     setSelectedDay(null)
-  }
+  }, [weekAnchor])
 
-  const selectedEvents = selectedDay ? (eventsByDate[selectedDay] || []) : []
+  const today = useMemo(() => new Date().toISOString().split('T')[0], [])
+  
+  const weekDates = useMemo(() => getWeekDates(weekAnchor), [weekAnchor])
 
-  const todayEventsCount = eventsByDate[today]?.length || 0
-  const upcomingCount = events.filter(ev => new Date(ev.event_date) >= new Date()).length
-  const completedEventsCount = events.filter(ev => new Date(ev.event_date) < new Date()).length
+  const eventsByDate = useMemo(() => {
+    const map = {}
+    events.forEach(ev => {
+      if (!map[ev.event_date]) map[ev.event_date] = []
+      map[ev.event_date].push(ev)
+    })
+    return map
+  }, [events])
+
+  const selectedEvents = useMemo(() => selectedDay ? (eventsByDate[selectedDay] || []) : [], [selectedDay, eventsByDate])
+
+  const todayEventsCount = useMemo(() => eventsByDate[today]?.length || 0, [eventsByDate, today])
+  const upcomingCount = useMemo(() => events.filter(ev => new Date(ev.event_date) >= new Date()).length, [events])
+  const completedEventsCount = useMemo(() => events.filter(ev => new Date(ev.event_date) < new Date()).length, [events])
   const totalEventsThisMonth = events.length
-  const monthProgressRate = totalEventsThisMonth > 0
-    ? Math.round((completedEventsCount / totalEventsThisMonth) * 100)
-    : 0
+  const monthProgressRate = useMemo(() => totalEventsThisMonth > 0 ? Math.round((completedEventsCount / totalEventsThisMonth) * 100) : 0, [completedEventsCount, totalEventsThisMonth])
 
   return (
     <div className="calendar-dashboard">
@@ -893,430 +903,488 @@ function CalendarWidget({ userId }) {
       <div className="aurora-blur-sphere sphere-secondary" />
       <div className="aurora-blur-sphere sphere-tertiary" />
 
-      {/* --- KPI Summary Module --- */}
-      <motion.div
-        className="stats-carousel-grid"
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: { opacity: 0, y: 20 },
-          visible: { opacity: 1, y: 0, transition: { staggerChildren: 0.06 } }
-        }}
-      >
-        <SummaryCard
-          label="Today's Events"
-          value={todayEventsCount}
-          icon={<CalendarClock size={16} aria-hidden="true" />}
-          desc="Due within 24 hours"
-          sparklinePath="M0,15 C10,12 20,18 30,5 C40,2 50,14 60,8"
-          accent="#f59e0b"
-        />
-        <SummaryCard
-          label="Upcoming"
-          value={upcomingCount}
-          icon={<Clock3 size={16} aria-hidden="true" />}
-          desc="Scheduled events"
-          sparklinePath="M0,8 C10,14 20,5 30,12 C40,16 50,2 60,10"
-          accent="#60a5fa"
-        />
-        <SummaryCard
-          label="Focus Score"
-          value="9.2"
-          icon={<Brain size={16} aria-hidden="true" />}
-          desc="Target: 9.5 scale"
-          sparklinePath="M0,18 C10,15 20,10 30,10 C40,10 50,3 60,3"
-          accent="#8b5cf6"
-        />
-        <SummaryCard
-          label="Accomplished"
-          value={completedEventsCount}
-          icon={<CircleCheck size={16} aria-hidden="true" />}
-          desc="Finished logs"
-          sparklinePath="M0,4 C10,12 20,2 30,8 C40,14 50,2 60,15"
-          accent="#10b981"
-        />
-      </motion.div>
+      <KpiSummary 
+        todayEventsCount={todayEventsCount} 
+        upcomingCount={upcomingCount} 
+        completedEventsCount={completedEventsCount} 
+      />
 
-      {/* --- Double Pane Dashboard Panel Layout --- */}
       <div className="calendar-dashboard-layout">
-
         <div className="left-pane">
-
-          {/* Calendar weekly ribbon navigation */}
-          <div className="calendar-nav-card">
-            <div className="calendar-nav-header">
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={weekDates[0].toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                  className="active-month-text"
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  transition={{ duration: 0.3, ease }}
-                >
-                  {weekDates[0].toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </motion.span>
-              </AnimatePresence>
-              <div className="nav-controls-box">
-                <motion.button
-                  onClick={() => shiftWeek(-1)}
-                  className="btn-nav-arrow"
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                  aria-label="Previous week"
-                >
-                  <ChevronLeft size={18} aria-hidden="true" />
-                </motion.button>
-                <motion.button
-                  onClick={() => shiftWeek(1)}
-                  className="btn-nav-arrow"
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                  aria-label="Next week"
-                >
-                  <ChevronRight size={18} aria-hidden="true" />
-                </motion.button>
-              </div>
-            </div>
-
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={weekDates[0].toISOString().split('T')[0]}
-                className="week-days-ribbon"
-                initial={{ opacity: 0, x: shiftDirection > 0 ? 30 : -30 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: shiftDirection > 0 ? -30 : 30 }}
-                transition={{ duration: 0.35, ease }}
-              >
-                {weekDates.map(d => {
-                  const key = d.toISOString().split('T')[0]
-                  const isToday = key === today
-                  const dayEvents = eventsByDate[key] || []
-                  const isSelected = selectedDay === key
-                  const fullLabel = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-                  return (
-                    <motion.div
-                      key={key}
-                      onClick={() => setSelectedDay(isSelected ? null : key)}
-                      onKeyDown={(e) => handleDayKeyDown(e, key, isSelected)}
-                      className={`day-ribbon-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}`}
-                      animate={{ y: isSelected ? -3 : 0, scale: isSelected ? 1.03 : 1 }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                      whileTap={{ scale: 0.95 }}
-                      role="button"
-                      tabIndex={0}
-                      aria-pressed={isSelected}
-                      aria-label={`${fullLabel}${isToday ? ' (today)' : ''}${dayEvents.length ? `, ${dayEvents.length} event${dayEvents.length > 1 ? 's' : ''}` : ''}`}
-                    >
-                      <span className="day-label-text">
-                        {d.toLocaleDateString('en-US', { weekday: 'short' })}
-                      </span>
-                      <span className="day-number-text">{d.getDate()}</span>
-                      {isToday && <div className="today-glow-dot" aria-hidden="true" />}
-                      {dayEvents.length > 0 && !isToday && (
-                        <div aria-hidden="true" style={{
-                          width: '5px', height: '5px', borderRadius: '50%',
-                          background: isSelected ? '#ffffff' : 'var(--accent-purple)',
-                          marginTop: '4px'
-                        }} />
-                      )}
-                    </motion.div>
-                  )
-                })}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Interactive selected day timeline view */}
-          <div className="timeline-container">
-            <h3 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 16px 0', letterSpacing: '-0.03em' }}>
-              {selectedDay ? (
-                new Date(selectedDay).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-              ) : (
-                "Today's Timeline"
-              )}
-            </h3>
-
-            <div className="timeline-axis">
-              {selectedDay ? (
-                selectedEvents.length === 0 ? (
-                  <div className="empty-events-banner">
-                    <div className="empty-icon-badge"><Clock3 size={28} aria-hidden="true" /></div>
-                    <span className="empty-banner-title">Nothing Scheduled</span>
-                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>You have no events allocated for this day.</p>
-                  </div>
-                ) : (
-                  selectedEvents.map((ev, index) => (
-                    <div className="timeline-event-wrapper" key={ev.id}>
-                      <div className={`timeline-node-dot ${index === 0 ? 'active' : ''}`} aria-hidden="true" />
-                      <div className="timeline-time-col">
-                        {ev.event_time ? ev.event_time.slice(0, 5) : "All Day"}
-                      </div>
-                      <div className="event-card-tactile">
-                        <div style={{ minWidth: 0 }}>
-                          <h4 className="event-title-main">{ev.title}</h4>
-                          <div className="event-meta-info">
-                            <span className="meta-tag">Course module</span>
-                            <span>·</span>
-                            <span>Active timeline</span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => deleteEvent(ev.id)}
-                          className="btn-delete-event"
-                          aria-label={`Delete event: ${ev.title}`}
-                        >
-                          <Trash2 size={16} aria-hidden="true" />
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )
-              ) : (
-                (eventsByDate[today] || []).length === 0 ? (
-                  <div className="empty-events-banner">
-                    <div className="empty-icon-badge"><Clock3 size={28} aria-hidden="true" /></div>
-                    <span className="empty-banner-title">No Events Scheduled Today</span>
-                  </div>
-                ) : (
-                  (eventsByDate[today] || []).map((ev, index) => (
-                    <div className="timeline-event-wrapper" key={ev.id}>
-                      <div className={`timeline-node-dot ${index === 0 ? 'active' : ''}`} aria-hidden="true" />
-                      <div className="timeline-time-col">
-                        {ev.event_time ? ev.event_time.slice(0, 5) : "All Day"}
-                      </div>
-                      <div className="event-card-tactile">
-                        <div style={{ minWidth: 0 }}>
-                          <h4 className="event-title-main">{ev.title}</h4>
-                          <div className="event-meta-info">
-                            <span className="meta-tag">Today</span>
-                            <span>·</span>
-                            <span>Active timeline</span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => deleteEvent(ev.id)}
-                          className="btn-delete-event"
-                          aria-label={`Delete event: ${ev.title}`}
-                        >
-                          <Trash2 size={16} aria-hidden="true" />
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )
-              )}
-            </div>
-          </div>
-
+          <WeekRibbon 
+            weekDates={weekDates}
+            today={today}
+            eventsByDate={eventsByDate}
+            selectedDay={selectedDay}
+            setSelectedDay={setSelectedDay}
+            handleDayKeyDown={handleDayKeyDown}
+            shiftWeek={shiftWeek}
+            shiftDirection={shiftDirection}
+          />
+          <Timeline 
+            selectedDay={selectedDay}
+            selectedEvents={selectedEvents}
+            eventsByDate={eventsByDate}
+            today={today}
+            deleteEvent={deleteEvent}
+          />
         </div>
 
-        {/* Right Pane: Event composer & AI Suggestions */}
-        <div className="right-pane">
+        <RightPane 
+          isMobile={isMobile}
+          addEvent={addEvent}
+          title={title}
+          setTitle={setTitle}
+          date={date}
+          setDate={setDate}
+          time={time}
+          setTime={setTime}
+          handleComposerRipple={handleComposerRipple}
+          composerRipples={composerRipples}
+          monthProgressRate={monthProgressRate}
+        />
+      </div>
 
-          {!isMobile && (
-            <div className="composer-card-glass">
-              <h3 className="composer-title">Create Schedule Node</h3>
+      {isMobile && (
+        <MobileFAB 
+          setIsMobileDrawerOpen={setIsMobileDrawerOpen}
+          handleFabRipple={handleFabRipple}
+          fabRipples={fabRipples}
+          scrolled={scrolled}
+          isMobileDrawerOpen={isMobileDrawerOpen}
+          addEvent={addEvent}
+          title={title}
+          setTitle={setTitle}
+          date={date}
+          setDate={setDate}
+          time={time}
+          setTime={setTime}
+        />
+      )}
+    </div>
+  )
+}
+
+const KpiSummary = memo(function KpiSummary({ todayEventsCount, upcomingCount, completedEventsCount }) {
+  return (
+    <motion.div
+      className="stats-carousel-grid"
+      initial="hidden"
+      animate="visible"
+      variants={{
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0, transition: { staggerChildren: 0.06 } }
+      }}
+    >
+      <SummaryCard
+        label="Today's Events"
+        value={todayEventsCount}
+        icon={<CalendarClock size={16} aria-hidden="true" />}
+        desc="Due within 24 hours"
+        sparklinePath="M0,15 C10,12 20,18 30,5 C40,2 50,14 60,8"
+        accent="#f59e0b"
+      />
+      <SummaryCard
+        label="Upcoming"
+        value={upcomingCount}
+        icon={<Clock3 size={16} aria-hidden="true" />}
+        desc="Scheduled events"
+        sparklinePath="M0,8 C10,14 20,5 30,12 C40,16 50,2 60,10"
+        accent="#60a5fa"
+      />
+      <SummaryCard
+        label="Focus Score"
+        value="9.2"
+        icon={<Brain size={16} aria-hidden="true" />}
+        desc="Target: 9.5 scale"
+        sparklinePath="M0,18 C10,15 20,10 30,10 C40,10 50,3 60,3"
+        accent="#8b5cf6"
+      />
+      <SummaryCard
+        label="Accomplished"
+        value={completedEventsCount}
+        icon={<CircleCheck size={16} aria-hidden="true" />}
+        desc="Finished logs"
+        sparklinePath="M0,4 C10,12 20,2 30,8 C40,14 50,2 60,15"
+        accent="#10b981"
+      />
+    </motion.div>
+  )
+})
+
+const WeekRibbon = memo(function WeekRibbon({ weekDates, today, eventsByDate, selectedDay, setSelectedDay, handleDayKeyDown, shiftWeek, shiftDirection }) {
+  return (
+    <div className="calendar-nav-card">
+      <div className="calendar-nav-header">
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={weekDates[0].toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            className="active-month-text"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.3, ease }}
+          >
+            {weekDates[0].toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          </motion.span>
+        </AnimatePresence>
+        <div className="nav-controls-box">
+          <motion.button
+            onClick={() => shiftWeek(-1)}
+            className="btn-nav-arrow"
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            aria-label="Previous week"
+          >
+            <ChevronLeft size={18} aria-hidden="true" />
+          </motion.button>
+          <motion.button
+            onClick={() => shiftWeek(1)}
+            className="btn-nav-arrow"
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            aria-label="Next week"
+          >
+            <ChevronRight size={18} aria-hidden="true" />
+          </motion.button>
+        </div>
+      </div>
+
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={weekDates[0].toISOString().split('T')[0]}
+          className="week-days-ribbon"
+          initial={{ opacity: 0, x: shiftDirection > 0 ? 30 : -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: shiftDirection > 0 ? -30 : 30 }}
+          transition={{ duration: 0.35, ease }}
+        >
+          {weekDates.map(d => {
+            const key = d.toISOString().split('T')[0]
+            const isToday = key === today
+            const dayEvents = eventsByDate[key] || []
+            const isSelected = selectedDay === key
+            const fullLabel = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+            return (
+              <motion.div
+                key={key}
+                onClick={() => setSelectedDay(isSelected ? null : key)}
+                onKeyDown={(e) => handleDayKeyDown(e, key, isSelected)}
+                className={`day-ribbon-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}`}
+                animate={{ y: isSelected ? -3 : 0, scale: isSelected ? 1.03 : 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                whileTap={{ scale: 0.95 }}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
+                aria-label={`${fullLabel}${isToday ? ' (today)' : ''}${dayEvents.length ? `, ${dayEvents.length} event${dayEvents.length > 1 ? 's' : ''}` : ''}`}
+              >
+                <span className="day-label-text">
+                  {d.toLocaleDateString('en-US', { weekday: 'short' })}
+                </span>
+                <span className="day-number-text">{d.getDate()}</span>
+                {isToday && <div className="today-glow-dot" aria-hidden="true" />}
+                {dayEvents.length > 0 && !isToday && (
+                  <div aria-hidden="true" style={{
+                    width: '5px', height: '5px', borderRadius: '50%',
+                    background: isSelected ? '#ffffff' : 'var(--accent-purple)',
+                    marginTop: '4px'
+                  }} />
+                )}
+              </motion.div>
+            )
+          })}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  )
+})
+
+const Timeline = memo(function Timeline({ selectedDay, selectedEvents, eventsByDate, today, deleteEvent }) {
+  return (
+    <div className="timeline-container">
+      <h3 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 16px 0', letterSpacing: '-0.03em' }}>
+        {selectedDay ? (
+          new Date(selectedDay).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+        ) : (
+          "Today's Timeline"
+        )}
+      </h3>
+
+      <div className="timeline-axis">
+        {selectedDay ? (
+          selectedEvents.length === 0 ? (
+            <div className="empty-events-banner">
+              <div className="empty-icon-badge"><Clock3 size={28} aria-hidden="true" /></div>
+              <span className="empty-banner-title">Nothing Scheduled</span>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>You have no events allocated for this day.</p>
+            </div>
+          ) : (
+            selectedEvents.map((ev, index) => (
+              <div className="timeline-event-wrapper" key={ev.id}>
+                <div className={`timeline-node-dot ${index === 0 ? 'active' : ''}`} aria-hidden="true" />
+                <div className="timeline-time-col">
+                  {ev.event_time ? ev.event_time.slice(0, 5) : "All Day"}
+                </div>
+                <div className="event-card-tactile">
+                  <div style={{ minWidth: 0 }}>
+                    <h4 className="event-title-main">{ev.title}</h4>
+                    <div className="event-meta-info">
+                      <span className="meta-tag">Course module</span>
+                      <span>·</span>
+                      <span>Active timeline</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => deleteEvent(ev.id)}
+                    className="btn-delete-event"
+                    aria-label={`Delete event: ${ev.title}`}
+                  >
+                    <Trash2 size={16} aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )
+        ) : (
+          (eventsByDate[today] || []).length === 0 ? (
+            <div className="empty-events-banner">
+              <div className="empty-icon-badge"><Clock3 size={28} aria-hidden="true" /></div>
+              <span className="empty-banner-title">No Events Scheduled Today</span>
+            </div>
+          ) : (
+            (eventsByDate[today] || []).map((ev, index) => (
+              <div className="timeline-event-wrapper" key={ev.id}>
+                <div className={`timeline-node-dot ${index === 0 ? 'active' : ''}`} aria-hidden="true" />
+                <div className="timeline-time-col">
+                  {ev.event_time ? ev.event_time.slice(0, 5) : "All Day"}
+                </div>
+                <div className="event-card-tactile">
+                  <div style={{ minWidth: 0 }}>
+                    <h4 className="event-title-main">{ev.title}</h4>
+                    <div className="event-meta-info">
+                      <span className="meta-tag">Today</span>
+                      <span>·</span>
+                      <span>Active timeline</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => deleteEvent(ev.id)}
+                    className="btn-delete-event"
+                    aria-label={`Delete event: ${ev.title}`}
+                  >
+                    <Trash2 size={16} aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )
+        )}
+      </div>
+    </div>
+  )
+})
+
+const RightPane = memo(function RightPane({ isMobile, addEvent, title, setTitle, date, setDate, time, setTime, handleComposerRipple, composerRipples, monthProgressRate }) {
+  return (
+    <div className="right-pane">
+      {!isMobile && (
+        <div className="composer-card-glass">
+          <h3 className="composer-title">Create Schedule Node</h3>
+          <form onSubmit={addEvent} className="composer-form">
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Event title..."
+              className="composer-input title"
+              aria-label="Event title"
+            />
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="composer-input date-picker"
+              aria-label="Event date"
+            />
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="composer-input time-picker"
+              aria-label="Event time (optional)"
+            />
+            <motion.button
+              type="submit"
+              className="btn-composer-add"
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              onPointerDown={handleComposerRipple}
+              aria-label="Add event"
+            >
+              <span className="btn-composer-content">
+                <Plus size={16} aria-hidden="true" />
+                <span>Add Event</span>
+              </span>
+              <span className="btn-ripple-layer">
+                {composerRipples.map((r) => (
+                  <span key={r.id} className="btn-ripple" style={{ left: r.x, top: r.y, width: r.size, height: r.size }} />
+                ))}
+              </span>
+            </motion.button>
+          </form>
+        </div>
+      )}
+
+      <div className="ai-assistant-card">
+        <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '10px', letterSpacing: '-0.03em' }}>
+          <span className="ai-sparkle-icon"><Sparkles size={18} color="var(--accent-amber)" aria-hidden="true" /></span>
+          <span>Atlas AI Suggestions</span>
+        </h3>
+
+        <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
+          <div className="suggestion-bullet" aria-hidden="true" style={{ background: 'var(--accent-amber)', boxShadow: '0 0 8px rgba(245, 158, 11, 0.5)' }} />
+          <div style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+            You have <strong style={{ color: 'var(--text-primary)' }}>3 hours free</strong> in your afternoon slot. Schedule a focus session?
+          </div>
+        </motion.div>
+
+        <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
+          <div className="suggestion-bullet" aria-hidden="true" style={{ background: 'var(--accent-red)', boxShadow: '0 0 8px rgba(239, 68, 68, 0.5)' }} />
+          <div style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+            Assignment due tomorrow. Ensure preparation notes are reviewed.
+          </div>
+        </motion.div>
+      </div>
+
+      <div className="month-radial-card">
+        <div>
+          <h3 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>Month Completion</h3>
+          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>Based on overall metrics.</p>
+        </div>
+
+        <div style={{ position: 'relative', width: '72px', height: '72px', flexShrink: 0 }}>
+          <svg width="72" height="72" viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }} role="img" aria-label={`Month completion: ${monthProgressRate}%`}>
+            <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
+            <motion.path
+              fill="none"
+              stroke="url(#gradientRing)"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: monthProgressRate / 100 }}
+              transition={{ duration: 1.2, ease }}
+            />
+            <defs>
+              <linearGradient id="gradientRing" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#60a5fa" />
+                <stop offset="100%" stopColor="#8b5cf6" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div aria-hidden="true" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
+            {monthProgressRate}%
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+})
+
+const MobileFAB = memo(function MobileFAB({ setIsMobileDrawerOpen, handleFabRipple, fabRipples, scrolled, isMobileDrawerOpen, addEvent, title, setTitle, date, setDate, time, setTime }) {
+  return (
+    <>
+      <motion.button
+        className="mobile-floating-add-btn"
+        onClick={() => setIsMobileDrawerOpen(true)}
+        onPointerDown={handleFabRipple}
+        animate={{ y: scrolled ? -4 : 0 }}
+        whileTap={{ scale: 0.9 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        aria-label="Add event"
+      >
+        <Plus size={26} strokeWidth={2.5} aria-hidden="true" style={{ position: 'relative', zIndex: 3 }} />
+        <span className="btn-ripple-layer">
+          {fabRipples.map((r) => (
+            <span key={r.id} className="btn-ripple" style={{ left: r.x, top: r.y, width: r.size, height: r.size }} />
+          ))}
+        </span>
+      </motion.button>
+
+      <AnimatePresence>
+        {isMobileDrawerOpen && (
+          <motion.div
+            className="mobile-drawer-sheet"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Add event"
+          >
+            <div style={{ flex: 1 }} onClick={() => setIsMobileDrawerOpen(false)} />
+
+            <motion.div
+              className="mobile-drawer-body"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            >
+              <h3 className="composer-title" style={{ margin: 0, padding: 0 }}>Add Event Node</h3>
+
               <form onSubmit={addEvent} className="composer-form">
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Event title..."
-                  className="composer-input title"
+                  className="composer-input"
                   aria-label="Event title"
                 />
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="composer-input date-picker"
-                  aria-label="Event date"
-                />
-                <input
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  className="composer-input time-picker"
-                  aria-label="Event time (optional)"
-                />
-                <motion.button
-                  type="submit"
-                  className="btn-composer-add"
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                  onPointerDown={(e) => spawnRipple(e, setComposerRipples)}
-                  aria-label="Add event"
-                >
-                  <span className="btn-composer-content">
-                    <Plus size={16} aria-hidden="true" />
-                    <span>Add Event</span>
-                  </span>
-                  <span className="btn-ripple-layer">
-                    {composerRipples.map((r) => (
-                      <span key={r.id} className="btn-ripple" style={{ left: r.x, top: r.y, width: r.size, height: r.size }} />
-                    ))}
-                  </span>
-                </motion.button>
+                <div style={{ display: 'flex', gap: '8px', width: '100%', flexWrap: 'wrap' }}>
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="composer-input"
+                    style={{ flex: '1 1 130px', minWidth: 0 }}
+                    aria-label="Event date"
+                  />
+                  <input
+                    type="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                    className="composer-input"
+                    style={{ flex: '1 1 110px', minWidth: 0 }}
+                    aria-label="Event time (optional)"
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileDrawerOpen(false)}
+                    className="composer-input"
+                    style={{ flex: 1, border: '1px solid var(--glass-border)', background: 'var(--input-bg)', justifyContent: 'center', cursor: 'pointer' }}
+                    aria-label="Cancel adding event"
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-composer-add" style={{ flex: 2, justifyContent: 'center' }} aria-label="Add event">
+                    <span className="btn-composer-content" style={{ justifyContent: 'center', width: '100%' }}>Add Event</span>
+                  </button>
+                </div>
               </form>
-            </div>
-          )}
-
-          {/* AI Insights & suggestions */}
-          <div className="ai-assistant-card">
-            <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '10px', letterSpacing: '-0.03em' }}>
-              <span className="ai-sparkle-icon"><Sparkles size={18} color="var(--accent-amber)" aria-hidden="true" /></span>
-              <span>Atlas AI Suggestions</span>
-            </h3>
-
-            <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
-              <div className="suggestion-bullet" aria-hidden="true" style={{ background: 'var(--accent-amber)', boxShadow: '0 0 8px rgba(245, 158, 11, 0.5)' }} />
-              <div style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
-                You have <strong style={{ color: 'var(--text-primary)' }}>3 hours free</strong> in your afternoon slot. Schedule a focus session?
-              </div>
             </motion.div>
-
-            <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
-              <div className="suggestion-bullet" aria-hidden="true" style={{ background: 'var(--accent-red)', boxShadow: '0 0 8px rgba(239, 68, 68, 0.5)' }} />
-              <div style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
-                Assignment due tomorrow. Ensure preparation notes are reviewed.
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Radial progress card */}
-          <div className="month-radial-card">
-            <div>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>Month Completion</h3>
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>Based on overall metrics.</p>
-            </div>
-
-            <div style={{ position: 'relative', width: '72px', height: '72px', flexShrink: 0 }}>
-              <svg width="72" height="72" viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }} role="img" aria-label={`Month completion: ${monthProgressRate}%`}>
-                <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
-                <motion.path
-                  fill="none"
-                  stroke="url(#gradientRing)"
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: monthProgressRate / 100 }}
-                  transition={{ duration: 1.2, ease }}
-                />
-                <defs>
-                  <linearGradient id="gradientRing" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#60a5fa" />
-                    <stop offset="100%" stopColor="#8b5cf6" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div aria-hidden="true" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                {monthProgressRate}%
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* Mobile Floating Action Drawer */}
-      {isMobile && (
-        <>
-          <motion.button
-            className="mobile-floating-add-btn"
-            onClick={() => setIsMobileDrawerOpen(true)}
-            onPointerDown={(e) => spawnRipple(e, setFabRipples)}
-            animate={{ y: scrolled ? -4 : 0 }}
-            whileTap={{ scale: 0.9 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            aria-label="Add event"
-          >
-            <Plus size={26} strokeWidth={2.5} aria-hidden="true" style={{ position: 'relative', zIndex: 3 }} />
-            <span className="btn-ripple-layer">
-              {fabRipples.map((r) => (
-                <span key={r.id} className="btn-ripple" style={{ left: r.x, top: r.y, width: r.size, height: r.size }} />
-              ))}
-            </span>
-          </motion.button>
-
-          <AnimatePresence>
-            {isMobileDrawerOpen && (
-              <motion.div
-                className="mobile-drawer-sheet"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                role="dialog"
-                aria-modal="true"
-                aria-label="Add event"
-              >
-                <div style={{ flex: 1 }} onClick={() => setIsMobileDrawerOpen(false)} />
-
-                <motion.div
-                  className="mobile-drawer-body"
-                  initial={{ y: '100%' }}
-                  animate={{ y: 0 }}
-                  exit={{ y: '100%' }}
-                  transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                >
-                  <h3 className="composer-title" style={{ margin: 0, padding: 0 }}>Add Event Node</h3>
-
-                  <form onSubmit={addEvent} className="composer-form">
-                    <input
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Event title..."
-                      className="composer-input"
-                      aria-label="Event title"
-                    />
-                    <div style={{ display: 'flex', gap: '8px', width: '100%', flexWrap: 'wrap' }}>
-                      <input
-                        type="date"
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        className="composer-input"
-                        style={{ flex: '1 1 130px', minWidth: 0 }}
-                        aria-label="Event date"
-                      />
-                      <input
-                        type="time"
-                        value={time}
-                        onChange={(e) => setTime(e.target.value)}
-                        className="composer-input"
-                        style={{ flex: '1 1 110px', minWidth: 0 }}
-                        aria-label="Event time (optional)"
-                      />
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '8px' }}>
-                      <button
-                        type="button"
-                        onClick={() => setIsMobileDrawerOpen(false)}
-                        className="composer-input"
-                        style={{ flex: 1, border: '1px solid var(--glass-border)', background: 'var(--input-bg)', justifyContent: 'center', cursor: 'pointer' }}
-                        aria-label="Cancel adding event"
-                      >
-                        Cancel
-                      </button>
-                      <button type="submit" className="btn-composer-add" style={{ flex: 2, justifyContent: 'center' }} aria-label="Add event">
-                        <span className="btn-composer-content" style={{ justifyContent: 'center', width: '100%' }}>Add Event</span>
-                      </button>
-                    </div>
-                  </form>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </>
-      )}
-
-    </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   )
-}
+})
 
-function SummaryCard({ label, value, icon, desc, sparklinePath, accent }) {
+const SummaryCard = memo(function SummaryCard({ label, value, icon, desc, sparklinePath, accent }) {
   const gradId = 'cal-spark-' + label.toLowerCase().replace(/[^a-z0-9]+/g, '-')
   const accentColor = accent || '#8b5cf6'
   return (
@@ -1355,6 +1423,6 @@ function SummaryCard({ label, value, icon, desc, sparklinePath, accent }) {
       </div>
     </motion.div>
   )
-}
+})
 
 export default CalendarWidget;
