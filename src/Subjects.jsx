@@ -6,197 +6,119 @@ import {
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
 
+const EASE = [0.22, 1, 0.36, 1]
+
 const styleSheet = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-  
+
   :root {
-    --atlas-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
-    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
-
-    --canvas-bg: #08070c;
-    --canvas-bg-2: #0c0b14;
-    
-    /* Unified Glass System */
-    --glass-bg: rgba(22, 21, 32, 0.55);
-    --glass-bg-elevated: rgba(28, 26, 40, 0.75);
-    --glass-border: rgba(255, 255, 255, 0.06);
-    --glass-border-strong: rgba(255, 255, 255, 0.1);
-    
+    --atlas-font: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    --canvas-bg: #090810;
+    --glass-bg: rgba(18, 16, 30, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.05);
+    --glass-border-glow: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(236, 72, 153, 0.3) 100%);
     --text-primary: #ffffff;
-    --text-secondary: #a1a1aa;
-    --text-tertiary: #71717a;
-    
-    --input-bg: rgba(255, 255, 255, 0.03);
-    --input-bg-hover: rgba(255, 255, 255, 0.06);
+    --text-secondary: #94a3b8;
+    --text-tertiary: #64748b;
+    --input-bg: rgba(26, 23, 44, 0.6);
+    --input-border: rgba(255, 255, 255, 0.06);
     --input-focus-border: #8b5cf6;
-    --input-focus-glow: rgba(139, 92, 246, 0.2);
-
-    --btn-primary-bg: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-    --btn-primary-glow: rgba(139, 92, 246, 0.35);
-    
-    /* Unified Soft Shadow System */
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.05);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.15), 0 12px 32px rgba(0,0,0,0.08);
-    --shadow-lg: 0 8px 24px rgba(0,0,0,0.15), 0 24px 48px rgba(0,0,0,0.15);
-
-    /* Larger, softer, dimmer aurora */
+    --input-focus-glow: rgba(139, 92, 246, 0.25);
+    --btn-primary-bg: linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #ec4899 100%);
+    --btn-primary-glow: rgba(139, 92, 246, 0.4);
+    --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --card-shadow-hover: 0 32px 64px -14px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.07);
     --aurora-primary: rgba(139, 92, 246, 0.12);
     --aurora-secondary: rgba(236, 72, 153, 0.08);
-    --aurora-tertiary: rgba(59, 130, 246, 0.06);
-
-    --accent-purple: #a78bfa;
-    --accent-pink: #ec4899;
-    --accent-gold: #f59e0b;
-    --accent-green: #10b981;
-    --accent-amber: #fbbf24;
+    --aurora-tertiary: rgba(59, 130, 246, 0.08);
   }
 
   body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
-    --canvas-bg: #f8f9fc;
-    --canvas-bg-2: #eef0f7;
-    --glass-bg: rgba(255, 255, 255, 0.65);
-    --glass-bg-elevated: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(15, 23, 42, 0.04);
-    --glass-border-strong: rgba(15, 23, 42, 0.08);
-    
-    --text-primary: #18181b;
-    --text-secondary: #52525b;
-    --text-tertiary: #71717a;
-    
-    --input-bg: rgba(255, 255, 255, 0.5);
-    --input-bg-hover: rgba(255, 255, 255, 0.8);
+    --canvas-bg: #f8fafc;
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(15, 23, 42, 0.06);
+    --glass-border-glow: linear-gradient(135deg, rgba(92, 71, 245, 0.15) 0%, rgba(224, 83, 93, 0.15) 100%);
+    --text-primary: #1e1b4b;
+    --text-secondary: #475569;
+    --text-tertiary: #94a3b8;
+    --input-bg: rgba(241, 245, 249, 0.75);
+    --input-border: rgba(15, 23, 42, 0.08);
     --input-focus-border: #6366f1;
-    --input-focus-glow: rgba(99, 102, 241, 0.12);
-
-    --btn-primary-bg: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    --input-focus-glow: rgba(99, 102, 241, 0.15);
+    --btn-primary-bg: linear-gradient(135deg, #6366f1 0%, #818cf8 50%, #a855f7 100%);
     --btn-primary-glow: rgba(99, 102, 241, 0.2);
-    
-    --shadow-sm: 0 1px 2px rgba(31, 38, 135, 0.04), 0 2px 8px rgba(31, 38, 135, 0.03);
-    --shadow-md: 0 4px 12px rgba(31, 38, 135, 0.05), 0 12px 32px rgba(31, 38, 135, 0.04);
-    --shadow-lg: 0 8px 24px rgba(31, 38, 135, 0.06), 0 24px 48px rgba(31, 38, 135, 0.05);
-
-    --aurora-primary: rgba(255, 220, 200, 0.35);
-    --aurora-secondary: rgba(210, 220, 255, 0.35);
-    --aurora-tertiary: rgba(230, 210, 255, 0.3);
-
-    --accent-purple: #6366f1;
-    --accent-pink: #ec4899;
-    --accent-gold: #d97706;
-    --accent-green: #059669;
-    --accent-amber: #d97706;
+    --card-shadow: 0 15px 35px rgba(31, 38, 135, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    --card-shadow-hover: 0 20px 45px rgba(31, 38, 135, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    --aurora-primary: #ffe3d8;
+    --aurora-secondary: #dce5ff;
+    --aurora-tertiary: #eedcff;
   }
 
   .subjects-wrapper {
     font-family: var(--atlas-font);
     color: var(--text-primary);
-    max-width: 1120px;
+    max-width: 1100px;
     margin: 0 auto;
     position: relative;
-    padding: 32px 16px 48px; /* Slightly wider on phones */
-    box-sizing: border-box;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
+    padding: 20px 0;
   }
 
-  /* Ambient Background */
   .aurora-blur-sphere {
-    position: fixed;
+    position: absolute;
     border-radius: 50%;
-    filter: blur(140px); /* Softer and larger */
+    filter: blur(90px);
     pointer-events: none;
     z-index: 0;
-    will-change: transform;
-    transition: background 0.6s var(--ease-premium);
+    transition: background 0.5s ease;
   }
-  .sphere-primary { top: -10%; left: -15%; width: 600px; height: 600px; background: var(--aurora-primary); }
-  .sphere-secondary { bottom: -10%; right: -15%; width: 550px; height: 550px; background: var(--aurora-secondary); }
-  .sphere-tertiary { top: 40%; left: 40%; width: 450px; height: 450px; background: var(--aurora-tertiary); opacity: 0.5; }
 
-  /* ---------- HERO HEADER ---------- */
+  .sphere-primary { top: 5%; left: -10%; width: 450px; height: 450px; background: var(--aurora-primary); }
+  .sphere-secondary { bottom: 10%; right: -10%; width: 400px; height: 400px; background: var(--aurora-secondary); }
+  .sphere-tertiary { top: 40%; left: 40%; width: 350px; height: 350px; background: var(--aurora-tertiary); }
+
   .subjects-hero-header {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: 24px;
-    padding: 20px 28px; /* 10-15% shorter */
-    margin-bottom: 24px;
-    box-shadow: var(--shadow-md);
-    backdrop-filter: blur(20px) saturate(1.8);
-    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    padding: 32px 40px;
+    margin-bottom: 32px;
+    box-shadow: var(--card-shadow);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
     z-index: 10;
-    flex-wrap: wrap;
-    gap: 16px;
-    overflow: hidden;
   }
 
-  .hero-info-area { position: relative; z-index: 1; }
-  .hero-info-area h1 { 
-    font-size: 26px; 
-    font-weight: 700; 
-    margin: 0 0 4px 0; 
-    letter-spacing: -0.03em; 
-    color: var(--text-primary);
-    line-height: 1.1;
-  }
-  .hero-info-area p { 
-    font-size: 14px; 
-    color: var(--text-secondary); 
-    margin: 0; 
-    font-weight: 400; 
-    letter-spacing: -0.01em;
-  }
-  .hero-meta-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; position: relative; z-index: 1; }
+  .hero-info-area h1 { font-size: 32px; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; color: var(--text-primary); }
+  .hero-info-area p { font-size: 14px; color: var(--text-secondary); margin: 0; font-weight: 500; }
+  .hero-meta-badges { display: flex; align-items: center; gap: 12px; }
 
   .semester-pill {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid transparent;
-    color: var(--text-secondary);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    padding: 5px 10px; /* Smaller */
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.18);
+    color: #8b5cf6;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 7px 15px;
     border-radius: 100px;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    backdrop-filter: blur(4px);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
-  }
-  body.light-theme .semester-pill, .light-theme .semester-pill {
-    background: rgba(255, 255, 255, 0.5);
-    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
+    backdrop-filter: blur(6px);
   }
 
   .sgpa-badge-glowing {
-    background: var(--input-bg);
-    border: 1px solid var(--glass-border);
-    color: var(--text-primary);
-    font-size: 13px;
-    font-weight: 700;
-    padding: 5px 12px;
+    background: linear-gradient(135deg, #ffeaa7 0%, #e1b12c 100%);
+    color: #0c0b11;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 6px 16px;
     border-radius: 100px;
-    white-space: nowrap;
-    letter-spacing: -0.01em;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .sgpa-badge-glowing::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--accent-gold);
-    box-shadow: 0 0 8px var(--accent-gold);
+    box-shadow: 0 4px 14px rgba(225, 177, 44, 0.35), inset 0 1px 0 rgba(255,255,255,0.4);
   }
 
-  /* ---------- STATS GRID ---------- */
   .stats-carousel-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -209,336 +131,186 @@ const styleSheet = `
   .kpi-card-glass {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: 20px;
+    border-radius: 22px;
     padding: 20px;
-    box-shadow: var(--shadow-sm);
-    backdrop-filter: blur(20px) saturate(1.5);
-    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    box-shadow: var(--card-shadow);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 108px; /* 10-15% shorter */
+    min-height: 120px;
     position: relative;
     overflow: hidden;
-    box-sizing: border-box;
-    transition: box-shadow 0.3s var(--ease-premium), 
-                border-color 0.3s var(--ease-premium),
-                transform 0.3s var(--ease-premium);
-    will-change: transform;
-    contain: layout paint;
-  }
-  .kpi-card-glass:hover {
-    box-shadow: var(--shadow-md);
-    border-color: var(--glass-border-strong);
-    transform: translateY(-2px);
+    transition: box-shadow 0.3s ease;
   }
 
-  .kpi-header-row { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 12px; 
-  }
-  .kpi-label { 
-    font-size: 12px; 
-    font-weight: 500; 
-    color: var(--text-secondary); 
-    letter-spacing: -0.01em; 
-  }
-  .kpi-icon-wrapper { 
-    color: var(--accent-purple); 
-    display: flex; 
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: rgba(139, 92, 246, 0.1); /* Softer bg */
-    box-shadow: 0 0 12px rgba(139, 92, 246, 0.1); /* Subtle glow */
-  }
-  body.light-theme .kpi-icon-wrapper, .light-theme .kpi-icon-wrapper {
-    background: rgba(99, 102, 241, 0.08);
-    box-shadow: 0 0 12px rgba(99, 102, 241, 0.08);
-  }
-  .kpi-main-metric { 
-    font-size: 32px; /* Slightly larger */
-    font-weight: 700; 
-    color: var(--text-primary); 
-    line-height: 1; 
-    margin-bottom: 6px; 
-    letter-spacing: -0.03em; 
-    font-variant-numeric: tabular-nums;
-  }
-  .kpi-desc-row { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: flex-end; 
-    gap: 8px; 
-  }
-  .kpi-desc { 
-    font-size: 11px; 
-    color: var(--text-tertiary); 
-    font-weight: 500; 
-    max-width: 65%; 
-    line-height: 1.4; 
-  }
+  .kpi-card-glass:hover { box-shadow: var(--card-shadow-hover); }
 
-  /* ---------- SUBJECT FORM ---------- */
+  .kpi-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .kpi-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; }
+  .kpi-icon-wrapper { color: var(--text-secondary); opacity: 0.8; }
+  .kpi-main-metric { font-size: 28px; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 6px; }
+  .kpi-desc-row { display: flex; justify-content: space-between; align-items: flex-end; }
+  .kpi-desc { font-size: 11px; color: var(--text-tertiary); font-weight: 500; max-width: 60%; }
+
   .subject-form-panel {
-    background: transparent;
-    border: none;
-    padding: 0;
-    margin-bottom: 24px;
-    z-index: 10;
-    position: relative;
-    box-sizing: border-box;
-  }
-
-  .subject-form { 
-    display: flex; 
-    gap: 8px; 
-    align-items: center; 
-    width: 100%; 
-  }
-
-  .subject-input {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    padding: 12px 16px;
-    color: var(--text-primary);
-    font-size: 14px;
-    font-weight: 500;
-    font-family: var(--atlas-font);
-    box-sizing: border-box;
-    transition: border-color 0.2s var(--ease-premium), 
-                box-shadow 0.2s var(--ease-premium),
-                background 0.2s var(--ease-premium);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-  }
-  .subject-input:hover { 
-    background: var(--glass-bg-elevated); 
-    border-color: var(--glass-border-strong);
-  }
-  .subject-input::placeholder { color: var(--text-tertiary); opacity: 1; }
-  .subject-input:focus { 
-    outline: none; 
-    border-color: var(--input-focus-border); 
-    box-shadow: 0 0 0 4px var(--input-focus-glow);
-    background: var(--glass-bg-elevated);
+    border-radius: 24px;
+    padding: 24px;
+    margin-bottom: 32px;
+    box-shadow: var(--card-shadow);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 10;
+    position: relative;
   }
 
+  .subject-form { display: flex; gap: 12px; align-items: center; width: 100%; }
+
+  .subject-input {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 14px;
+    padding: 14px 18px;
+    color: var(--input-text);
+    font-size: 14px;
+    font-weight: 500;
+    box-sizing: border-box;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .subject-input::placeholder { color: var(--text-secondary); opacity: 0.6; }
+  .subject-input:focus { outline: none; border-color: var(--input-focus-border); background: var(--input-bg); box-shadow: 0 0 0 3px var(--input-focus-glow); }
   .subject-input.name { flex: 2; min-width: 200px; }
   .subject-input.credits { width: 100px; min-width: 80px; }
   .subject-input.faculty { flex: 1.2; min-width: 150px; }
 
   .btn-subject-add {
-    position: relative;
     background: var(--btn-primary-bg);
     color: #ffffff;
     border: none;
-    border-radius: 12px;
-    padding: 12px 24px;
+    border-radius: 14px;
+    padding: 14px 24px;
     font-size: 14px;
     font-weight: 600;
-    font-family: var(--atlas-font);
-    letter-spacing: -0.01em;
     cursor: pointer;
-    box-shadow: 0 4px 14px var(--btn-primary-glow), 0 1px 0 rgba(255,255,255,0.2) inset; /* Reduced glow */
-    transition: transform 0.2s var(--ease-premium), 
-                box-shadow 0.2s var(--ease-premium),
-                filter 0.2s var(--ease-premium);
+    box-shadow: 0 6px 16px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.25);
+    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex-shrink: 0;
     white-space: nowrap;
-    overflow: hidden;
-  }
-  .btn-subject-add:hover { 
-    transform: translateY(-1px); 
-    box-shadow: 0 8px 20px var(--btn-primary-glow), 0 1px 0 rgba(255,255,255,0.2) inset;
-    filter: brightness(1.08);
-  }
-  .btn-subject-add:active { 
-    transform: scale(0.97); /* Premium press animation */
-    box-shadow: 0 2px 6px var(--btn-primary-glow), 0 1px 0 rgba(255,255,255,0.2) inset;
   }
 
-  /* ---------- DESKTOP DASHBOARD GRID ---------- */
+  .btn-subject-add:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 26px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.3);
+    filter: brightness(1.05);
+  }
+
   .subjects-dashboard-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    gap: 20px;
     z-index: 10;
     position: relative;
   }
 
   .premium-subject-card {
-    background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), var(--glass-bg); /* Subtle glass gradient */
+    background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: 22px; /* Slightly increased radius */
+    border-radius: 24px;
     padding: 24px;
-    box-shadow: var(--shadow-sm); /* Softer shadow */
-    backdrop-filter: blur(20px) saturate(1.5);
-    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    box-shadow: var(--card-shadow);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 200px;
+    min-height: 220px;
     position: relative;
     overflow: visible;
-    transition: box-shadow 0.3s var(--ease-premium), 
-                border-color 0.3s var(--ease-premium),
-                transform 0.3s var(--ease-premium);
-    will-change: transform;
-    contain: layout paint;
-  }
-  .premium-subject-card:hover {
-    box-shadow: var(--shadow-lg);
-    border-color: var(--glass-border-strong);
-    transform: translateY(-4px); /* Faint hover elevation */
-  }
-  .premium-subject-card:active {
-    transform: translateY(-2px) scale(0.99); /* Faint press elevation */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
   }
 
-  .card-top-header { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: flex-start; 
-    z-index: 2; 
-    position: relative; 
+  .premium-subject-card:hover {
+    border-image: var(--glass-border-glow) 1;
+    border-radius: 24px;
+    box-shadow: var(--card-shadow-hover);
   }
+
+  .card-top-header { display: flex; justify-content: space-between; align-items: flex-start; z-index: 2; position: relative; }
 
   .academic-brand-icon {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.05) 100%); /* Richer glass finish */
-    border: 1px solid rgba(139, 92, 246, 0.15);
+    width: 44px;
+    height: 44px;
+    background: var(--input-bg);
+    border: 1px solid var(--glass-border);
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--accent-purple); /* Brighter icon */
-    flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08); /* Soft purple glow */
-  }
-  body.light-theme .academic-brand-icon, .light-theme .academic-brand-icon {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0.03) 100%);
-    border-color: rgba(99, 102, 241, 0.1);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    color: #8b5cf6;
   }
 
   .academic-completetion-chip {
     font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
     padding: 4px 10px;
     border-radius: 100px;
     background: rgba(16, 185, 129, 0.1);
-    color: var(--accent-green);
+    color: var(--accent-emerald);
     border: 1px solid rgba(16, 185, 129, 0.15);
     white-space: nowrap;
   }
 
   .academic-pending-chip {
     font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    padding: 3px 10px; /* 2-3px shorter height */
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 4px 10px;
     border-radius: 100px;
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.06) 100%); /* Subtle amber gradient */
+    background: rgba(245, 158, 11, 0.1);
     color: var(--accent-amber);
-    border: 1px solid rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.15);
     white-space: nowrap;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05); /* Tiny inner highlight */
-  }
-  body.light-theme .academic-pending-chip, .light-theme .academic-pending-chip {
-    background: linear-gradient(135deg, rgba(217, 119, 6, 0.1) 0%, rgba(217, 119, 6, 0.05) 100%);
-    color: #d97706;
-    border-color: rgba(217, 119, 6, 0.15);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
   }
 
-  .card-text-body { margin: 24px 0 12px 0; z-index: 2; position: relative; } /* Increased spacing */
+  .card-text-body { margin: 16px 0; z-index: 2; position: relative; }
+  .card-subject-name { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0 0 6px 0; line-height: 1.3; letter-spacing: -0.01em; }
+  .card-subject-meta { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; font-weight: 500; }
+  .card-credits-indicator { background: var(--input-bg); padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+  .card-divider-line { height: 1px; background: var(--glass-border); margin-bottom: 16px; z-index: 2; position: relative; }
+  .card-grades-tray { display: flex; align-items: center; justify-content: space-between; gap: 12px; z-index: 20; position: relative; }
 
-  .card-subject-name { 
-    font-size: 16px; 
-    font-weight: 700; /* Slightly bolder */
-    color: var(--text-primary); 
-    margin: 0 0 8px 0; 
-    line-height: 1.3; 
-    letter-spacing: -0.02em;
-  }
-
-  .card-subject-meta { 
-    font-size: 12px; 
-    color: var(--text-tertiary); 
-    display: flex; 
-    align-items: center; 
-    gap: 6px; 
-    font-weight: 500; 
-    flex-wrap: wrap; 
-  }
-
-  .card-credits-indicator { 
-    background: var(--input-bg); 
-    padding: 2px 8px; 
-    border-radius: 6px; 
-    font-weight: 500;
-    border: 1px solid var(--glass-border);
-    font-size: 11px;
-  }
-
-  .card-grades-tray { 
-    display: flex; 
-    align-items: center; 
-    justify-content: space-between; 
-    gap: 12px; 
-    z-index: 20; 
-    position: relative; 
-    margin-top: auto;
-  }
-
-  /* ---------- CUSTOM DROPDOWN ---------- */
   .custom-dropdown-container { position: relative; width: 120px; z-index: 30; }
 
   .dropdown-trigger-btn {
     width: 100%;
     background: var(--input-bg);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--input-border);
     border-radius: 10px;
     padding: 8px 12px;
-    color: var(--text-primary);
+    color: var(--input-text);
     font-size: 13px;
-    font-weight: 500;
-    font-family: var(--atlas-font);
+    font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
-    transition: border-color 0.2s var(--ease-premium), 
-                box-shadow 0.2s var(--ease-premium),
-                background 0.2s var(--ease-premium);
+    transition: all 0.2s ease;
     box-sizing: border-box;
     outline: none;
-    letter-spacing: -0.01em;
   }
-  .dropdown-trigger-btn:hover { 
-    background: var(--input-bg-hover); 
-    border-color: var(--glass-border-strong);
-  }
-  .dropdown-trigger-btn:focus { 
-    border-color: var(--input-focus-border); 
-    box-shadow: 0 0 0 3px var(--input-focus-glow); 
-  }
-  .dropdown-chevron { 
-    color: var(--text-tertiary); 
-    transition: transform 0.25s var(--ease-premium);
-    will-change: transform;
-  }
+
+  .dropdown-trigger-btn:focus { border-color: var(--input-focus-border); box-shadow: 0 0 0 3px var(--input-focus-glow); }
+  .dropdown-chevron { color: var(--text-secondary); transition: transform 0.25s ease; }
   .dropdown-chevron.open { transform: rotate(180deg); }
 
   .dropdown-options-list {
@@ -546,303 +318,126 @@ const styleSheet = `
     bottom: calc(100% + 8px);
     left: 0;
     width: 100%;
-    background: var(--glass-bg-elevated);
-    backdrop-filter: blur(24px) saturate(1.8);
-    -webkit-backdrop-filter: blur(24px) saturate(1.8);
-    border: 1px solid var(--glass-border-strong);
+    background: var(--glass-bg);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid var(--glass-border);
     border-radius: 12px;
-    padding: 4px;
+    padding: 6px;
     margin: 0;
     list-style: none;
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
     box-sizing: border-box;
     z-index: 100;
+    will-change: opacity, transform;
   }
 
-  .dropdown-option-item {
-    padding: 8px 10px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.15s var(--ease-premium), color 0.15s var(--ease-premium);
-    letter-spacing: -0.01em;
-  }
+  .dropdown-option-item { padding: 8px 10px; font-size: 12px; font-weight: 600; color: var(--text-secondary); border-radius: 8px; cursor: pointer; transition: all 0.15s ease; }
+  .dropdown-option-item:hover { background: var(--input-bg); color: var(--text-primary); }
+  .dropdown-option-item.selected { background: var(--btn-primary-bg); color: #ffffff; }
 
-  .dropdown-option-item:hover { 
-    background: var(--input-bg-hover); 
-    color: var(--text-primary); 
-  }
-  .dropdown-option-item.selected { 
-    background: var(--btn-primary-bg); 
-    color: #ffffff;
-    box-shadow: 0 2px 6px var(--btn-primary-glow);
-  }
-
-  .dropdown-click-outside-overlay { 
-    position: fixed; 
-    top: 0; left: 0; right: 0; bottom: 0; 
-    z-index: 90; 
-    background: transparent; 
-  }
+  .dropdown-click-outside-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 90; background: transparent; }
 
   .btn-destroy-subject {
-    background: var(--input-bg);
-    border: 1px solid var(--glass-border);
+    background: none;
+    border: none;
     color: var(--text-tertiary);
     cursor: pointer;
     padding: 8px;
-    border-radius: 10px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s var(--ease-premium), 
-                color 0.2s var(--ease-premium),
-                border-color 0.2s var(--ease-premium),
-                transform 0.15s var(--ease-premium);
-    flex-shrink: 0;
+    transition: all 0.2s ease;
   }
-  .btn-destroy-subject:hover { 
-    background: rgba(239, 68, 68, 0.1); 
-    color: #ef4444; 
-    border-color: rgba(239, 68, 68, 0.2);
-  }
-  .btn-destroy-subject:active { transform: scale(0.92); }
 
-  /* ---------- EMPTY STATE ---------- */
+  .btn-destroy-subject:hover { background: rgba(239, 68, 68, 0.08); color: var(--accent-coral); }
+
   .dashboard-empty-state {
     text-align: center;
-    padding: 64px 20px;
-    border-radius: 24px;
-    border: 1px dashed var(--glass-border-strong);
+    padding: 60px 20px;
+    border-radius: 28px;
+    border: 1.5px dashed var(--glass-border);
     background: var(--glass-bg);
     backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     z-index: 10;
     position: relative;
-    box-sizing: border-box;
   }
 
-  .empty-banner-title { 
-    font-size: 18px; 
-    font-weight: 600; 
-    color: var(--text-primary); 
-    margin: 16px 0 6px 0; 
-    letter-spacing: -0.02em;
-  }
-  .empty-banner-subtitle { 
-    font-size: 14px; 
-    color: var(--text-secondary); 
-    max-width: 340px; 
-    margin: 0 auto; 
-    line-height: 1.5; 
-  }
+  .empty-banner-title { font-size: 20px; font-weight: 700; color: var(--text-primary); margin: 16px 0 6px 0; }
+  .empty-banner-subtitle { font-size: 14px; color: var(--text-secondary); max-width: 340px; margin: 0 auto; line-height: 1.5; }
 
-  /* ============================================================
-     PERFORMANCE-FIRST ACCORDION
-     Uses CSS grid-template-rows (0fr → 1fr) — no JS height
-     measurement, no layout thrashing, GPU-friendly.
-     ============================================================ */
-  .mobile-accordion-drawer-grid {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 0.32s var(--ease-out-quart); /* Spring-like easing */
-    will-change: grid-template-rows;
-    contain: content;
-  }
-  .mobile-accordion-drawer-grid.is-open { 
-    grid-template-rows: 1fr; 
-  }
-
-  .mobile-accordion-drawer-inner {
-    overflow: hidden;
-    min-height: 0;
-    opacity: 0;
-    transform: translateY(-4px);
-    transition: opacity 0.18s ease, transform 0.18s ease;
-    will-change: opacity, transform;
-  }
-  .mobile-accordion-drawer-grid.is-open .mobile-accordion-drawer-inner {
-    opacity: 1;
-    transform: translateY(0);
-    transition: opacity 0.24s ease 0.08s, transform 0.24s var(--ease-out-quart) 0.08s;
-  }
-
-  /* ---------- RESPONSIVE: MOBILE ---------- */
   @media (max-width: 768px) {
-    .subjects-wrapper { padding: 16px 8px 32px; } /* 4-6% wider on phones */
-    .subjects-hero-header { 
-      padding: 16px 20px; 
-      margin-bottom: 16px; 
-      border-radius: 20px; 
-      flex-direction: row; 
-      align-items: center; 
-      gap: 12px; 
-    }
-    .subjects-hero-header h1 { font-size: 20px !important; letter-spacing: -0.02em; }
+    .subjects-hero-header { padding: 16px 20px; margin-bottom: 16px; border-radius: 18px; flex-direction: row; align-items: center; gap: 12px; }
+    .subjects-hero-header h1 { font-size: 20px !important; }
     .subjects-hero-header p { display: none; }
 
-    .stats-carousel-grid {
-      display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      gap: 10px;
-      padding-bottom: 4px;
-      margin-bottom: 16px;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-
+    .stats-carousel-grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding-bottom: 4px; margin-bottom: 16px; -webkit-overflow-scrolling: touch; }
     .stats-carousel-grid::-webkit-scrollbar { display: none; }
 
-    .kpi-card-glass { 
-      flex: 0 0 75%; 
-      scroll-snap-align: start; 
-      min-height: 98px; /* 10-15% shorter */
-      padding: 16px; 
-      border-radius: 16px; 
-    }
-    .kpi-main-metric { font-size: 24px !important; margin-bottom: 2px; } /* Slightly larger */
+    .kpi-card-glass { flex: 0 0 70%; scroll-snap-align: start; min-height: 94px; padding: 14px; border-radius: 16px; }
+    .kpi-main-metric { font-size: 20px !important; margin-bottom: 2px; }
     .kpi-desc { font-size: 10px !important; }
     .golden-trophy-badge { display: none !important; }
 
     .subjects-dashboard-grid { display: none; }
 
-    .mobile-accordion-list-container { 
-      display: flex; 
-      flex-direction: column; 
-      gap: 8px; 
-      z-index: 10; 
-      position: relative; 
-    }
+    .mobile-accordion-list-container { display: flex; flex-direction: column; gap: 10px; z-index: 10; position: relative; }
 
     .mobile-subject-accordion-item {
-      background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), var(--glass-bg);
+      background: var(--glass-bg);
       border: 1px solid var(--glass-border);
-      border-radius: 16px;
-      box-shadow: var(--shadow-sm);
-      backdrop-filter: blur(20px) saturate(1.5);
-      -webkit-backdrop-filter: blur(20px) saturate(1.5);
+      border-radius: 18px;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       overflow: hidden;
       box-sizing: border-box;
-      transition: border-color 0.25s var(--ease-premium), 
-                  box-shadow 0.25s var(--ease-premium);
-      contain: layout;
+      transition: box-shadow 0.3s ease;
     }
 
-    .mobile-subject-accordion-item:hover {
-      box-shadow: var(--shadow-md);
-    }
-    .mobile-subject-accordion-item.is-active { 
-      border-color: var(--glass-border-strong);
-      box-shadow: var(--shadow-md);
-    }
+    .mobile-subject-accordion-item:hover { box-shadow: var(--card-shadow-hover); }
+    .mobile-subject-accordion-item.is-active { border-left: 3px solid #7c3aed; }
+    .mobile-subject-accordion-item.is-graded { border-left: 3px solid #10b981; }
 
-    .mobile-accordion-closed-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 16px;
-      min-height: 68px;
-      cursor: pointer;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      box-sizing: border-box;
-      transition: background 0.2s var(--ease-premium);
-    }
-    .mobile-accordion-closed-row:active { 
-      background: var(--input-bg); 
-    }
-
+    .mobile-accordion-closed-row { display: flex; justify-content: space-between; align-items: center; padding: 16px; min-height: 72px; cursor: pointer; user-select: none; box-sizing: border-box; }
     .mobile-row-left { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
 
     .mobile-accordion-icon {
-      width: 36px; height: 36px; 
-      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.05) 100%); 
-      border: 1px solid rgba(139, 92, 246, 0.15);
-      border-radius: 10px; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      color: var(--accent-purple); 
-      flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      width: 36px; height: 36px; background: var(--input-bg); border: 1px solid var(--glass-border);
+      border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #8b5cf6; flex-shrink: 0;
     }
 
     .mobile-subject-info-block { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
-    .mobile-subject-name { 
-      font-size: 14px; 
-      font-weight: 700; 
-      color: var(--text-primary); 
-      margin: 0; 
-      white-space: nowrap; 
-      overflow: hidden; 
-      text-overflow: ellipsis; 
-      letter-spacing: -0.01em;
-    }
-    .mobile-subject-meta-inline { 
-      font-size: 12px; 
-      color: var(--text-tertiary); 
-      font-weight: 500; 
-      white-space: nowrap; 
-      overflow: hidden; 
-      text-overflow: ellipsis; 
-    }
-
-    .mobile-row-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-
-    .mobile-chevron-chevron { 
-      color: var(--text-tertiary); 
-      transition: transform 0.3s var(--ease-premium); 
-      will-change: transform;
-    }
+    .mobile-subject-name { font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mobile-subject-meta-inline { font-size: 11px; color: var(--text-secondary); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mobile-row-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .mobile-chevron-chevron { color: var(--text-tertiary); transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
     .mobile-chevron-chevron.is-open { transform: rotate(180deg); }
 
-    .mobile-accordion-drawer-body { 
-      padding: 0 16px 16px 16px; 
-    }
-    .mobile-drawer-controls { 
-      display: flex; 
-      align-items: center; 
-      justify-content: space-between; 
-      gap: 12px; 
-      padding-top: 12px; 
-      border-top: 1px solid var(--glass-border);
-    }
+    .mobile-accordion-drawer-body { padding: 0 16px 16px 16px; border-top: 1px solid var(--glass-border); will-change: opacity, transform; }
+    .mobile-drawer-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 14px; }
 
-    .subject-form-panel { 
-      padding: 0; 
-      margin-bottom: 16px; 
-      border-radius: 0; 
-    }
-    .subject-form { flex-direction: column; align-items: stretch; gap: 8px; }
+    .subject-form-panel { padding: 16px; margin-bottom: 16px; border-radius: 18px; }
+    .subject-form { flex-direction: column; align-items: stretch; gap: 12px; }
     .subject-input { width: 100% !important; }
     .btn-subject-add { width: 100% !important; justify-content: center; }
 
     .mobile-add-subject-form-trigger {
-      position: relative;
       background: var(--btn-primary-bg);
-      border-radius: 14px;
-      padding: 14px;
+      border-radius: 16px;
+      padding: 13px;
       text-align: center;
       color: #ffffff;
-      font-weight: 600;
+      font-weight: 700;
       font-size: 14px;
-      font-family: var(--atlas-font);
-      letter-spacing: -0.01em;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 8px;
       margin-bottom: 16px;
-      box-shadow: 0 4px 14px var(--btn-primary-glow), 0 1px 0 rgba(255,255,255,0.2) inset;
-      transition: transform 0.2s var(--ease-premium), box-shadow 0.2s var(--ease-premium);
-    }
-    .mobile-add-subject-form-trigger:active { 
-      transform: scale(0.97); 
-      box-shadow: 0 2px 6px var(--btn-primary-glow), 0 1px 0 rgba(255,255,255,0.2) inset;
+      box-shadow: 0 4px 14px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.25);
     }
   }
 
@@ -851,12 +446,7 @@ const styleSheet = `
     .stats-carousel-grid { grid-template-columns: repeat(2, 1fr); }
     .subject-form { flex-wrap: wrap; }
   }
-`
-
-function fieldsEqual(a, b) {
-  return a.id === b.id && a.name === b.name && a.credits === b.credits &&
-    a.faculty === b.faculty && a.grade_point === b.grade_point
-}
+`;
 
 function Subjects({ userId }) {
   const [subjects, setSubjects] = useState([])
@@ -864,26 +454,9 @@ function Subjects({ userId }) {
   const [credits, setCredits] = useState('')
   const [faculty, setFaculty] = useState('')
   const [loading, setLoading] = useState(true)
-
   const [isMobile, setIsMobile] = useState(false)
   const [expandedSubjectId, setExpandedSubjectId] = useState(null)
   const [isAddFormExpanded, setIsAddFormExpanded] = useState(false)
-
-  useEffect(() => {
-    fetchSubjects()
-    let ticking = false
-    const handleResize = () => {
-      if (ticking) return
-      ticking = true
-      requestAnimationFrame(() => {
-        setIsMobile(window.innerWidth <= 768)
-        ticking = false
-      })
-    }
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
 
   const fetchSubjects = useCallback(async () => {
     const { data, error } = await supabase
@@ -893,6 +466,14 @@ function Subjects({ userId }) {
     if (!error) setSubjects(data)
     setLoading(false)
   }, [])
+
+  useEffect(() => {
+    fetchSubjects()
+    const handleResize = () => setIsMobile(window.innerWidth <= 768)
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [fetchSubjects])
 
   async function addSubject(e) {
     e.preventDefault()
@@ -945,19 +526,16 @@ function Subjects({ userId }) {
 
       <motion.div
         className="subjects-hero-header"
-        initial={{ opacity: 0, y: -12 }}
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 120, damping: 18, mass: 0.8 }}
+        transition={{ type: 'spring', stiffness: 100, damping: 15 }}
       >
         <div className="hero-info-area">
           <h1>Academic Workspace</h1>
           <p>Track academic status, GPA metrics, and course credit distribution.</p>
         </div>
         <div className="hero-meta-badges">
-          <span className="semester-pill">
-            <CalendarDays size={12} strokeWidth={2} />
-            Current Semester
-          </span>
+          <span className="semester-pill">Current Semester</span>
           {sgpa && <span className="sgpa-badge-glowing">{sgpa} SGPA</span>}
         </div>
       </motion.div>
@@ -966,15 +544,12 @@ function Subjects({ userId }) {
         className="stats-carousel-grid"
         initial="hidden"
         animate="visible"
-        variants={{
-          hidden: { opacity: 0 },
-          visible: { opacity: 1, transition: { staggerChildren: 0.04 } }
-        }}
+        variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } }}
       >
         <SummaryCard
           label="Subjects"
           value={totalSubjectsCount}
-          icon={<BookOpen size={14} />}
+          icon={<BookOpen size={16} />}
           desc={`${gradedSubjects.length} subjects graded`}
           sparklinePath="M0,15 C10,12 20,18 30,5 C40,2 50,14 60,8"
         />
@@ -982,29 +557,29 @@ function Subjects({ userId }) {
         <SummaryCard
           label="Total Credits"
           value={totalCredits}
-          icon={<Layers size={14} />}
+          icon={<Layers size={16} />}
           desc={`${gradedCredits} graded credits`}
           sparklinePath="M0,8 C10,14 20,5 30,12 C40,16 50,2 60,10"
         />
 
         <motion.div
           className="kpi-card-glass"
-          variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 120, damping: 16 } } }}
-          whileHover={{ y: -2, transition: { duration: 0.2 } }}
+          variants={{ hidden: { opacity: 0, y: 15 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' } } }}
+          whileHover={{ y: -4, transition: { duration: 0.2, ease: EASE } }}
         >
           <div className="kpi-header-row">
             <span className="kpi-label">Cumulative SGPA</span>
-            <span className="kpi-icon-wrapper" style={{ color: 'var(--accent-gold)', background: 'rgba(245, 158, 11, 0.1)', boxShadow: '0 0 12px rgba(245, 158, 11, 0.1)' }}>
-              <Award size={14} />
+            <span className="kpi-icon-wrapper" style={{ color: '#e1b12c' }}>
+              <Award size={16} />
             </span>
           </div>
-          <div className="kpi-main-metric" style={{ color: 'var(--accent-gold)' }}>
+          <div className="kpi-main-metric" style={{ color: '#e1b12c' }}>
             {sgpa ?? '—'}
           </div>
           <div className="kpi-desc-row">
             <span className="kpi-desc">Based on evaluated modules.</span>
-            <div className="golden-trophy-badge" style={{ position: 'absolute', width: '24px', height: '24px', top: 'unset', right: '14px', bottom: '14px', borderRadius: '50%', background: 'var(--input-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--glass-border)' }}>
-              <GraduationCap size={12} color="var(--accent-gold)" strokeWidth={2.5} />
+            <div className="golden-trophy-badge" style={{ width: '28px', height: '28px', top: 'unset', right: '12px', bottom: '12px' }}>
+              <GraduationCap size={14} color="#0c0b11" strokeWidth={2.5} />
             </div>
           </div>
         </motion.div>
@@ -1012,7 +587,7 @@ function Subjects({ userId }) {
         <SummaryCard
           label="Graded Ratio"
           value={`${gradedSubjects.length}/${totalSubjectsCount}`}
-          icon={<TrendingUp size={14} />}
+          icon={<TrendingUp size={16} />}
           desc={`${completedPercentage}% of workload graded`}
           sparklinePath="M0,18 C10,15 20,10 30,10 C40,10 50,3 60,3"
         />
@@ -1022,10 +597,9 @@ function Subjects({ userId }) {
         {!isMobile ? (
           <motion.div
             className="subject-form-panel"
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            exit={{ opacity: 0, y: -15 }}
           >
             <form onSubmit={addSubject} className="subject-form">
               <input
@@ -1050,10 +624,9 @@ function Subjects({ userId }) {
               <motion.button
                 type="submit"
                 className="btn-subject-add"
-                whileTap={{ scale: 0.97 }}
-                transition={{ duration: 0.1 }}
+                whileTap={{ scale: 0.98 }}
               >
-                <Plus size={16} strokeWidth={2.5} />
+                <Plus size={16} />
                 <span>Add Subject</span>
               </motion.button>
             </form>
@@ -1065,7 +638,6 @@ function Subjects({ userId }) {
                 className="mobile-add-subject-form-trigger"
                 onClick={() => setIsAddFormExpanded(true)}
                 whileTap={{ scale: 0.97 }}
-                transition={{ duration: 0.12 }}
                 layoutId="addSubjectForm"
               >
                 <Plus size={16} strokeWidth={2.5} />
@@ -1076,7 +648,7 @@ function Subjects({ userId }) {
                 className="subject-form-panel"
                 layoutId="addSubjectForm"
               >
-                <form onSubmit={addSubject} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <form onSubmit={addSubject} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -1084,7 +656,7 @@ function Subjects({ userId }) {
                     className="subject-input"
                     style={{ width: '100%' }}
                   />
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '10px' }}>
                     <input
                       type="number"
                       value={credits}
@@ -1101,12 +673,12 @@ function Subjects({ userId }) {
                       style={{ flex: '2' }}
                     />
                   </div>
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
                     <button
                       type="button"
                       onClick={() => setIsAddFormExpanded(false)}
                       className="subject-input"
-                      style={{ flex: 1, border: '1px solid var(--glass-border)', background: 'var(--input-bg)', justifyContent: 'center', cursor: 'pointer' }}
+                      style={{ flex: 1, border: '1px solid var(--glass-border)', background: 'none' }}
                     >
                       Cancel
                     </button>
@@ -1122,9 +694,8 @@ function Subjects({ userId }) {
       </AnimatePresence>
 
       {loading ? (
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14, textAlign: 'center', fontWeight: 500 }}>Loading subjects...</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', textAlign: 'center' }}>Loading subjects...</p>
       ) : subjects.length === 0 ? (
-
         <div className="dashboard-empty-state">
           <GraduationCap size={48} color="var(--accent-purple)" opacity="0.8" style={{ margin: '0 auto' }} />
           <h4 className="empty-banner-title">No subjects added yet</h4>
@@ -1132,27 +703,21 @@ function Subjects({ userId }) {
             Create subjects and allocate credit values above to activate your dashboard.
           </p>
         </div>
-
       ) : !isMobile ? (
         <motion.div
           className="subjects-dashboard-grid"
           initial="hidden"
           animate="visible"
-          variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } }}
+          variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.08 } } }}
         >
           {subjects.map((s) => (
-            <PremiumSubjectCard
-              key={s.id}
-              subject={s}
-              onUpdateGrade={updateGrade}
-              onDelete={deleteSubject}
-            />
+            <DesktopSubjectCard key={s.id} subject={s} onUpdateGrade={updateGrade} onDelete={deleteSubject} />
           ))}
         </motion.div>
       ) : (
         <div className="mobile-accordion-list-container">
           {subjects.map((s) => (
-            <MobileAccordionItem
+            <MobileSubjectAccordionItem
               key={s.id}
               subject={s}
               isExpanded={expandedSubjectId === s.id}
@@ -1167,111 +732,8 @@ function Subjects({ userId }) {
   )
 }
 
-const PremiumSubjectCard = memo(function PremiumSubjectCard({ subject: s, onUpdateGrade, onDelete }) {
-  const isGraded = s.grade_point !== null && s.grade_point !== undefined
-
-  return (
-    <motion.div
-      className="premium-subject-card"
-      variants={{
-        hidden: { opacity: 0, y: 12, scale: 0.98 },
-        visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 100, damping: 16 } }
-      }}
-      whileHover={{ y: -4, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
-      whileTap={{ scale: 0.99 }}
-    >
-      <div className="card-top-header">
-        <div className="academic-brand-icon">
-          <School size={18} />
-        </div>
-        <span className={isGraded ? 'academic-completetion-chip' : 'academic-pending-chip'}>
-          {isGraded ? 'Graded' : 'Active'}
-        </span>
-      </div>
-
-      <div className="card-text-body">
-        <h4 className="card-subject-name">{s.name}</h4>
-        <div className="card-subject-meta">
-          <span className="card-credits-indicator">{s.credits} Credits</span>
-          {s.faculty && (
-            <>
-              <span>·</span>
-              <span>{s.faculty}</span>
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="card-grades-tray">
-        <CustomGradeDropdown
-          value={s.grade_point}
-          onChange={(val) => onUpdateGrade(s, val)}
-        />
-        <button onClick={() => onDelete(s.id)} className="btn-destroy-subject" title="Delete Course">
-          <Trash2 size={15} />
-        </button>
-      </div>
-    </motion.div>
-  )
-}, function areEqual(prev, next) {
-  return fieldsEqual(prev.subject, next.subject) &&
-    prev.onUpdateGrade === next.onUpdateGrade &&
-    prev.onDelete === next.onDelete
-})
-
-const MobileAccordionItem = memo(function MobileAccordionItem({ subject: s, isExpanded, onToggle, onUpdateGrade, onDelete }) {
-  const isGraded = s.grade_point !== null && s.grade_point !== undefined
-
-  return (
-    <div className={`mobile-subject-accordion-item ${isExpanded ? 'is-active' : ''}`}>
-      <div className="mobile-accordion-closed-row" onClick={() => onToggle(s.id)}>
-        <div className="mobile-row-left">
-          <div className="mobile-accordion-icon">
-            <Library size={16} />
-          </div>
-          <div className="mobile-subject-info-block">
-            <h4 className="mobile-subject-name">{s.name}</h4>
-            <div className="mobile-subject-meta-inline">
-              {s.credits} Credits {s.faculty ? `· ${s.faculty}` : ''}
-            </div>
-          </div>
-        </div>
-
-        <div className="mobile-row-right">
-          <span className={isGraded ? 'academic-completetion-chip' : 'academic-pending-chip'}>
-            {isGraded ? `GP: ${s.grade_point}` : 'Active'}
-          </span>
-          <ChevronDown size={16} className={`mobile-chevron-chevron ${isExpanded ? 'is-open' : ''}`} />
-        </div>
-      </div>
-
-      <div className={`mobile-accordion-drawer-grid ${isExpanded ? 'is-open' : ''}`}>
-        <div className="mobile-accordion-drawer-inner">
-          <div className="mobile-accordion-drawer-body">
-            <div className="mobile-drawer-controls">
-              <CustomGradeDropdown
-                value={s.grade_point}
-                onChange={(val) => onUpdateGrade(s, val)}
-              />
-              <button onClick={() => onDelete(s.id)} className="btn-destroy-subject" title="Delete Course">
-                <Trash2 size={15} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}, function areEqual(prev, next) {
-  return fieldsEqual(prev.subject, next.subject) &&
-    prev.isExpanded === next.isExpanded &&
-    prev.onToggle === next.onToggle &&
-    prev.onUpdateGrade === next.onUpdateGrade &&
-    prev.onDelete === next.onDelete
-})
-
 const CustomGradeDropdown = memo(function CustomGradeDropdown({ value, onChange }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false)
   const grades = [
     { label: 'Grade', val: '' },
     { label: '10.0 (O)', val: '10' },
@@ -1281,9 +743,9 @@ const CustomGradeDropdown = memo(function CustomGradeDropdown({ value, onChange 
     { label: '6.0 (B)', val: '6' },
     { label: '5.0 (C)', val: '5' },
     { label: '0.0 (F)', val: '0' }
-  ];
+  ]
 
-  const currentLabel = grades.find(g => g.val === (value?.toString() || ''))?.label || 'Grade';
+  const currentLabel = grades.find(g => g.val === (value?.toString() || ''))?.label || 'Grade'
 
   return (
     <div className="custom-dropdown-container">
@@ -1300,21 +762,20 @@ const CustomGradeDropdown = memo(function CustomGradeDropdown({ value, onChange 
         {isOpen && (
           <>
             <div className="dropdown-click-outside-overlay" onClick={() => setIsOpen(false)} />
-
             <motion.ul
               className="dropdown-options-list"
-              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+              initial={{ opacity: 0, y: -8, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.96 }}
-              transition={{ type: 'spring', stiffness: 340, damping: 24 }}
+              exit={{ opacity: 0, y: -8, scale: 0.97 }}
+              transition={{ duration: 0.16, ease: EASE }}
             >
               {grades.map((g) => (
                 <li
                   key={g.val}
                   className={`dropdown-option-item ${value?.toString() === g.val ? 'selected' : ''}`}
                   onClick={() => {
-                    onChange(g.val);
-                    setIsOpen(false);
+                    onChange(g.val)
+                    setIsOpen(false)
                   }}
                 >
                   {g.label}
@@ -1325,17 +786,129 @@ const CustomGradeDropdown = memo(function CustomGradeDropdown({ value, onChange 
         )}
       </AnimatePresence>
     </div>
-  );
-}, function areEqual(prev, next) {
-  return prev.value === next.value && prev.onChange === next.onChange;
+  )
+})
+
+const DesktopSubjectCard = memo(function DesktopSubjectCard({ subject, onUpdateGrade, onDelete }) {
+  const isGraded = subject.grade_point !== null && subject.grade_point !== undefined
+  return (
+    <motion.div
+      className="premium-subject-card"
+      variants={{
+        hidden: { opacity: 0, y: 20, scale: 0.95 },
+        visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 80 } }
+      }}
+      whileHover={{ y: -4, transition: { duration: 0.2, ease: EASE } }}
+    >
+      <div className="card-top-header">
+        <div className="academic-brand-icon">
+          <School size={18} />
+        </div>
+        <span className={isGraded ? 'academic-completetion-chip' : 'academic-pending-chip'}>
+          {isGraded ? 'Graded' : 'Active'}
+        </span>
+      </div>
+
+      <div className="card-text-body">
+        <h4 className="card-subject-name">{subject.name}</h4>
+        <div className="card-subject-meta">
+          <span className="card-credits-indicator">{subject.credits} Credits</span>
+          {subject.faculty && (
+            <>
+              <span>·</span>
+              <span>{subject.faculty}</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="card-divider-line" />
+
+      <div className="card-grades-tray">
+        <CustomGradeDropdown
+          value={subject.grade_point}
+          onChange={(val) => onUpdateGrade(subject, val)}
+        />
+        <button onClick={() => onDelete(subject.id)} className="btn-destroy-subject" title="Delete Course">
+          <Trash2 size={16} />
+        </button>
+      </div>
+    </motion.div>
+  )
+})
+
+const MobileSubjectAccordionItem = memo(function MobileSubjectAccordionItem({ subject, isExpanded, onToggle, onUpdateGrade, onDelete }) {
+  const isGraded = subject.grade_point !== null && subject.grade_point !== undefined
+
+  return (
+    <div className={`mobile-subject-accordion-item ${isExpanded ? 'is-active' : ''} ${isGraded ? 'is-graded' : ''}`}>
+      <div className="mobile-accordion-closed-row" onClick={() => onToggle(subject.id)}>
+        <div className="mobile-row-left">
+          <div className="mobile-accordion-icon">
+            <Library size={18} />
+          </div>
+          <div className="mobile-subject-info-block">
+            <h4 className="mobile-subject-name">{subject.name}</h4>
+            <div className="mobile-subject-meta-inline">
+              {subject.credits} Credits {subject.faculty ? `· ${subject.faculty}` : ''}
+            </div>
+          </div>
+        </div>
+
+        <div className="mobile-row-right">
+          <span className={isGraded ? 'academic-completetion-chip' : 'academic-pending-chip'}>
+            {isGraded ? `GP: ${subject.grade_point}` : 'Active'}
+          </span>
+          <ChevronDown
+            size={16}
+            className={`mobile-chevron-chevron ${isExpanded ? 'is-open' : ''}`}
+          />
+        </div>
+      </div>
+
+      {/*
+        Performance fix: previously this animated height:0 -> 'auto', which forces
+        Framer Motion to remeasure scrollHeight on every single frame (a forced
+        synchronous layout read+write, i.e. layout thrashing). Instead, the drawer
+        content is mounted/unmounted (one cheap one-time reflow) and only opacity +
+        transform are animated, both of which run on the compositor thread with no
+        per-frame layout cost.
+      */}
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            key="drawer"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18, ease: EASE }}
+            className="mobile-accordion-drawer-body"
+          >
+            <div className="mobile-drawer-controls">
+              <CustomGradeDropdown
+                value={subject.grade_point}
+                onChange={(val) => onUpdateGrade(subject, val)}
+              />
+              <button onClick={() => onDelete(subject.id)} className="btn-destroy-subject" title="Delete Course">
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
 })
 
 const SummaryCard = memo(function SummaryCard({ label, value, icon, desc, sparklinePath }) {
   return (
     <motion.div
       className="kpi-card-glass"
-      variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 120, damping: 16 } } }}
-      whileHover={{ y: -2, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
+      variants={{
+        hidden: { opacity: 0, y: 15 },
+        visible: { opacity: 1, y: 0, transition: { type: 'spring' } }
+      }}
+      whileHover={{ y: -4, transition: { duration: 0.2, ease: EASE } }}
     >
       <div className="kpi-header-row">
         <span className="kpi-label">{label}</span>
@@ -1344,12 +917,12 @@ const SummaryCard = memo(function SummaryCard({ label, value, icon, desc, sparkl
       <div className="kpi-main-metric">{value}</div>
       <div className="kpi-desc-row">
         <span className="kpi-desc">{desc}</span>
-        <svg width="60" height="20" viewBox="0 0 60 20" fill="none" style={{ opacity: 0.7 }} aria-hidden="true">
-          <path d={sparklinePath} stroke="var(--accent-purple)" strokeWidth="2" strokeLinecap="round" />
+        <svg width="60" height="20" viewBox="0 0 60 20" fill="none" style={{ opacity: 0.7 }}>
+          <path d={sparklinePath} stroke="var(--sparkline-color)" strokeWidth="2" strokeLinecap="round" />
         </svg>
       </div>
     </motion.div>
   )
 })
 
-export default Subjects;
+export default Subjects
