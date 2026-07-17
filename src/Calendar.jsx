@@ -306,7 +306,7 @@ const styleSheet = `
     border-radius: 12px;
     padding: 12px 16px;
     color: var(--text-primary);
-    font-size: 14px;
+    font-size: 16px; /* Optimized to prevent default iOS viewport tap scaling */
     font-weight: 500;
     font-family: var(--atlas-font);
     box-sizing: border-box;
@@ -338,13 +338,13 @@ const styleSheet = `
     letter-spacing: -0.01em;
     cursor: pointer;
     box-shadow: 0 4px 12px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.2);
-    transition: transform 0.2s var(--ease-premium), box-shadow 0.2s var(--ease-premium), filter 0.2s var(--ease-premium);
+    /* Removed conflicting CSS transform transition */
+    transition: box-shadow 0.2s var(--ease-premium), filter 0.2s var(--ease-premium);
     flex-shrink: 0;
     white-space: nowrap;
     margin-left: auto;
   }
-  .btn-composer-add:hover { transform: translateY(-1px); box-shadow: 0 8px 20px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.2); filter: brightness(1.08); }
-  .btn-composer-add:active { transform: scale(0.97); box-shadow: 0 2px 6px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.2); }
+  .btn-composer-add:hover { box-shadow: 0 8px 20px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.2); filter: brightness(1.08); }
   .btn-composer-content { position: relative; z-index: 3; display: flex; align-items: center; gap: 6px; }
   .btn-ripple-layer { position: absolute; inset: 0; z-index: 2; overflow: hidden; border-radius: inherit; pointer-events: none; }
   .btn-ripple { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.32); transform: scale(0); animation: btn-ripple-expand 0.6s ease-out forwards; }
@@ -382,10 +382,11 @@ const styleSheet = `
     align-items: center; 
     justify-content: center;
     cursor: pointer;
-    transition: background-color 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium), transform 0.2s var(--ease-premium);
+    /* Removed transform transition to eliminate conflicting physics during tap states */
+    transition: background-color 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium);
     will-change: transform;
   }
-  .btn-nav-arrow:hover { background: var(--input-bg-hover); border-color: var(--glass-border-strong); transform: translateY(-1px); }
+  .btn-nav-arrow:hover { background: var(--input-bg-hover); border-color: var(--glass-border-strong); }
 
   .week-days-ribbon {
     display: grid;
@@ -403,14 +404,15 @@ const styleSheet = `
     align-items: center;
     gap: 6px;
     cursor: pointer;
-    transition: transform 0.3s var(--ease-spring), background-color 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium), box-shadow 0.3s var(--ease-premium);
+    /* Removed transform transition to prevent layout shifts/shaking during gesture responses */
+    transition: background-color 0.2s var(--ease-premium), border-color 0.2s var(--ease-premium), box-shadow 0.3s var(--ease-premium);
     will-change: transform;
     position: relative;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
     min-width: 0;
   }
-  .day-ribbon-card:hover { background: var(--input-bg-hover); border-color: var(--glass-border); transform: translateY(-2px); }
+  .day-ribbon-card:hover { background: var(--input-bg-hover); border-color: var(--glass-border); }
 
   .day-ribbon-card.is-today::after {
     content: '';
@@ -427,7 +429,6 @@ const styleSheet = `
     background: var(--btn-primary-bg);
     border-color: transparent;
     box-shadow: 0 8px 24px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.25);
-    transform: translateY(-2px);
   }
 
   .day-label-text {
@@ -518,11 +519,11 @@ const styleSheet = `
     align-items: center;
     gap: 12px;
     min-width: 0;
-    transition: transform 0.3s var(--ease-premium), background-color 0.3s var(--ease-premium), border-color 0.3s var(--ease-premium), box-shadow 0.3s var(--ease-premium);
+    /* Removed transform transition to prevent layout jumps/flickers */
+    transition: background-color 0.3s var(--ease-premium), border-color 0.3s var(--ease-premium), box-shadow 0.3s var(--ease-premium);
     will-change: transform;
   }
   .event-card-tactile:hover {
-    transform: translateY(-2px);
     border-color: var(--glass-border);
     box-shadow: var(--shadow-md);
     background: var(--input-bg-hover);
@@ -600,13 +601,13 @@ const styleSheet = `
     display: flex;
     gap: 12px;
     align-items: flex-start;
-    transition: transform 0.3s var(--ease-premium), background-color 0.3s var(--ease-premium), border-color 0.3s var(--ease-premium);
+    /* Removed transform transition to prevent layout shaking during interaction */
+    transition: background-color 0.3s var(--ease-premium), border-color 0.3s var(--ease-premium);
     will-change: transform;
   }
   .ai-suggestion-box:hover { 
     background: var(--input-bg-hover); 
     border-color: var(--glass-border); 
-    transform: translateY(-2px); 
   }
   .ai-suggestion-box > div { min-width: 0; word-wrap: break-word; }
 
@@ -1033,7 +1034,7 @@ const WeekRibbon = memo(function WeekRibbon({ weekDates, today, eventsByDate, se
             onClick={() => shiftWeek(-1)}
             className="btn-nav-arrow"
             whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.9 }}
+            whileTap={{ scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             aria-label="Previous week"
           >
@@ -1043,7 +1044,7 @@ const WeekRibbon = memo(function WeekRibbon({ weekDates, today, eventsByDate, se
             onClick={() => shiftWeek(1)}
             className="btn-nav-arrow"
             whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.9 }}
+            whileTap={{ scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             aria-label="Next week"
           >
@@ -1075,7 +1076,7 @@ const WeekRibbon = memo(function WeekRibbon({ weekDates, today, eventsByDate, se
                 className={`day-ribbon-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}`}
                 animate={{ y: isSelected ? -3 : 0, scale: isSelected ? 1.03 : 1 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                whileTap={{ scale: 0.95 }}
+                whileTap={{ scale: 0.98 }}
                 role="button"
                 tabIndex={0}
                 aria-pressed={isSelected}
@@ -1218,7 +1219,7 @@ const RightPane = memo(function RightPane({ isMobile, addEvent, title, setTitle,
             <motion.button
               type="submit"
               className="btn-composer-add"
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.98 }}
               transition={{ type: 'spring', stiffness: 400, damping: 20 }}
               onPointerDown={handleComposerRipple}
               aria-label="Add event"
@@ -1301,7 +1302,7 @@ const MobileFAB = memo(function MobileFAB({ setIsMobileDrawerOpen, handleFabRipp
         onClick={() => setIsMobileDrawerOpen(true)}
         onPointerDown={handleFabRipple}
         animate={{ y: scrolled ? -4 : 0 }}
-        whileTap={{ scale: 0.9 }}
+        whileTap={{ scale: 0.98 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
         aria-label="Add event"
       >
