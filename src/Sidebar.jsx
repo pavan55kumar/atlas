@@ -94,7 +94,7 @@ function NavList({ page, onNavigate, showAllLabels }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {SECTIONS.map((section) => {
         const isCollapsible = section.collapsible;
         const isOpen = isCollapsible ? openSections[section.label] : true;
@@ -108,6 +108,7 @@ function NavList({ page, onNavigate, showAllLabels }) {
                 role={isCollapsible ? 'button' : undefined}
                 tabIndex={isCollapsible ? 0 : undefined}
                 aria-expanded={isCollapsible ? isOpen : undefined}
+                className="atlas-section-header"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -118,12 +119,12 @@ function NavList({ page, onNavigate, showAllLabels }) {
                   outline: 'none',
                 }}
               >
-                <span style={{ fontSize: '10.5px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)' }}>
+                <span className="atlas-section-label" style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--text-tertiary)' }}>
                   {section.label.toUpperCase()}
                 </span>
                 {isCollapsible && (
                   <motion.div animate={{ rotate: isOpen ? 0 : -90 }} transition={{ duration: 0.2 }}>
-                    <ChevronDown size={14} color="var(--text-muted)" />
+                    <ChevronDown size={14} color="var(--text-tertiary)" />
                   </motion.div>
                 )}
               </div>
@@ -160,7 +161,7 @@ function NavList({ page, onNavigate, showAllLabels }) {
                           gap: '12px',
                           padding: '12px 14px',
                           borderRadius: '12px',
-                          border: 'none',
+                          border: '1px solid transparent',
                           fontSize: '13px',
                           fontWeight: active ? 600 : 500,
                           textAlign: 'left',
@@ -181,12 +182,12 @@ function NavList({ page, onNavigate, showAllLabels }) {
                             style={{
                               position: 'absolute',
                               left: '0',
-                              top: '20%',
-                              bottom: '20%',
+                              top: '25%',
+                              bottom: '25%',
                               width: '3px',
                               borderRadius: '0 4px 4px 0',
-                              background: 'var(--accent)',
-                              boxShadow: '0 0 8px var(--accent)',
+                              background: 'linear-gradient(to bottom, #d07eff, #8b5cf6)',
+                              boxShadow: '0 0 8px rgba(208, 126, 255, 0.6), 0 0 4px rgba(245, 158, 11, 0.3)',
                             }}
                           />
                         )}
@@ -235,62 +236,54 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
   return (
     <>
       <div
-        className="sidebar-desktop"
+        className="sidebar-desktop atlas-sidebar-shell"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         style={{
           width: expanded ? '240px' : '76px',
           flexShrink: 0,
-          borderRight: '1px solid var(--border)',
           padding: '24px 12px',
           minHeight: '100vh',
           transition: 'width 0.3s cubic-bezier(.22,1,.36,1)',
           overflow: 'hidden',
           position: 'relative',
           zIndex: 10,
-          backgroundColor: 'var(--surface)'
+          borderRight: '1px solid var(--border)'
         }}
       >
-       <div style={{ 
-  display: 'flex', 
-  alignItems: 'center', 
-  gap: '12px', 
-  padding: '0 10px', 
-  marginBottom: '24px', 
-  height: '40px' 
-}}>
-  <img
-    src="/pwa-512x512.png"
-    alt="Atlas"
-    style={{
-      width: '32px',
-      height: '32px',
-      borderRadius: '9px',
-      objectFit: 'cover',
-      flexShrink: 0
-    }}
-  />
-
-  <AnimatePresence>
-    {expanded && (
-      <motion.span
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -10 }}
-        transition={{ duration: 0.2 }}
-        style={{
-          fontSize: '14px',
-          fontWeight: 700,
-          letterSpacing: '0.1em',
-          color: 'var(--text)',
-          whiteSpace: 'nowrap'
-        }}
-      >
-        ATLAS
-      </motion.span>
-    )}
-  </AnimatePresence>
-</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 10px', marginBottom: '28px', height: '40px' }}>
+          <img
+            src="/pwa-512x512.png"
+            alt="Atlas"
+            className="atlas-logo"
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '9px',
+              objectFit: 'cover',
+              flexShrink: 0
+            }}
+          />
+          <AnimatePresence>
+            {expanded && (
+              <motion.span
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+                className="atlas-brand-text"
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 800,
+                  letterSpacing: '0.15em',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                ATLAS
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </div>
         <NavList page={page} onNavigate={onNavigate} showAllLabels={expanded} />
       </div>
 
@@ -307,8 +300,8 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
                 position: 'fixed',
                 inset: 0,
                 background: 'rgba(0,0,0,0.6)',
-                backdropFilter: 'blur(6px)',
-                WebkitBackdropFilter: 'blur(6px)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
                 zIndex: 998
               }}
             />
@@ -317,6 +310,7 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'tween', duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="atlas-sidebar-shell"
               style={{
                 position: 'fixed',
                 top: 0,
@@ -324,14 +318,13 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
                 bottom: 0,
                 width: '288px',
                 maxWidth: '85vw',
-                background: 'var(--surface)',
                 borderRight: '1px solid var(--border)',
                 zIndex: 999,
                 display: 'flex',
                 flexDirection: 'column',
                 paddingTop: 'env(safe-area-inset-top)',
                 paddingBottom: 'env(safe-area-inset-bottom)',
-                boxShadow: '4px 0 32px rgba(0,0,0,0.2)'
+                boxShadow: '4px 0 40px rgba(0,0,0,0.4)'
               }}
             >
               <div style={{
@@ -342,30 +335,31 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
                 borderBottom: '1px solid var(--border)',
                 position: 'sticky',
                 top: 0,
-                background: 'var(--surface)',
                 zIndex: 2
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <img
-  src="/pwa-512x512.png"
-  alt="Atlas"
-  style={{
-    width: '32px',
-    height: '32px',
-    borderRadius: '9px',
-    objectFit: 'cover',
-    flexShrink: 0
-  }}
-/>
-                  <span style={{ fontSize: '14px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text)' }}>ATLAS</span>
+                    src="/pwa-512x512.png"
+                    alt="Atlas"
+                    className="atlas-logo"
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '9px',
+                      objectFit: 'cover',
+                      flexShrink: 0
+                    }}
+                  />
+                  <span className="atlas-brand-text" style={{ fontSize: '14px', fontWeight: 800, letterSpacing: '0.15em' }}>ATLAS</span>
                 </div>
                 <button
                   onClick={onCloseMobile}
                   aria-label="Close menu"
+                  className="atlas-close-btn"
                   style={{
                     width: '44px', height: '44px', borderRadius: '12px', border: '1px solid var(--border)',
-                    background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0, cursor: 'pointer', color: 'var(--text)'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0, cursor: 'pointer'
                   }}
                 >
                   <X size={18} />
@@ -388,29 +382,160 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
       </AnimatePresence>
 
       <style>{`
+        /* =========================================
+           ATLAS COMMAND CENTER VISUAL SYSTEM
+           ========================================= */
+        
+        .atlas-sidebar-shell {
+          background-color: rgba(6, 6, 9, 0.7); /* Obsidian glass */
+          backdrop-filter: blur(24px) saturate(180%);
+          -webkit-backdrop-filter: blur(24px) saturate(180%);
+        }
+
+        /* Subtle Topographic Atmosphere */
+        .atlas-sidebar-shell::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50 Q 25 25, 50 50 T 100 50' fill='none' stroke='%23ffffff' stroke-width='0.5' opacity='0.015'/%3E%3Cpath d='M0 80 Q 25 55, 50 80 T 100 80' fill='none' stroke='%23ffffff' stroke-width='0.5' opacity='0.015'/%3E%3Cpath d='M0 20 Q 25 -5, 50 20 T 100 20' fill='none' stroke='%23ffffff' stroke-width='0.5' opacity='0.015'/%3E%3C/svg%3E");
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        /* Ambient Royal Purple Glow at the top */
+        .atlas-sidebar-shell::after {
+          content: '';
+          position: absolute;
+          top: -50px; left: -50px;
+          width: 200px; height: 200px;
+          background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        /* Ensure content stays above pseudo-elements */
+        .sidebar-desktop > * {
+          position: relative;
+          z-index: 1;
+        }
+
+        /* Branding & Logo */
+        .atlas-logo {
+          box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 4px 12px rgba(208, 126, 255, 0.25);
+        }
+        .atlas-brand-text {
+          background: linear-gradient(135deg, #ffffff 0%, #c4b5fd 50%, #d07eff 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          color: transparent;
+        }
+
+        /* Section Headers */
+        .atlas-section-label {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .atlas-section-label::before {
+          content: '';
+          width: 3px;
+          height: 3px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #d07eff, #8b5cf6);
+          box-shadow: 0 0 6px rgba(208, 126, 255, 0.6);
+        }
+
+        /* Navigation Items */
         .sidebar-nav-item {
           background: transparent;
           color: var(--text-muted);
-          transition: background 0.2s ease, color 0.2s ease;
+          transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
         }
-        .sidebar-nav-item.active {
-          background: var(--surface-2);
-          color: var(--text);
-        }
-        .sidebar-nav-item.active svg {
-          color: var(--accent);
-        }
+
+        /* Hover/Pressed States */
         @media (hover: hover) {
           .sidebar-nav-item:hover {
-            background: rgba(139, 92, 246, 0.08);
+            background: rgba(255, 255, 255, 0.04);
             color: var(--text);
-          }
-          .sidebar-nav-item.active:hover {
-            background: var(--surface-2);
+            border-color: rgba(139, 92, 246, 0.15);
+            box-shadow: inset 0 0 12px rgba(139, 92, 246, 0.05);
           }
         }
         .sidebar-nav-item:active {
-          background: rgba(139, 92, 246, 0.15);
+          background: rgba(139, 92, 246, 0.12);
+          transform: scale(0.98);
+        }
+
+        /* Active State - Mission Selected */
+        .sidebar-nav-item.active {
+          background: linear-gradient(90deg, rgba(139, 92, 246, 0.15) 0%, rgba(255, 255, 255, 0.02) 100%);
+          color: #ffffff;
+          border-color: rgba(139, 92, 246, 0.3);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 1px 0 0 rgba(208, 126, 255, 0.4);
+        }
+        .sidebar-nav-item.active svg {
+          color: #d07eff;
+          filter: drop-shadow(0 0 4px rgba(208, 126, 255, 0.5));
+        }
+
+        /* Mobile Close Button */
+        .atlas-close-btn {
+          background: rgba(255, 255, 255, 0.04);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          color: var(--text);
+          transition: all 0.2s ease;
+        }
+        .atlas-close-btn:hover {
+          background: rgba(208, 126, 255, 0.1);
+          border-color: rgba(208, 126, 255, 0.3);
+        }
+        .atlas-close-btn:active {
+          transform: scale(0.95);
+          background: rgba(208, 126, 255, 0.2);
+        }
+
+        /* =========================================
+           LIGHT THEME OVERRIDES
+           ========================================= */
+        body.light-theme .atlas-sidebar-shell {
+          background-color: rgba(248, 250, 252, 0.8); /* Frosted off-white */
+          border-color: rgba(15, 23, 42, 0.06);
+        }
+        body.light-theme .atlas-sidebar-shell::before {
+          background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50 Q 25 25, 50 50 T 100 50' fill='none' stroke='%23000' stroke-width='0.5' opacity='0.02'/%3E%3Cpath d='M0 80 Q 25 55, 50 80 T 100 80' fill='none' stroke='%23000' stroke-width='0.5' opacity='0.02'/%3E%3Cpath d='M0 20 Q 25 -5, 50 20 T 100 20' fill='none' stroke='%23000' stroke-width='0.5' opacity='0.02'/%3E%3C/svg%3E");
+        }
+        body.light-theme .atlas-sidebar-shell::after {
+          background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+        }
+        body.light-theme .atlas-brand-text {
+          background: linear-gradient(135deg, #0f172a 0%, #6d5ef2 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        body.light-theme .sidebar-nav-item.active {
+          background: linear-gradient(90deg, rgba(99, 102, 241, 0.12) 0%, rgba(255, 255, 255, 0.4) 100%);
+          color: #0f172a;
+          border-color: rgba(99, 102, 241, 0.2);
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08), inset 1px 0 0 rgba(99, 102, 241, 0.3);
+        }
+        body.light-theme .sidebar-nav-item.active svg {
+          color: #6d5ef2;
+          filter: none;
+        }
+        body.light-theme .sidebar-nav-item:hover {
+          background: rgba(15, 23, 42, 0.04);
+          border-color: rgba(99, 102, 241, 0.1);
+        }
+        body.light-theme .atlas-close-btn {
+          background: rgba(255, 255, 255, 0.6);
+          color: #0f172a;
+        }
+        body.light-theme .atlas-close-btn:hover {
+          background: rgba(99, 102, 241, 0.1);
+          border-color: rgba(99, 102, 241, 0.2);
         }
         
         @media (max-width: 768px) {
