@@ -291,8 +291,8 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
                 position: 'fixed',
                 inset: 0,
                 background: 'rgba(0,0,0,0.6)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
+                backdropFilter: 'blur(6px)',
+                WebkitBackdropFilter: 'blur(6px)',
                 zIndex: 998
               }}
             />
@@ -301,7 +301,7 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'tween', duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="atlas-sidebar-shell"
+              className="atlas-sidebar-shell atlas-mobile-drawer"
               style={{
                 position: 'fixed',
                 top: 0,
@@ -374,28 +374,26 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
 
       <style>{`
         .atlas-sidebar-shell {
-          background-color: rgba(6, 6, 9, 0.7);
-          backdrop-filter: blur(24px) saturate(180%);
-          -webkit-backdrop-filter: blur(24px) saturate(180%);
+          background-color: rgba(6, 6, 9, 0.75);
+          backdrop-filter: blur(16px) saturate(140%);
+          -webkit-backdrop-filter: blur(16px) saturate(140%);
         }
 
+        /* Replaced heavy SVG with lightweight CSS radial gradients for Chrome stability */
         .atlas-sidebar-shell::before {
           content: '';
           position: absolute;
-          top: 0; left: 0; right: 0; bottom: 0;
-          background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50 Q 25 25, 50 50 T 100 50' fill='none' stroke='%23ffffff' stroke-width='0.5' opacity='0.015'/%3E%3Cpath d='M0 80 Q 25 55, 50 80 T 100 80' fill='none' stroke='%23ffffff' stroke-width='0.5' opacity='0.015'/%3E%3Cpath d='M0 20 Q 25 -5, 50 20 T 100 20' fill='none' stroke='%23ffffff' stroke-width='0.5' opacity='0.015'/%3E%3C/svg%3E");
+          inset: 0;
+          background: 
+            radial-gradient(circle at 30% 10%, rgba(139, 92, 246, 0.06) 0%, transparent 40%),
+            radial-gradient(circle at 70% 90%, rgba(208, 126, 255, 0.04) 0%, transparent 40%);
           pointer-events: none;
           z-index: 0;
         }
 
-        .atlas-sidebar-shell::after {
-          content: '';
-          position: absolute;
-          top: -50px; left: -50px;
-          width: 200px; height: 200px;
-          background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
-          pointer-events: none;
-          z-index: 0;
+        /* Force GPU acceleration to prevent white screen on mobile Chrome */
+        .atlas-mobile-drawer {
+          transform: translateZ(0);
         }
 
         .sidebar-desktop > * {
@@ -475,7 +473,7 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
         }
 
         /* =========================================
-           LIGHT THEME OVERRIDES (Robust selectors)
+           LIGHT THEME OVERRIDES
            ========================================= */
         body.light-theme .atlas-sidebar-shell,
         body.light .atlas-sidebar-shell,
@@ -491,15 +489,9 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
         .light-theme .atlas-sidebar-shell::before,
         .light .atlas-sidebar-shell::before,
         [data-theme="light"] .atlas-sidebar-shell::before {
-          background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50 Q 25 25, 50 50 T 100 50' fill='none' stroke='%23000' stroke-width='0.5' opacity='0.02'/%3E%3Cpath d='M0 80 Q 25 55, 50 80 T 100 80' fill='none' stroke='%23000' stroke-width='0.5' opacity='0.02'/%3E%3Cpath d='M0 20 Q 25 -5, 50 20 T 100 20' fill='none' stroke='%23000' stroke-width='0.5' opacity='0.02'/%3E%3C/svg%3E");
-        }
-
-        body.light-theme .atlas-sidebar-shell::after,
-        body.light .atlas-sidebar-shell::after,
-        .light-theme .atlas-sidebar-shell::after,
-        .light .atlas-sidebar-shell::after,
-        [data-theme="light"] .atlas-sidebar-shell::after {
-          background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+          background: 
+            radial-gradient(circle at 30% 10%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+            radial-gradient(circle at 70% 90%, rgba(208, 126, 255, 0.05) 0%, transparent 40%);
         }
 
         body.light-theme .atlas-brand-text,
