@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Home, CheckCircle2, Flame, Target, Calendar, Timer,
   FileText, Wallet, BarChart3,
   GraduationCap, CalendarCheck, ClipboardList, TrendingUp, Award, BookOpen,
   Sparkles, ListOrdered,
-  Settings,Info, ChevronDown, X
+  Settings, Info, ChevronDown, X
 } from 'lucide-react'
 
 const SECTIONS = [
@@ -16,11 +17,13 @@ const SECTIONS = [
       { key: 'habits', label: 'Habits', icon: Flame },
       { key: 'goals', label: 'Goals', icon: Target },
       { key: 'calendar', label: 'Calendar', icon: Calendar },
-      { key: 'focus', label: 'Focus Mode', icon: Timer }
+      { key: 'focus', label: 'Focus Mode', icon: Timer },
+      { key: 'ai', label: 'AI Assistant', icon: Sparkles }
     ]
   },
   {
     label: 'Workspace',
+    collapsible: true,
     items: [
       { key: 'notes', label: 'Notes', icon: FileText },
       { key: 'expenses', label: 'Expenses', icon: Wallet },
@@ -41,92 +44,160 @@ const SECTIONS = [
   {
     label: 'AI',
     items: [
-      { key: 'ai', label: 'AI Assistant', icon: Sparkles },
       { key: 'schedule-ai', label: 'AI Schedule', icon: ListOrdered }
     ]
   },
   {
     label: 'System',
+    collapsible: true,
     items: [
       { key: 'settings', label: 'Settings', icon: Settings },
-     { key: 'about', label: 'Info', icon: Info }
+      { key: 'about', label: 'Info', icon: Info }
     ]
   }
 ]
 
-const ACADEMIC_KEYS = SECTIONS.find(function (s) { return s.label === 'Academics' }).items.map(function (i) { return i.key })
-
 function NavList({ page, onNavigate, showAllLabels }) {
-  const [openAcademics, setOpenAcademics] = useState(ACADEMIC_KEYS.indexOf(page) !== -1)
+  // Initialize open state for all collapsible sections dynamically
+  const [openSections, setOpenSections] = useState(() => {
+    const initial = {};
+    SECTIONS.forEach((s) => {
+      if (s.collapsible) {
+        initial[s.label] = s.items.some((i) => i.key === page);
+      }
+    });
+    return initial;
+  });
 
-  useEffect(function () {
-    if (ACADEMIC_KEYS.indexOf(page) !== -1) setOpenAcademics(true)
-  }, [page])
+  // Ensure the section containing the active page is always open
+  useEffect(() => {
+    setOpenSections((prev) => {
+      const next = { ...prev };
+      SECTIONS.forEach((s) => {
+        if (s.collapsible && s.items.some((i) => i.key === page)) {
+          next[s.label] = true;
+        }
+      });
+      return next;
+    });
+  }, [page]);
+
+  const toggleSection = (label) => {
+    setOpenSections((prev) => ({ ...prev, [label]: !prev[label] }));
+  };
+
+  const handleSectionKey = (e, label) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleSection(label);
+    }
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-      {SECTIONS.map(function (section) {
-        const isAcademics = section.collapsible
-        const isOpen = isAcademics ? openAcademics : true
+      {SECTIONS.map((section) => {
+        const isCollapsible = section.collapsible;
+        const isOpen = isCollapsible ? openSections[section.label] : true;
+
         return (
           <div key={section.label}>
             {showAllLabels && (
               <div
-                onClick={isAcademics ? function () { setOpenAcademics(!openAcademics) } : undefined}
+                onClick={isCollapsible ? () => toggleSection(section.label) : undefined}
+                onKeyDown={isCollapsible ? (e) => handleSectionKey(e, section.label) : undefined}
+                role={isCollapsible ? 'button' : undefined}
+                tabIndex={isCollapsible ? 0 : undefined}
+                aria-expanded={isCollapsible ? isOpen : undefined}
                 style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '0 10px', marginBottom: '6px', cursor: isAcademics ? 'pointer' : 'default'
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0 14px',
+                  marginBottom: '8px',
+                  cursor: isCollapsible ? 'pointer' : 'default',
+                  outline: 'none',
                 }}
               >
                 <span style={{ fontSize: '10.5px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)' }}>
                   {section.label.toUpperCase()}
                 </span>
-                {isAcademics && (
-                  <ChevronDown
-                    size={13}
-                    color="var(--text-muted)"
-                    style={{ transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s ease' }}
-                  />
+                {isCollapsible && (
+                  <motion.div animate={{ rotate: isOpen ? 0 : -90 }} transition={{ duration: 0.2 }}>
+                    <ChevronDown size={14} color="var(--text-muted)" />
+                  </motion.div>
                 )}
               </div>
             )}
 
-            {isOpen && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {section.items.map(function (item) {
-                  const Icon = item.icon
-                  const active = page === item.key
-                  return (
-                    <button
-                      key={item.key}
-                      onClick={function () { onNavigate(item.key) }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        padding: '10px',
-                        borderRadius: '10px',
-                        border: 'none',
-                        background: active ? 'var(--surface-2)' : 'transparent',
-                        color: active ? 'var(--text)' : 'var(--text-muted)',
-                        fontSize: '13px',
-                        fontWeight: 500,
-                        textAlign: 'left',
-                        whiteSpace: 'nowrap',
-                         outline: 'none',
-                        WebkitTapHighlightColor: 'transparent',
-                       WebkitTouchCallout: 'none',
+            <AnimatePresence initial={false}>
+              {/* 
+                Render items if:
+                1. It's not collapsible 
+                2. It is collapsible but open 
+                3. The sidebar is collapsed (showAllLabels is false) - we must show all icons!
+              */}
+              {(!isCollapsible || isOpen || !showAllLabels) && (
+                <motion.div
+                  initial={showAllLabels ? { height: 0, opacity: 0 } : false}
+                  animate={showAllLabels ? { height: 'auto', opacity: 1 } : { opacity: 1 }}
+                  exit={showAllLabels ? { height: 0, opacity: 0 } : { opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '4px' }}
+                >
+                  {section.items.map((item) => {
+                    const Icon = item.icon
+                    const active = page === item.key
+
+                    return (
+                      <button
+                        key={item.key}
+                        onClick={() => onNavigate(item.key)}
+                        aria-current={active ? 'page' : undefined}
+                        className={`sidebar-nav-item ${active ? 'active' : ''}`}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '12px 14px',
+                          borderRadius: '12px',
+                          border: 'none',
+                          fontSize: '13px',
+                          fontWeight: active ? 600 : 500,
+                          textAlign: 'left',
+                          whiteSpace: 'nowrap',
+                          position: 'relative',
+                          outline: 'none',
+                          WebkitTapHighlightColor: 'transparent',
+                          WebkitTouchCallout: 'none',
                           userSelect: 'none',
-                        WebkitUserSelect: 'none',
-                      }}
-                    >
-                      <Icon size={17} style={{ flexShrink: 0 }} />
-                      {showAllLabels && item.label}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
+                          WebkitUserSelect: 'none',
+                          cursor: 'pointer',
+                          minHeight: '44px',
+                        }}
+                      >
+                        {active && (
+                          <motion.span
+                            layoutId="active-nav-indicator"
+                            style={{
+                              position: 'absolute',
+                              left: '0',
+                              top: '20%',
+                              bottom: '20%',
+                              width: '3px',
+                              borderRadius: '0 4px 4px 0',
+                              background: 'var(--accent)',
+                              boxShadow: '0 0 8px var(--accent)',
+                            }}
+                          />
+                        )}
+                        <Icon size={18} style={{ flexShrink: 0, transition: 'color 0.2s ease' }} />
+                        {showAllLabels && item.label}
+                      </button>
+                    )
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )
       })}
@@ -136,62 +207,208 @@ function NavList({ page, onNavigate, showAllLabels }) {
 
 function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
   const [expanded, setExpanded] = useState(false)
+  const hoverTimeout = useRef(null)
+
+  // Scroll lock & Escape key for mobile drawer
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden'
+      const handleEsc = (e) => e.key === 'Escape' && onCloseMobile()
+      window.addEventListener('keydown', handleEsc)
+      return () => {
+        document.body.style.overflow = ''
+        window.removeEventListener('keydown', handleEsc)
+      }
+    } else {
+      document.body.style.overflow = ''
+    }
+  }, [mobileOpen, onCloseMobile])
+
+  const handleMouseEnter = () => {
+    hoverTimeout.current = setTimeout(() => setExpanded(true), 150)
+  }
+  const handleMouseLeave = () => {
+    clearTimeout(hoverTimeout.current)
+    setExpanded(false)
+  }
 
   return (
     <>
       <div
         className="sidebar-desktop"
-        onMouseEnter={function () { setExpanded(true) }}
-        onMouseLeave={function () { setExpanded(false) }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         style={{
-          width: expanded ? '230px' : '72px',
+          width: expanded ? '240px' : '76px',
           flexShrink: 0,
           borderRight: '1px solid var(--border)',
           padding: '24px 12px',
           minHeight: '100vh',
           transition: 'width 0.3s cubic-bezier(.22,1,.36,1)',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          position: 'relative',
+          zIndex: 10,
+          backgroundColor: 'var(--surface)'
         }}
       >
-        <p style={{
-          fontSize: '12px', fontWeight: 700, letterSpacing: '0.1em',
-          color: 'var(--text-muted)', padding: '0 10px', marginBottom: '20px', whiteSpace: 'nowrap'
-        }}>
-          {expanded ? 'ATLAS' : 'A'}
-        </p>
+       <div style={{ 
+  display: 'flex', 
+  alignItems: 'center', 
+  gap: '12px', 
+  padding: '0 10px', 
+  marginBottom: '24px', 
+  height: '40px' 
+}}>
+  <img
+    src="/pwa-512x512.png"
+    alt="Atlas"
+    style={{
+      width: '32px',
+      height: '32px',
+      borderRadius: '9px',
+      objectFit: 'cover',
+      flexShrink: 0
+    }}
+  />
+
+  <AnimatePresence>
+    {expanded && (
+      <motion.span
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -10 }}
+        transition={{ duration: 0.2 }}
+        style={{
+          fontSize: '14px',
+          fontWeight: 700,
+          letterSpacing: '0.1em',
+          color: 'var(--text)',
+          whiteSpace: 'nowrap'
+        }}
+      >
+        ATLAS
+      </motion.span>
+    )}
+  </AnimatePresence>
+</div>
         <NavList page={page} onNavigate={onNavigate} showAllLabels={expanded} />
       </div>
 
-      {mobileOpen && (
-        <>
-          <div
-            onClick={onCloseMobile}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 998 }}
-          />
-          <div style={{
-            position: 'fixed', top: 0, left: 0, bottom: 0, width: '250px',
-            background: 'var(--surface)', borderRight: '1px solid var(--border)',
-            padding: '20px 12px', zIndex: 999, overflowY: 'auto'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px', marginBottom: '20px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text)' }}>ATLAS</span>
-              <button
-                onClick={onCloseMobile}
-                style={{ width: '30px', height: '30px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <X size={15} color="var(--text)" />
-              </button>
-            </div>
-            <NavList
-              page={page}
-              onNavigate={function (key) { onNavigate(key); onCloseMobile() }}
-              showAllLabels={true}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={onCloseMobile}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0,0,0,0.6)',
+                backdropFilter: 'blur(6px)',
+                WebkitBackdropFilter: 'blur(6px)',
+                zIndex: 998
+              }}
             />
-          </div>
-        </>
-      )}
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'tween', duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                bottom: 0,
+                width: '288px',
+                maxWidth: '85vw',
+                background: 'var(--surface)',
+                borderRight: '1px solid var(--border)',
+                zIndex: 999,
+                display: 'flex',
+                flexDirection: 'column',
+                paddingTop: 'env(safe-area-inset-top)',
+                paddingBottom: 'env(safe-area-inset-bottom)',
+                boxShadow: '4px 0 32px rgba(0,0,0,0.2)'
+              }}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '20px 16px 16px',
+                borderBottom: '1px solid var(--border)',
+                position: 'sticky',
+                top: 0,
+                background: 'var(--surface)',
+                zIndex: 2
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    width: '32px', height: '32px', borderRadius: '10px', flexShrink: 0,
+                    background: 'linear-gradient(135deg, #ff9a8b 0%, #d07eff 50%, #8b5cf6 100%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    <Sparkles size={16} color="#fff" />
+                  </div>
+                  <span style={{ fontSize: '14px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text)' }}>ATLAS</span>
+                </div>
+                <button
+                  onClick={onCloseMobile}
+                  aria-label="Close menu"
+                  style={{
+                    width: '44px', height: '44px', borderRadius: '12px', border: '1px solid var(--border)',
+                    background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0, cursor: 'pointer', color: 'var(--text)'
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div style={{ flex: 1, overflowY: 'auto', padding: '20px 12px' }}>
+                <NavList
+                  page={page}
+                  onNavigate={(key) => {
+                    onNavigate(key)
+                    onCloseMobile()
+                  }}
+                  showAllLabels={true}
+                />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <style>{`
+        .sidebar-nav-item {
+          background: transparent;
+          color: var(--text-muted);
+          transition: background 0.2s ease, color 0.2s ease;
+        }
+        .sidebar-nav-item.active {
+          background: var(--surface-2);
+          color: var(--text);
+        }
+        .sidebar-nav-item.active svg {
+          color: var(--accent);
+        }
+        @media (hover: hover) {
+          .sidebar-nav-item:hover {
+            background: rgba(139, 92, 246, 0.08);
+            color: var(--text);
+          }
+          .sidebar-nav-item.active:hover {
+            background: var(--surface-2);
+          }
+        }
+        .sidebar-nav-item:active {
+          background: rgba(139, 92, 246, 0.15);
+        }
+        
         @media (max-width: 768px) {
           .sidebar-desktop { display: none; }
         }
