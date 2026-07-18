@@ -265,6 +265,13 @@ const styleSheet = `
     .about-page-container .hero-card-premium { padding: 32px 20px; }
     .about-page-container .dev-social-grid { grid-template-columns: 1fr; }
   }
+    .atlas-hero-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  display: block;
+  border-radius: 18px;
+}
 `;
 
 export default function AboutAtlas({ onNavigate }) {
@@ -326,8 +333,12 @@ export default function AboutAtlas({ onNavigate }) {
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="logo-pulse-wrapper">
-          <Sparkles size={36} color="#d07eff" />
-        </div>
+  <img
+    src="/pwa-512x512.png"
+    alt="Atlas Logo"
+    className="atlas-hero-logo"
+  />
+</div>
         <h1 className="hero-app-title">Atlas</h1>
         <p className="hero-subtitle">Your Personal Life Operating System</p>
       </motion.div>
