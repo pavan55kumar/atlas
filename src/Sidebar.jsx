@@ -92,7 +92,7 @@ function NavList({ page, onNavigate, showAllLabels }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {SECTIONS.map((section) => {
         const isCollapsible = section.collapsible;
         const isOpen = isCollapsible ? openSections[section.label] : true;
@@ -111,8 +111,8 @@ function NavList({ page, onNavigate, showAllLabels }) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '0 14px',
-                  marginBottom: '8px',
+                  padding: '0 12px',
+                  marginBottom: '6px',
                   cursor: isCollapsible ? 'pointer' : 'default',
                   outline: 'none',
                 }}
@@ -135,7 +135,7 @@ function NavList({ page, onNavigate, showAllLabels }) {
                   animate={showAllLabels ? { height: 'auto', opacity: 1 } : { opacity: 1 }}
                   exit={showAllLabels ? { height: 0, opacity: 0 } : { opacity: 0 }}
                   transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '4px' }}
+                  style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '3px' }}
                 >
                   {section.items.map((item) => {
                     const Icon = item.icon
@@ -150,9 +150,9 @@ function NavList({ page, onNavigate, showAllLabels }) {
                         style={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '12px',
-                          padding: '12px 14px',
-                          borderRadius: '12px',
+                          gap: '11px',
+                          padding: '10px 12px',
+                          borderRadius: '10px',
                           border: '1px solid transparent',
                           fontSize: '13px',
                           fontWeight: active ? 600 : 500,
@@ -165,7 +165,7 @@ function NavList({ page, onNavigate, showAllLabels }) {
                           userSelect: 'none',
                           WebkitUserSelect: 'none',
                           cursor: 'pointer',
-                          minHeight: '44px',
+                          minHeight: '42px',
                         }}
                       >
                         {active && (
@@ -183,7 +183,7 @@ function NavList({ page, onNavigate, showAllLabels }) {
                             }}
                           />
                         )}
-                        <Icon size={18} style={{ flexShrink: 0, transition: 'color 0.2s ease' }} />
+                        <Icon size={17} style={{ flexShrink: 0, transition: 'color 0.2s ease' }} />
                         {showAllLabels && item.label}
                       </button>
                     )
@@ -231,9 +231,9 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         style={{
-          width: expanded ? '240px' : '76px',
+          width: expanded ? '220px' : '72px', // Reduced width
           flexShrink: 0,
-          padding: '24px 12px',
+          padding: '20px 10px', // Tightened padding
           minHeight: '100vh',
           transition: 'width 0.3s cubic-bezier(.22,1,.36,1)',
           overflow: 'hidden',
@@ -242,15 +242,15 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
           borderRight: '1px solid var(--border)'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 10px', marginBottom: '28px', height: '40px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '11px', padding: '0 8px', marginBottom: '24px', height: '36px' }}>
           <img
             src="/pwa-512x512.png"
             alt="Atlas"
             className="atlas-logo"
             style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '9px',
+              width: '30px', // Slightly smaller logo
+              height: '30px',
+              borderRadius: '8px',
               objectFit: 'cover',
               flexShrink: 0
             }}
@@ -264,7 +264,7 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
                 transition={{ duration: 0.2 }}
                 className="atlas-brand-text"
                 style={{
-                  fontSize: '14px',
+                  fontSize: '13px',
                   fontWeight: 800,
                   letterSpacing: '0.15em',
                   whiteSpace: 'nowrap'
@@ -307,7 +307,7 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
                 top: 0,
                 left: 0,
                 bottom: 0,
-                width: '288px',
+                width: '264px', // Reduced mobile width
                 maxWidth: '85vw',
                 borderRight: '1px solid var(--border)',
                 zIndex: 999,
@@ -322,33 +322,33 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '20px 16px 16px',
+                padding: '16px 14px 14px',
                 borderBottom: '1px solid var(--border)',
                 position: 'sticky',
                 top: 0,
                 zIndex: 2
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
                   <img
                     src="/pwa-512x512.png"
                     alt="Atlas"
                     className="atlas-logo"
                     style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '9px',
+                      width: '30px',
+                      height: '30px',
+                      borderRadius: '8px',
                       objectFit: 'cover',
                       flexShrink: 0
                     }}
                   />
-                  <span className="atlas-brand-text" style={{ fontSize: '14px', fontWeight: 800, letterSpacing: '0.15em' }}>ATLAS</span>
+                  <span className="atlas-brand-text" style={{ fontSize: '13px', fontWeight: 800, letterSpacing: '0.15em' }}>ATLAS</span>
                 </div>
                 <button
                   onClick={onCloseMobile}
                   aria-label="Close menu"
                   className="atlas-close-btn"
                   style={{
-                    width: '44px', height: '44px', borderRadius: '12px', border: '1px solid var(--border)',
+                    width: '40px', height: '40px', borderRadius: '10px', border: '1px solid var(--border)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     flexShrink: 0, cursor: 'pointer'
                   }}
@@ -357,7 +357,7 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
                 </button>
               </div>
 
-              <div style={{ flex: 1, overflowY: 'auto', padding: '20px 12px' }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '16px 10px' }}>
                 <NavList
                   page={page}
                   onNavigate={(key) => {
@@ -379,7 +379,6 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
           -webkit-backdrop-filter: blur(16px) saturate(140%);
         }
 
-        /* Replaced heavy SVG with lightweight CSS radial gradients for Chrome stability */
         .atlas-sidebar-shell::before {
           content: '';
           position: absolute;
@@ -391,7 +390,6 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
           z-index: 0;
         }
 
-        /* Force GPU acceleration to prevent white screen on mobile Chrome */
         .atlas-mobile-drawer {
           transform: translateZ(0);
         }
