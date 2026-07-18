@@ -1,5 +1,16 @@
 {
   "appId": "com.pavan.atlas",
-  "appName": " ATLAS",
-  "webDir": "dist"
+  "appName": "ATLAS",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "launchAutoHide": true,
+      "backgroundColor": "#0E0F13",
+      "androidScaleType": "CENTER_INSIDE",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
+    }
+  }
 }
