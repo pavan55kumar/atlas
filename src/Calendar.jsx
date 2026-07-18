@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
   Clock3, Sparkles, Brain, CircleCheck,
   CalendarClock, ChevronLeft, ChevronRight, Plus, Trash2
@@ -8,7 +8,9 @@ import { supabase } from './lib/supabase'
 
 const ease = [0.22, 1, 0.36, 1]
 
-// Premium Theme Adaptive Glassmorphic Stylesheet
+// Atlas Command Calendar — premium, fluid, responsive stylesheet
+// All existing Atlas design tokens (--canvas-bg, --glass-*, --text-*, --accent-*, --btn-primary-*)
+// are preserved exactly as before. Only layout/responsiveness/visual-polish rules were added or adjusted.
 const styleSheet = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
@@ -45,6 +47,15 @@ const styleSheet = `
     --accent-amber: #f59e0b;
     --accent-red: #ef4444;
     --accent-blue: #60a5fa;
+
+    /* fluid spacing/type scale tokens used throughout the redesign */
+    --space-2xs: clamp(4px, 1vw, 6px);
+    --space-xs: clamp(6px, 1.5vw, 10px);
+    --space-sm: clamp(8px, 2vw, 14px);
+    --space-md: clamp(12px, 3vw, 20px);
+    --space-lg: clamp(16px, 4vw, 24px);
+    --radius-card: clamp(16px, 3.5vw, 24px);
+    --radius-tile: clamp(11px, 2.5vw, 18px);
   }
 
   body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
@@ -76,23 +87,32 @@ const styleSheet = `
     --accent-amber: #d97706;
   }
 
-  * {
-    -webkit-tap-highlight-color: transparent !important;
-    outline: none !important;
+  .calendar-dashboard, .calendar-dashboard * {
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
+
+  /* Keyboard accessibility: no visible focus ring for mouse users, but always visible for keyboard nav */
+  .calendar-dashboard :focus { outline: none; }
+  .calendar-dashboard :focus-visible {
+    outline: 2px solid var(--accent-purple-light);
+    outline-offset: 2px;
+    border-radius: 8px;
   }
 
   .calendar-dashboard {
     font-family: var(--atlas-font);
     color: var(--text-primary);
+    width: 100%;
     max-width: 1100px;
     margin: 0 auto;
     position: relative;
-    padding: 20px 12px;
-    box-sizing: border-box;
+    padding: var(--space-lg) var(--space-md);
+    padding-left: max(var(--space-md), env(safe-area-inset-left));
+    padding-right: max(var(--space-md), env(safe-area-inset-right));
+    padding-bottom: calc(clamp(24px, 6vw, 32px) + env(safe-area-inset-bottom));
     touch-action: pan-y;
     overflow-x: hidden;
-    user-select: none;
-    -webkit-user-select: none;
   }
 
   /* ---------- Layered ambient background ---------- */
@@ -104,9 +124,9 @@ const styleSheet = `
     z-index: 0;
     transition: background 0.5s ease;
   }
-  .sphere-primary { top: 5%; left: -10%; width: 450px; height: 450px; background: var(--aurora-primary); }
-  .sphere-secondary { bottom: 10%; right: -10%; width: 400px; height: 400px; background: var(--aurora-secondary); }
-  .sphere-tertiary { top: 38%; left: 38%; width: 340px; height: 340px; background: var(--aurora-tertiary); }
+  .sphere-primary { top: 5%; left: -10%; width: min(450px, 60vw); height: min(450px, 60vw); background: var(--aurora-primary); }
+  .sphere-secondary { bottom: 10%; right: -10%; width: min(400px, 55vw); height: min(400px, 55vw); background: var(--aurora-secondary); }
+  .sphere-tertiary { top: 38%; left: 38%; width: min(340px, 48vw); height: min(340px, 48vw); background: var(--aurora-tertiary); }
 
   .calendar-noise-overlay {
     position: absolute;
@@ -120,9 +140,6 @@ const styleSheet = `
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   @keyframes noise-breathe { 0%, 100% { opacity: 0.02; } 50% { opacity: 0.035; } }
-  @media (prefers-reduced-motion: reduce) {
-    .calendar-noise-overlay { animation: none; }
-  }
 
   /* ---------- Shared glass surface ---------- */
   .kpi-card-glass,
@@ -139,6 +156,7 @@ const styleSheet = `
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     position: relative;
+    min-width: 0;
   }
 
   .kpi-card-glass::before,
@@ -154,58 +172,69 @@ const styleSheet = `
     pointer-events: none;
   }
 
-  /* ---------- KPI Summary Grid ---------- */
+  /* ---------- KPI Summary Grid (fluid 2x2 on mobile, 4-up on desktop) ---------- */
   .stats-carousel-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
-    margin-bottom: 32px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
     z-index: 10;
     position: relative;
   }
+  @media (min-width: 720px) {
+    .stats-carousel-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
 
   .kpi-card-glass {
-    border-radius: 22px;
-    padding: 20px;
-    min-height: 120px;
+    border-radius: var(--radius-tile);
+    padding: var(--space-sm) var(--space-md);
+    min-height: clamp(84px, 18vw, 120px);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     overflow: hidden;
     transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, box-shadow 0.3s ease;
   }
-  .kpi-card-glass:hover {
+  .kpi-card-glass:hover, .kpi-card-glass:focus-visible {
     transform: translateY(-4px);
     border-color: rgba(139, 92, 246, 0.22);
     box-shadow: var(--card-shadow-hover);
   }
+  .kpi-card-glass:active { transform: translateY(-1px) scale(0.99); }
 
-  .kpi-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .kpi-label { font-size: 10px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.07em; }
+  .kpi-header-row { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2xs); margin-bottom: var(--space-xs); min-width: 0; }
+  .kpi-label {
+    font-size: clamp(8.5px, 2.1vw, 10px);
+    font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.07em;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+  }
   .kpi-icon-wrapper {
-    width: 28px; height: 28px; border-radius: 9px;
+    width: clamp(22px, 6vw, 28px); height: clamp(22px, 6vw, 28px); border-radius: 9px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
-  .kpi-main-metric { font-size: 30px; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 6px; letter-spacing: -0.01em; }
-  .kpi-desc-row { display: flex; justify-content: space-between; align-items: flex-end; }
-  .kpi-desc { font-size: 11px; color: var(--text-tertiary); font-weight: 500; max-width: 60%; }
+  .kpi-main-metric { font-size: clamp(19px, 5.2vw, 30px); font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: var(--space-2xs); letter-spacing: -0.01em; }
+  .kpi-desc-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 6px; min-width: 0; }
+  .kpi-desc { font-size: clamp(9px, 2vw, 11px); color: var(--text-tertiary); font-weight: 500; overflow-wrap: break-word; min-width: 0; }
+  .kpi-desc-row svg { flex-shrink: 0; width: clamp(38px, 12vw, 60px); height: auto; }
 
   /* ---------- Double pane layout ---------- */
   .calendar-dashboard-layout {
     display: grid;
-    grid-template-columns: 1.6fr 1fr;
-    gap: 24px;
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
     z-index: 10;
     position: relative;
   }
-  .left-pane { display: flex; flex-direction: column; gap: 24px; }
-  .right-pane { display: flex; flex-direction: column; gap: 24px; }
+  @media (min-width: 900px) {
+    .calendar-dashboard-layout { grid-template-columns: 1.6fr 1fr; }
+  }
+  .left-pane, .right-pane { display: flex; flex-direction: column; gap: var(--space-lg); min-width: 0; }
 
   /* ---------- Event Composer ---------- */
-  .composer-card-glass { border-radius: 24px; padding: 24px; }
-  .composer-title { font-size: 16px; font-weight: 700; margin: 0 0 16px 0; letter-spacing: -0.01em; }
-  .composer-form { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; width: 100%; }
+  .composer-card-glass { border-radius: var(--radius-card); padding: var(--space-lg); }
+  .composer-title { font-size: clamp(14px, 3.2vw, 16px); font-weight: 700; margin: 0 0 var(--space-sm) 0; letter-spacing: -0.01em; }
+  .composer-form { display: flex; gap: var(--space-xs); align-items: center; flex-wrap: wrap; width: 100%; min-width: 0; }
 
   .composer-input {
     background: var(--input-bg);
@@ -216,14 +245,14 @@ const styleSheet = `
     font-size: 14px;
     font-weight: 500;
     box-sizing: border-box;
+    min-width: 0;
     transition: border-color 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-    outline: none;
   }
   .composer-input::placeholder { color: var(--text-secondary); opacity: 0.65; }
-  .composer-input:focus { border-color: var(--input-focus-border); box-shadow: 0 0 0 3px var(--input-focus-glow), inset 0 1px 2px rgba(0,0,0,0.06); }
-  .composer-input.title { flex: 2; min-width: 200px; }
-  .composer-input.date-picker { width: 160px; cursor: pointer; }
-  .composer-input.time-picker { width: 120px; cursor: pointer; }
+  .composer-input:focus-visible { border-color: var(--input-focus-border); box-shadow: 0 0 0 3px var(--input-focus-glow); }
+  .composer-input.title { flex: 2 1 180px; min-width: 0; }
+  .composer-input.date-picker { flex: 1 1 130px; min-width: 0; max-width: 180px; cursor: pointer; }
+  .composer-input.time-picker { flex: 1 1 100px; min-width: 0; max-width: 140px; cursor: pointer; }
 
   .btn-composer-add {
     position: relative;
@@ -232,7 +261,7 @@ const styleSheet = `
     color: #ffffff;
     border: none;
     border-radius: 13px;
-    padding: 12px 24px;
+    padding: 12px 22px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -240,6 +269,7 @@ const styleSheet = `
     transition: box-shadow 0.25s ease;
     flex-shrink: 0;
     white-space: nowrap;
+    min-height: 44px;
   }
   .btn-composer-add::after {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 55%;
@@ -247,45 +277,50 @@ const styleSheet = `
     z-index: 1; pointer-events: none;
   }
   .btn-composer-add:hover { box-shadow: 0 10px 26px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.22); }
-  .btn-composer-content { position: relative; z-index: 3; display: flex; align-items: center; gap: 8px; }
+  .btn-composer-content { position: relative; z-index: 3; display: flex; align-items: center; justify-content: center; gap: 8px; }
   .btn-ripple-layer { position: absolute; inset: 0; z-index: 2; overflow: hidden; border-radius: inherit; pointer-events: none; }
   .btn-ripple { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.32); transform: scale(0); animation: btn-ripple-expand 0.6s ease-out forwards; }
   @keyframes btn-ripple-expand { to { transform: scale(1); opacity: 0; } }
 
-  /* ---------- Weekly ribbon (Calendar card) ---------- */
-  .calendar-nav-card { border-radius: 24px; padding: 24px; overflow: hidden; }
-  .calendar-nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-  .active-month-text { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; color: var(--text-primary); }
+  /* ---------- Weekly ribbon (Calendar centerpiece) ---------- */
+  .calendar-nav-card { border-radius: var(--radius-card); padding: var(--space-lg); overflow: hidden; }
+  .calendar-nav-header { display: flex; justify-content: space-between; align-items: center; gap: var(--space-xs); margin-bottom: var(--space-md); min-width: 0; }
+  .active-month-text {
+    font-size: clamp(16px, 4.2vw, 20px); font-weight: 800; letter-spacing: -0.02em; color: var(--text-primary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+  }
 
-  .nav-controls-box { display: flex; gap: 10px; }
+  .nav-controls-box { display: flex; gap: var(--space-2xs); flex-shrink: 0; }
   .btn-nav-arrow {
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     color: var(--text-primary);
-    width: 38px; height: 38px;
+    width: clamp(34px, 8vw, 38px); height: clamp(34px, 8vw, 38px);
     border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease;
+    flex-shrink: 0;
   }
   .btn-nav-arrow:hover { background: var(--glass-border); border-color: rgba(139, 92, 246, 0.25); }
 
-  .week-days-ribbon { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
+  .week-days-ribbon { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: clamp(3px, 1.6vw, 12px); width: 100%; }
 
   .day-ribbon-card {
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--glass-border);
-    border-radius: 18px;
-    padding: 14px;
+    border-radius: var(--radius-tile);
+    padding: clamp(8px, 2.6vw, 14px) clamp(2px, 1vw, 14px);
+    min-height: 44px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: clamp(3px, 1vw, 8px);
     cursor: pointer;
     transition: background 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease, box-shadow 0.3s ease;
     position: relative;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
+    min-width: 0;
   }
   .day-ribbon-card:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.12); }
 
@@ -293,7 +328,7 @@ const styleSheet = `
     content: '';
     position: absolute;
     inset: -3px;
-    border-radius: 21px;
+    border-radius: calc(var(--radius-tile) + 3px);
     background: radial-gradient(circle, rgba(245, 158, 11, 0.16), transparent 70%);
     animation: today-halo-pulse 3.2s ease-in-out infinite;
     z-index: -1;
@@ -306,8 +341,11 @@ const styleSheet = `
     box-shadow: 0 14px 30px -10px rgba(90, 60, 220, 0.35), inset 0 1px 0 rgba(255,255,255,0.14);
   }
 
-  .day-label-text { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
-  .day-number-text { font-size: 20px; font-weight: 800; color: var(--text-primary); }
+  .day-label-text {
+    font-size: clamp(8px, 2.2vw, 11px); font-weight: 700; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
+  }
+  .day-number-text { font-size: clamp(13px, 4.2vw, 20px); font-weight: 800; color: var(--text-primary); }
   .day-ribbon-card.is-selected .day-label-text,
   .day-ribbon-card.is-selected .day-number-text { color: #ffffff; }
 
@@ -316,22 +354,21 @@ const styleSheet = `
     background-color: var(--accent-amber);
     border-radius: 50%;
     box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
-    position: absolute;
-    bottom: 8px;
+    flex-shrink: 0;
   }
 
   /* ---------- Timeline & Event Feed ---------- */
-  .timeline-container { border-radius: 24px; padding: 24px; }
-  .timeline-axis { position: relative; padding-left: 30px; margin-top: 16px; }
+  .timeline-container { border-radius: var(--radius-card); padding: var(--space-lg); }
+  .timeline-axis { position: relative; padding-left: clamp(20px, 6vw, 30px); margin-top: var(--space-sm); }
   .timeline-axis::before {
     content: '';
     position: absolute;
-    top: 6px; bottom: 6px; left: 7px; width: 2px;
+    top: 6px; bottom: 6px; left: clamp(5px, 1.6vw, 7px); width: 2px;
     background-image: repeating-linear-gradient(to bottom, var(--glass-border) 0px, var(--glass-border) 4px, transparent 4px, transparent 9px);
   }
 
   .timeline-node-dot {
-    position: absolute; left: 4px; width: 8px; height: 8px;
+    position: absolute; left: clamp(2px, 1vw, 4px); width: 8px; height: 8px;
     border-radius: 50%;
     background: var(--text-tertiary);
     border: 2px solid var(--canvas-bg);
@@ -343,18 +380,20 @@ const styleSheet = `
     box-shadow: 0 0 8px rgba(167, 139, 250, 0.4), 0 0 0 3px rgba(167, 139, 250, 0.18);
   }
 
-  .timeline-event-wrapper { position: relative; margin-bottom: 26px; }
+  .timeline-event-wrapper { position: relative; margin-bottom: clamp(16px, 4vw, 26px); min-width: 0; }
   .timeline-event-wrapper:last-child { margin-bottom: 0; }
-  .timeline-time-col { font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .timeline-time-col { font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2xs); }
 
   .event-card-tactile {
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--glass-border);
-    border-radius: 18px;
-    padding: 16px 20px;
+    border-radius: var(--radius-tile);
+    padding: clamp(12px, 3vw, 16px) clamp(14px, 3.5vw, 20px);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: var(--space-xs);
+    min-width: 0;
     transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, box-shadow 0.3s ease, background 0.25s ease;
   }
   .event-card-tactile:hover {
@@ -364,27 +403,33 @@ const styleSheet = `
     background: rgba(255, 255, 255, 0.045);
   }
 
-  .event-title-main { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0; }
-  .event-meta-info { font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; font-weight: 500; }
-  .meta-tag { background: var(--input-bg); padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+  .event-card-text { min-width: 0; }
+  .event-title-main {
+    font-size: clamp(13px, 3.2vw, 14px); font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;
+    overflow-wrap: break-word; word-break: break-word;
+  }
+  .event-meta-info { font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-weight: 500; }
+  .meta-tag { background: var(--input-bg); padding: 2px 8px; border-radius: 6px; font-weight: 600; white-space: nowrap; }
 
   .btn-delete-event {
     background: none; border: none; color: var(--text-tertiary);
     cursor: pointer; padding: 8px; border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
     transition: background 0.2s ease, color 0.2s ease;
+    min-width: 40px; min-height: 40px;
   }
   .btn-delete-event:hover { background: rgba(239, 68, 68, 0.09); color: var(--accent-red); }
 
   /* ---------- AI Suggestions & Progress ---------- */
   .ai-assistant-card {
     background-image: linear-gradient(150deg, rgba(139, 92, 246, 0.08) 0%, rgba(96, 165, 250, 0.04) 60%, transparent 100%);
-    border-radius: 24px;
-    padding: 24px;
+    border-radius: var(--radius-card);
+    padding: var(--space-lg);
     overflow: hidden;
   }
 
-  .ai-sparkle-icon { display: inline-flex; animation: ai-sparkle-twinkle 2.6s ease-in-out infinite; transform-origin: center; }
+  .ai-sparkle-icon { display: inline-flex; animation: ai-sparkle-twinkle 2.6s ease-in-out infinite; transform-origin: center; flex-shrink: 0; }
   @keyframes ai-sparkle-twinkle {
     0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.85; }
     50% { transform: scale(1.15) rotate(8deg); opacity: 1; }
@@ -393,95 +438,129 @@ const styleSheet = `
   .ai-suggestion-box {
     background: rgba(22, 21, 34, 0.42);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
-    padding: 14px;
-    margin-top: 16px;
+    border-radius: var(--radius-tile);
+    padding: var(--space-sm);
+    margin-top: var(--space-sm);
     display: flex;
-    gap: 12px;
+    gap: var(--space-xs);
     align-items: flex-start;
+    min-width: 0;
     transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease;
   }
-  .ai-suggestion-box > div { min-width: 0; word-wrap: break-word; }
+  .ai-suggestion-box > div { min-width: 0; overflow-wrap: break-word; word-break: break-word; font-size: clamp(11.5px, 2.8vw, 12px); line-height: 1.55; }
 
   .suggestion-bullet { width: 6px; height: 6px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
 
-  .month-radial-card { border-radius: 24px; padding: 24px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+  .month-radial-card {
+    border-radius: var(--radius-card);
+    padding: var(--space-lg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    flex-wrap: nowrap;
+  }
+  .month-radial-text { min-width: 0; }
+  .month-radial-text h3 { font-size: clamp(13px, 3.2vw, 14px); font-weight: 700; margin: 0 0 4px 0; overflow-wrap: break-word; }
+  .month-radial-text p { font-size: clamp(10px, 2.6vw, 11px); color: var(--text-secondary); margin: 0; overflow-wrap: break-word; }
 
-  /* ---------- Empty State ---------- */
+  .radial-progress-wrap { position: relative; width: clamp(52px, 15vw, 68px); height: clamp(52px, 15vw, 68px); flex-shrink: 0; }
+  .radial-progress-wrap svg { width: 100%; height: 100%; display: block; }
+  .radial-progress-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: clamp(10.5px, 2.8vw, 12px); font-weight: 800; }
+
+  /* ---------- Empty State (compact, intentional) ---------- */
   .empty-events-banner {
     text-align: center;
-    padding: 44px 20px;
-    border-radius: 22px;
+    padding: clamp(20px, 5vw, 28px) var(--space-md);
+    border-radius: var(--radius-tile);
     border: 1px dashed var(--glass-border);
   }
   .empty-icon-badge {
-    width: 46px; height: 46px; border-radius: 50%;
-    margin: 0 auto 14px auto;
+    width: 38px; height: 38px; border-radius: 50%;
+    margin: 0 auto var(--space-xs) auto;
     display: flex; align-items: center; justify-content: center;
     background: linear-gradient(135deg, rgba(139, 92, 246, 0.16), rgba(96, 165, 250, 0.08));
     color: var(--text-secondary);
     box-shadow: inset 0 1px 1px rgba(255,255,255,0.08);
   }
-  .empty-banner-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0; letter-spacing: -0.01em; }
+  .empty-banner-title { font-size: clamp(12.5px, 3vw, 14px); font-weight: 700; color: var(--text-primary); margin: 0 0 2px 0; letter-spacing: -0.01em; }
+  .empty-banner-sub { font-size: clamp(10px, 2.6vw, 11px); color: var(--text-secondary); margin: 0 0 var(--space-xs) 0; }
 
-  /* Mobile */
-  @media (max-width: 768px) {
-    .calendar-dashboard { padding-bottom: 120px !important; }
+  .btn-empty-add {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .btn-empty-add:hover { border-color: rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.08); }
 
-    .stats-carousel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
-    .kpi-card-glass { min-height: 95px; padding: 14px; border-radius: 18px; }
-    .kpi-main-metric { font-size: 22px; margin-bottom: 2px; }
-    .kpi-label { font-size: 9px; }
-    .kpi-desc { font-size: 9px; max-width: 100%; }
+  /* ---------- Floating Add Button (mobile) ---------- */
+  .mobile-floating-add-btn {
+    position: fixed;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    right: calc(18px + env(safe-area-inset-right));
+    width: 58px; height: 58px; border-radius: 50%;
+    background: var(--btn-primary-bg);
+    display: flex; align-items: center; justify-content: center;
+    color: #ffffff;
+    box-shadow: 0 10px 24px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.18);
+    z-index: 99; cursor: pointer; border: none;
+    overflow: hidden;
+  }
 
-    .calendar-dashboard-layout { grid-template-columns: 1fr; gap: 20px; }
+  .mobile-drawer-sheet {
+    position: fixed; inset: 0;
+    background: rgba(9, 8, 16, 0.85);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    z-index: 100;
+    display: flex; flex-direction: column; justify-content: flex-end;
+  }
 
-    .week-days-ribbon { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-    .day-ribbon-card { padding: 10px 4px; border-radius: 13px; gap: 4px; }
-    .day-label-text { font-size: 9px; }
-    .day-number-text { font-size: 15px; }
-    .today-glow-dot { width: 4px; height: 4px; bottom: 4px; }
+  .mobile-drawer-body {
+    background-color: var(--glass-base);
+    background-image: linear-gradient(165deg, var(--glass-sheen-1) 0%, var(--glass-sheen-2) 100%);
+    border-top: 1px solid var(--glass-border);
+    border-radius: 28px 28px 0 0;
+    padding: clamp(20px, 6vw, 30px) var(--space-lg);
+    padding-bottom: calc(clamp(20px, 6vw, 30px) + env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; gap: var(--space-md);
+    width: 100%;
+    box-sizing: border-box;
+  }
 
+  /* ---------- Below 768px: single column dashboard, drawer-based composer ---------- */
+  @media (max-width: 767px) {
+    .calendar-dashboard { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
     .composer-card-glass { display: none; }
-    .month-radial-card { padding: 18px 20px; }
-
-    .mobile-floating-add-btn {
-      position: fixed; bottom: 24px; right: 24px;
-      width: 56px; height: 56px; border-radius: 50%;
-      background: var(--btn-primary-bg);
-      display: flex; align-items: center; justify-content: center;
-      color: #ffffff;
-      box-shadow: 0 6px 16px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.18);
-      z-index: 99; cursor: pointer; border: none;
-      overflow: hidden;
-    }
-
-    .mobile-drawer-sheet {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(9, 8, 16, 0.85);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
-      z-index: 100;
-      display: flex; flex-direction: column; justify-content: flex-end;
-    }
-
-    .mobile-drawer-body {
-      background-color: var(--glass-base);
-      background-image: linear-gradient(165deg, var(--glass-sheen-1) 0%, var(--glass-sheen-2) 100%);
-      border-top: 1px solid var(--glass-border);
-      border-radius: 28px 28px 0 0;
-      padding: 30px 24px;
-      display: flex; flex-direction: column; gap: 20px;
-    }
-
     .composer-form { flex-direction: column; align-items: stretch; }
-    .composer-input { width: 100% !important; }
+    .composer-input { width: 100%; max-width: none !important; }
     .btn-composer-add { width: 100%; justify-content: center; }
   }
 
-  @media (min-width: 769px) and (max-width: 1024px) {
-    .calendar-dashboard-layout { grid-template-columns: 1fr; }
-    .stats-carousel-grid { grid-template-columns: repeat(2, 1fr); }
+  @media (min-width: 768px) {
+    .mobile-floating-add-btn, .mobile-drawer-sheet { display: none; }
+  }
+
+  /* Extra-narrow phones: trim gaps further without changing structure */
+  @media (max-width: 340px) {
+    .stats-carousel-grid { gap: 6px; }
+    .week-days-ribbon { gap: 3px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .calendar-noise-overlay,
+    .day-ribbon-card.is-today::after,
+    .ai-sparkle-icon { animation: none !important; }
   }
 `;
 
@@ -511,6 +590,8 @@ function CalendarWidget({ userId }) {
   const [scrolled, setScrolled] = useState(false)
   const [composerRipples, setComposerRipples] = useState([])
   const [fabRipples, setFabRipples] = useState([])
+
+  const prefersReducedMotion = useReducedMotion()
 
   useEffect(() => {
     fetchEvents()
@@ -586,6 +667,13 @@ function CalendarWidget({ userId }) {
     setSelectedDay(null)
   }
 
+  function handleDayKeyDown(e, key, isSelected) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      setSelectedDay(isSelected ? null : key)
+    }
+  }
+
   const selectedEvents = selectedDay ? (eventsByDate[selectedDay] || []) : []
 
   const todayEventsCount = eventsByDate[today]?.length || 0
@@ -595,6 +683,48 @@ function CalendarWidget({ userId }) {
   const monthProgressRate = totalEventsThisMonth > 0
     ? Math.round((completedEventsCount / totalEventsThisMonth) * 100)
     : 0
+
+  const motionOK = !prefersReducedMotion
+
+  function renderEventList(list, emptyTitle, emptySub, tag) {
+    if (list.length === 0) {
+      return (
+        <div className="empty-events-banner">
+          <div className="empty-icon-badge"><Clock3 size={18} /></div>
+          <span className="empty-banner-title">{emptyTitle}</span>
+          {emptySub && <p className="empty-banner-sub">{emptySub}</p>}
+          <button
+            type="button"
+            className="btn-empty-add"
+            onClick={() => (isMobile ? setIsMobileDrawerOpen(true) : document.querySelector('.composer-input.title')?.focus())}
+          >
+            <Plus size={14} /> Add event
+          </button>
+        </div>
+      )
+    }
+    return list.map((ev, index) => (
+      <div className="timeline-event-wrapper" key={ev.id}>
+        <div className={`timeline-node-dot ${index === 0 ? 'active' : ''}`} />
+        <div className="timeline-time-col">
+          {ev.event_time ? ev.event_time.slice(0, 5) : "All Day"}
+        </div>
+        <div className="event-card-tactile">
+          <div className="event-card-text">
+            <h4 className="event-title-main">{ev.title}</h4>
+            <div className="event-meta-info">
+              <span className="meta-tag">{tag}</span>
+              <span>·</span>
+              <span>Active timeline</span>
+            </div>
+          </div>
+          <button onClick={() => deleteEvent(ev.id)} className="btn-delete-event" aria-label={`Delete ${ev.title}`}>
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
+    ))
+  }
 
   return (
     <div className="calendar-dashboard">
@@ -611,7 +741,7 @@ function CalendarWidget({ userId }) {
         animate="visible"
         variants={{
           hidden: { opacity: 0 },
-          visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+          visible: { opacity: 1, transition: { staggerChildren: motionOK ? 0.05 : 0 } }
         }}
       >
         <SummaryCard
@@ -621,6 +751,7 @@ function CalendarWidget({ userId }) {
           desc="Due within 24 hours"
           sparklinePath="M0,15 C10,12 20,18 30,5 C40,2 50,14 60,8"
           accent="#f59e0b"
+          motionOK={motionOK}
         />
         <SummaryCard
           label="Upcoming"
@@ -629,6 +760,7 @@ function CalendarWidget({ userId }) {
           desc="Scheduled events"
           sparklinePath="M0,8 C10,14 20,5 30,12 C40,16 50,2 60,10"
           accent="#60a5fa"
+          motionOK={motionOK}
         />
         <SummaryCard
           label="Focus Score"
@@ -637,6 +769,7 @@ function CalendarWidget({ userId }) {
           desc="Target: 9.5 scale"
           sparklinePath="M0,18 C10,15 20,10 30,10 C40,10 50,3 60,3"
           accent="#8b5cf6"
+          motionOK={motionOK}
         />
         <SummaryCard
           label="Accomplished"
@@ -645,6 +778,7 @@ function CalendarWidget({ userId }) {
           desc="Finished logs"
           sparklinePath="M0,4 C10,12 20,2 30,8 C40,14 50,2 60,15"
           accent="#10b981"
+          motionOK={motionOK}
         />
       </motion.div>
 
@@ -653,17 +787,17 @@ function CalendarWidget({ userId }) {
 
         <div className="left-pane">
 
-          {/* Calendar weekly ribbon navigation */}
+          {/* Calendar weekly ribbon navigation — the visual centerpiece */}
           <div className="calendar-nav-card">
             <div className="calendar-nav-header">
               <AnimatePresence mode="wait">
                 <motion.span
                   key={weekDates[0].toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   className="active-month-text"
-                  initial={{ opacity: 0, y: -6 }}
+                  initial={motionOK ? { opacity: 0, y: -6 } : false}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6 }}
-                  transition={{ duration: 0.25, ease }}
+                  exit={motionOK ? { opacity: 0, y: 6 } : {}}
+                  transition={{ duration: motionOK ? 0.25 : 0, ease }}
                 >
                   {weekDates[0].toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </motion.span>
@@ -672,6 +806,7 @@ function CalendarWidget({ userId }) {
                 <motion.button
                   onClick={() => shiftWeek(-1)}
                   className="btn-nav-arrow"
+                  aria-label="Previous week"
                   whileHover={{ y: -1 }}
                   whileTap={{ scale: 0.92 }}
                   transition={{ type: 'spring', stiffness: 420, damping: 24 }}
@@ -681,6 +816,7 @@ function CalendarWidget({ userId }) {
                 <motion.button
                   onClick={() => shiftWeek(1)}
                   className="btn-nav-arrow"
+                  aria-label="Next week"
                   whileHover={{ y: -1 }}
                   whileTap={{ scale: 0.92 }}
                   transition={{ type: 'spring', stiffness: 420, damping: 24 }}
@@ -694,10 +830,10 @@ function CalendarWidget({ userId }) {
               <motion.div
                 key={weekDates[0].toISOString().split('T')[0]}
                 className="week-days-ribbon"
-                initial={{ opacity: 0, x: shiftDirection > 0 ? 26 : -26 }}
+                initial={motionOK ? { opacity: 0, x: shiftDirection > 0 ? 26 : -26 } : false}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: shiftDirection > 0 ? -26 : 26 }}
-                transition={{ duration: 0.3, ease }}
+                exit={motionOK ? { opacity: 0, x: shiftDirection > 0 ? -26 : 26 } : {}}
+                transition={{ duration: motionOK ? 0.3 : 0, ease }}
               >
                 {weekDates.map(d => {
                   const key = d.toISOString().split('T')[0]
@@ -708,6 +844,11 @@ function CalendarWidget({ userId }) {
                     <motion.div
                       key={key}
                       onClick={() => setSelectedDay(isSelected ? null : key)}
+                      onKeyDown={(e) => handleDayKeyDown(e, key, isSelected)}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={isSelected}
+                      aria-label={d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + (isToday ? ' (today)' : '')}
                       className={`day-ribbon-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}`}
                       animate={{ y: isSelected ? -3 : 0, scale: isSelected ? 1.03 : 1 }}
                       transition={{ type: 'spring', stiffness: 340, damping: 22 }}
@@ -722,7 +863,6 @@ function CalendarWidget({ userId }) {
                         <div style={{
                           width: '5px', height: '5px', borderRadius: '50%',
                           background: isSelected ? '#ffffff' : 'var(--accent-purple-light)',
-                          marginTop: '4px'
                         }} />
                       )}
                     </motion.div>
@@ -732,9 +872,9 @@ function CalendarWidget({ userId }) {
             </AnimatePresence>
           </div>
 
-          {/* Interactive selected day timeline view */}
+          {/* Interactive selected day / today's timeline */}
           <div className="timeline-container">
-            <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 16px 0' }}>
+            <h3 style={{ fontSize: 'clamp(14px, 3.2vw, 15px)', fontWeight: 700, margin: '0 0 var(--space-sm) 0' }}>
               {selectedDay ? (
                 new Date(selectedDay).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
               ) : (
@@ -743,66 +883,9 @@ function CalendarWidget({ userId }) {
             </h3>
 
             <div className="timeline-axis">
-              {selectedDay ? (
-                selectedEvents.length === 0 ? (
-                  <div className="empty-events-banner">
-                    <div className="empty-icon-badge"><Clock3 size={20} /></div>
-                    <span className="empty-banner-title">Nothing Scheduled</span>
-                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>You have no events allocated for this day.</p>
-                  </div>
-                ) : (
-                  selectedEvents.map((ev, index) => (
-                    <div className="timeline-event-wrapper" key={ev.id}>
-                      <div className={`timeline-node-dot ${index === 0 ? 'active' : ''}`} />
-                      <div className="timeline-time-col">
-                        {ev.event_time ? ev.event_time.slice(0, 5) : "All Day"}
-                      </div>
-                      <div className="event-card-tactile">
-                        <div>
-                          <h4 className="event-title-main">{ev.title}</h4>
-                          <div className="event-meta-info">
-                            <span className="meta-tag">Course module</span>
-                            <span>·</span>
-                            <span>Active timeline</span>
-                          </div>
-                        </div>
-                        <button onClick={() => deleteEvent(ev.id)} className="btn-delete-event">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )
-              ) : (
-                (eventsByDate[today] || []).length === 0 ? (
-                  <div className="empty-events-banner">
-                    <div className="empty-icon-badge"><Clock3 size={20} /></div>
-                    <span className="empty-banner-title">No Events Scheduled Today</span>
-                  </div>
-                ) : (
-                  (eventsByDate[today] || []).map((ev, index) => (
-                    <div className="timeline-event-wrapper" key={ev.id}>
-                      <div className={`timeline-node-dot ${index === 0 ? 'active' : ''}`} />
-                      <div className="timeline-time-col">
-                        {ev.event_time ? ev.event_time.slice(0, 5) : "All Day"}
-                      </div>
-                      <div className="event-card-tactile">
-                        <div>
-                          <h4 className="event-title-main">{ev.title}</h4>
-                          <div className="event-meta-info">
-                            <span className="meta-tag">Today</span>
-                            <span>·</span>
-                            <span>Active timeline</span>
-                          </div>
-                        </div>
-                        <button onClick={() => deleteEvent(ev.id)} className="btn-delete-event">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )
-              )}
+              {selectedDay
+                ? renderEventList(selectedEvents, 'Nothing Scheduled', 'You have no events allocated for this day.', 'Course module')
+                : renderEventList(eventsByDate[today] || [], 'No Events Scheduled Today', null, 'Today')}
             </div>
           </div>
 
@@ -820,18 +903,21 @@ function CalendarWidget({ userId }) {
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Event title..."
                   className="composer-input title"
+                  aria-label="Event title"
                 />
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   className="composer-input date-picker"
+                  aria-label="Event date"
                 />
                 <input
                   type="time"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
                   className="composer-input time-picker"
+                  aria-label="Event time"
                 />
                 <motion.button
                   type="submit"
@@ -856,21 +942,21 @@ function CalendarWidget({ userId }) {
 
           {/* AI Insights & suggestions */}
           <div className="ai-assistant-card">
-            <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3 style={{ fontSize: 'clamp(14px, 3.2vw, 15px)', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span className="ai-sparkle-icon"><Sparkles size={16} color="var(--accent-amber)" /></span>
               <span>Atlas AI Suggestions</span>
             </h3>
 
             <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.985 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
               <div className="suggestion-bullet" style={{ background: 'var(--accent-amber)', boxShadow: '0 0 6px rgba(245, 158, 11, 0.45)' }} />
-              <div style={{ fontSize: '12px', lineHeight: 1.55 }}>
+              <div>
                 You have <strong>3 hours free</strong> in your afternoon slot. Schedule a focus session?
               </div>
             </motion.div>
 
             <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.985 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
               <div className="suggestion-bullet" style={{ background: 'var(--accent-red)', boxShadow: '0 0 6px rgba(239, 68, 68, 0.4)' }} />
-              <div style={{ fontSize: '12px', lineHeight: 1.55 }}>
+              <div>
                 Assignment due tomorrow. Ensure preparation notes are reviewed.
               </div>
             </motion.div>
@@ -878,13 +964,13 @@ function CalendarWidget({ userId }) {
 
           {/* Radial progress card */}
           <div className="month-radial-card">
-            <div>
-              <h3 style={{ fontSize: '14px', fontWeight: 700, margin: '0 0 4px 0' }}>Month Completion</h3>
-              <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>Based on overall metrics.</p>
+            <div className="month-radial-text">
+              <h3>Month Completion</h3>
+              <p>Based on overall metrics.</p>
             </div>
 
-            <div style={{ position: 'relative', width: '68px', height: '68px', flexShrink: 0 }}>
-              <svg width="68" height="68" viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }}>
+            <div className="radial-progress-wrap">
+              <svg viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }}>
                 <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
                 <motion.path
                   fill="none"
@@ -894,7 +980,7 @@ function CalendarWidget({ userId }) {
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                   initial={{ pathLength: 0 }}
                   animate={{ pathLength: monthProgressRate / 100 }}
-                  transition={{ duration: 1.2, ease }}
+                  transition={{ duration: motionOK ? 1.2 : 0, ease }}
                 />
                 <defs>
                   <linearGradient id="gradientRing" x1="0" y1="0" x2="1" y2="1">
@@ -903,7 +989,7 @@ function CalendarWidget({ userId }) {
                   </linearGradient>
                 </defs>
               </svg>
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '12px', fontWeight: 800 }}>
+              <div className="radial-progress-label">
                 {monthProgressRate}%
               </div>
             </div>
@@ -920,6 +1006,7 @@ function CalendarWidget({ userId }) {
             className="mobile-floating-add-btn"
             onClick={() => setIsMobileDrawerOpen(true)}
             onPointerDown={(e) => spawnRipple(e, setFabRipples)}
+            aria-label="Add event"
             animate={{ y: scrolled ? -3 : 0 }}
             whileTap={{ scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 380, damping: 22 }}
@@ -957,6 +1044,7 @@ function CalendarWidget({ userId }) {
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="Event title..."
                       className="composer-input"
+                      aria-label="Event title"
                     />
                     <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
                       <input
@@ -964,14 +1052,16 @@ function CalendarWidget({ userId }) {
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
                         className="composer-input"
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, minWidth: 0 }}
+                        aria-label="Event date"
                       />
                       <input
                         type="time"
                         value={time}
                         onChange={(e) => setTime(e.target.value)}
                         className="composer-input"
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, minWidth: 0 }}
+                        aria-label="Event time"
                       />
                     </div>
                     <div style={{ display: 'flex', gap: '10px', width: '100%', marginTop: '10px' }}>
@@ -979,7 +1069,7 @@ function CalendarWidget({ userId }) {
                         type="button"
                         onClick={() => setIsMobileDrawerOpen(false)}
                         className="composer-input"
-                        style={{ flex: 1, border: '1px solid var(--glass-border)', background: 'none' }}
+                        style={{ flex: 1, border: '1px solid var(--glass-border)', background: 'none', cursor: 'pointer' }}
                       >
                         Cancel
                       </button>
@@ -999,12 +1089,13 @@ function CalendarWidget({ userId }) {
   )
 }
 
-function SummaryCard({ label, value, icon, desc, sparklinePath, accent }) {
+function SummaryCard({ label, value, icon, desc, sparklinePath, accent, motionOK }) {
   const gradId = 'cal-spark-' + label.toLowerCase().replace(/[^a-z0-9]+/g, '-')
   const accentColor = accent || '#8b5cf6'
   return (
     <motion.div
       className="kpi-card-glass"
+      tabIndex={0}
       variants={{
         hidden: { opacity: 0, y: 15 },
         visible: { opacity: 1, y: 0, transition: { type: 'spring' } }
@@ -1018,7 +1109,7 @@ function SummaryCard({ label, value, icon, desc, sparklinePath, accent }) {
       <div className="kpi-main-metric">{value}</div>
       <div className="kpi-desc-row">
         <span className="kpi-desc">{desc}</span>
-        <svg width="60" height="20" viewBox="0 0 60 20" fill="none">
+        <svg viewBox="0 0 60 20" fill="none">
           <defs>
             <linearGradient id={gradId} x1="0" y1="0" x2="60" y2="0" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stopColor={accentColor} stopOpacity="0.3" />
@@ -1032,7 +1123,7 @@ function SummaryCard({ label, value, icon, desc, sparklinePath, accent }) {
             strokeLinecap="round"
             initial={{ pathLength: 0, opacity: 0 }}
             animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ duration: 1.1, ease, delay: 0.25 }}
+            transition={{ duration: motionOK ? 1.1 : 0, ease, delay: motionOK ? 0.25 : 0 }}
           />
         </svg>
       </div>
