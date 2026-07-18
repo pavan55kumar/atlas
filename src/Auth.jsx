@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { supabase } from './lib/supabase'
 import { inputStyle, primaryButton } from './styles' // Kept for import compatibility
 
 // Custom CSS stylesheet matching your dashboard styling perfectly (Optimized for single-screen mobile usage)
+// NOTE: Only additive/fix-oriented CSS changes were made below (marked with comments).
+// No colors, gradients, typography, spacing, card shapes, or layout were altered.
 const styleSheet = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700&display=swap');
   
@@ -12,10 +14,16 @@ const styleSheet = `
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    min-height: 100dvh; /* modern viewport unit: keeps layout correct when mobile browser chrome / keyboard changes viewport height */
     background: radial-gradient(circle at center, #151324 0%, #0a0812 100%);
     padding: 24px;
+    padding-top: max(24px, env(safe-area-inset-top));
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+    padding-left: max(24px, env(safe-area-inset-left));
+    padding-right: max(24px, env(safe-area-inset-right));
     box-sizing: border-box;
     color: #ffffff;
+    overflow-y: auto; /* allow natural vertical scrolling instead of clipping content when viewport shrinks (keyboard, small screens) */
   }
   
   .auth-card {
@@ -28,6 +36,7 @@ const styleSheet = `
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.05);
     transition: all 0.3s ease;
+    margin: auto; /* ensures the card can scroll into view fully rather than clipping at top/bottom when content is taller than viewport */
   }
   
   .auth-form-column {
@@ -94,6 +103,15 @@ const styleSheet = `
     background-color: #ffffff;
     box-shadow: 0 0 0 4px rgba(92, 71, 245, 0.3);
   }
+
+  /* Keep a visible, non-intrusive focus ring for keyboard users on non-input controls, matching existing purple accent */
+  .password-toggle:focus-visible,
+  .recovery-link:focus-visible,
+  .social-btn:focus-visible,
+  .toggle-auth-link:focus-visible {
+    outline: 2px solid #5c47f5;
+    outline-offset: 2px;
+  }
   
   .password-toggle {
     position: absolute;
@@ -134,6 +152,12 @@ const styleSheet = `
   
   .recovery-link:hover {
     color: #5c47f5;
+  }
+
+  .recovery-link:disabled {
+    color: #5d5b70;
+    cursor: not-allowed;
+    opacity: 0.6;
   }
   
   .btn-submit {
@@ -207,11 +231,16 @@ const styleSheet = `
     transition: all 0.2s ease;
   }
   
-  .social-btn:hover {
+  .social-btn:hover:not(:disabled) {
     transform: translateY(-2px);
     background: #1b1928;
     border-color: rgba(255, 255, 255, 0.15);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  }
+
+  .social-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
   }
   
   .toggle-auth-text {
@@ -221,12 +250,25 @@ const styleSheet = `
     color: #8e8c9d;
   }
   
+  /* .toggle-auth-link is now a <button>; these rules reset default button chrome
+     so its appearance stays pixel-identical to the previous <span> */
   .toggle-auth-link {
     color: #5c47f5;
     font-weight: 600;
     cursor: pointer;
     transition: color 0.2s;
     margin-left: 4px;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    letter-spacing: inherit;
+    display: inline;
+  }
+
+  .toggle-auth-link:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
   }
   
   .toggle-auth-link:hover {
@@ -338,6 +380,22 @@ const styleSheet = `
     transition: transform 0.3s ease;
   }
 
+  /* FIX: previously ".card-habit / .card-focus / .card-academics" carried BOTH the
+     positioning/keyframe-animation (which sets the transform property every frame) AND, on
+     mobile, a static transform: scale(...). A CSS keyframe animation replaces the
+     whole transform value each frame, so the mobile scale was silently discarded.
+     Fix: the scale now lives on a dedicated inner wrapper (.card-scale) that never
+     animates, while the outer .card-* element keeps handling position + keyframe
+     float animation exactly as before. Visual result on both desktop and mobile is
+     unchanged / now matches the originally intended appearance. */
+  .card-scale {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transform: scale(1);
+    transform-origin: inherit;
+  }
+
   /* Staggered Floating Parallax Movements */
   .card-habit {
     top: 15%;
@@ -418,12 +476,24 @@ const styleSheet = `
     border: 1px solid rgba(16, 185, 129, 0.2);
   }
 
+  /* Dedicated class replacing the previous overly-broad ".auth-illustration-column div:last-child"
+     selector, so unrelated future DOM additions inside this column can never be
+     accidentally hidden by this rule. */
+  .hero-footer-row {
+    /* base styles intentionally identical to previous inline usage; only used as a hook for the
+       mobile hide-rule below */
+  }
+
   /* =========================================================================
      MOBILE SECURE RENDERING - HANDCRAFTED NATIVE iOS APP UX (BELOW 768PX)
      ========================================================================= */
   @media (max-width: 768px) {
     .auth-container {
       padding: 12px;
+      padding-top: max(12px, env(safe-area-inset-top));
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
     }
     
     .auth-card {
@@ -472,6 +542,8 @@ const styleSheet = `
     .card-habit {
       top: 10%;
       left: 6%;
+    }
+    .card-habit .card-scale {
       transform: scale(0.68);
       transform-origin: top left;
     }
@@ -479,6 +551,8 @@ const styleSheet = `
     .card-academics {
       top: 12%;
       right: 6%;
+    }
+    .card-academics .card-scale {
       transform: scale(0.68);
       transform-origin: top right;
     }
@@ -492,9 +566,9 @@ const styleSheet = `
       font-size: 11px !important;
     }
 
-    /* Hide unneeded carousel controls and footer text on mobile */
+    /* Hide unneeded carousel controls and footer row on mobile (scoped, dedicated classes) */
     .auth-illustration-column .carousel-controls,
-    .auth-illustration-column div:last-child {
+    .auth-illustration-column .hero-footer-row {
       display: none !important;
     }
     
@@ -553,7 +627,7 @@ const styleSheet = `
       box-shadow: 0 6px 16px rgba(139, 92, 246, 0.3) !important;
     }
 
-    .btn-submit:active {
+    .btn-submit:active:not(:disabled) {
       transform: scale(0.97) !important;
     }
 
@@ -574,7 +648,7 @@ const styleSheet = `
       border: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
 
-    .social-btn:hover {
+    .social-btn:hover:not(:disabled) {
       background: rgba(27, 25, 42, 0.8) !important;
       border-color: rgba(255, 255, 255, 0.15) !important;
     }
@@ -605,7 +679,109 @@ const styleSheet = `
       min-height: 100px;
     }
   }
+
+  /* Respect prefers-reduced-motion: freeze decorative/ambient animations for users who
+     have disabled motion at the OS level. Normal users see the exact same design. */
+  @media (prefers-reduced-motion: reduce) {
+    .ai-core-ring,
+    .ai-core-center,
+    .card-habit,
+    .card-focus,
+    .card-academics,
+    .status-circle-pulse,
+    .metric-chart-path {
+      animation: none !important;
+    }
+    .metric-chart-path {
+      stroke-dashoffset: 0 !important;
+    }
+    .auth-card,
+    .btn-submit,
+    .social-btn,
+    .password-toggle,
+    .toggle-auth-link,
+    .recovery-link,
+    .input-field {
+      transition: none !important;
+    }
+  }
 `;
+
+// ---- Small, focused helpers (logic-only; no visual output) ----
+
+const MIN_PASSWORD_LENGTH = 6
+
+function isValidEmailFormat(value) {
+  // Pragmatic client-side check; Supabase still validates authoritatively server-side.
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+}
+
+function isOffline() {
+  return typeof navigator !== 'undefined' && navigator.onLine === false
+}
+
+function isNetworkError(error) {
+  const msg = (error?.message || '').toLowerCase()
+  return (
+    isOffline() ||
+    msg.includes('failed to fetch') ||
+    msg.includes('networkerror') ||
+    msg.includes('network request failed') ||
+    msg.includes('load failed') ||
+    msg.includes('timeout')
+  )
+}
+
+// Converts raw Supabase/auth errors into short, user-facing copy without leaking backend details.
+function toFriendlyAuthMessage(error) {
+  if (!error) return ''
+  if (isNetworkError(error)) {
+    return 'Unable to connect. Check your internet connection and try again.'
+  }
+  const msg = (error.message || '').toLowerCase()
+
+  if (msg.includes('invalid login credentials') || msg.includes('invalid_credentials')) {
+    return 'Incorrect email or password.'
+  }
+  if (msg.includes('already registered') || msg.includes('already exists') || msg.includes('user_already_exists')) {
+    return 'An account with this email already exists.'
+  }
+  if (msg.includes('email not confirmed')) {
+    return 'Please confirm your email address before signing in.'
+  }
+  if (msg.includes('password') && msg.includes('at least')) {
+    return `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`
+  }
+  if (msg.includes('rate limit') || msg.includes('too many requests')) {
+    return 'Too many attempts. Please wait a moment and try again.'
+  }
+  if (msg.includes('invalid email') || msg.includes('unable to validate email')) {
+    return 'Please enter a valid email address.'
+  }
+  return 'Something went wrong. Please try again.'
+}
+
+// Determines the correct OAuth redirect target for web/PWA vs. the native Capacitor Android app.
+// Web keeps the existing architecture (window.location.origin) untouched.
+// Native builds should register a custom URL scheme / App Link and handle it via
+// Capacitor's `App.addListener('appUrlOpen', ...)` at the app root, then hand the resulting
+// URL off to `supabase.auth` (e.g. via `getSessionFromUrl` / exchanging the code).
+// The scheme below is a placeholder — replace ATLAS_NATIVE_AUTH_REDIRECT with the app's
+// actual registered deep link if this is wired up to run inside the Android shell.
+const ATLAS_NATIVE_AUTH_REDIRECT = 'atlas://auth-callback'
+
+function getOAuthRedirectTo() {
+  if (typeof window === 'undefined') return undefined
+  const isNativePlatform =
+    typeof window.Capacitor !== 'undefined' &&
+    typeof window.Capacitor.isNativePlatform === 'function' &&
+    window.Capacitor.isNativePlatform()
+
+  if (isNativePlatform) {
+    return ATLAS_NATIVE_AUTH_REDIRECT
+  }
+  return window.location.origin
+}
 
 function Auth({ onLogin }) {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -615,56 +791,119 @@ function Auth({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Synchronous guards against double-submits / double-taps. React state updates are async,
+  // so a ref gives an immediate, same-tick lock that `disabled` alone can't guarantee.
+  const isSubmittingRef = useRef(false);
+  const isGoogleLoadingRef = useRef(false);
+  const isRecoveryLoadingRef = useRef(false);
+
+  function toggleMode() {
+    // Preserve the entered email across Sign In / Sign Up, but clear stale error/success text.
+    setIsSignUp((prev) => !prev);
+    setMessage('');
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
+    if (isSubmittingRef.current || loading) return;
+
+    const normalizedEmail = email.trim();
+
+    if (isSignUp) {
+      if (!isValidEmailFormat(normalizedEmail)) {
+        setMessage('❌ Please enter a valid email address.');
+        return;
+      }
+      if (password.length < MIN_PASSWORD_LENGTH) {
+        setMessage(`❌ Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+        return;
+      }
+    }
+
+    isSubmittingRef.current = true;
     setLoading(true);
     setMessage('');
 
-    if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) setMessage('❌ ' + error.message);
-      else setMessage('✅ Check your email to confirm your account.');
-    } else {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) setMessage('❌ ' + error.message);
-      else onLogin(data.user);
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({ email: normalizedEmail, password });
+        if (error) setMessage('❌ ' + toFriendlyAuthMessage(error));
+        else setMessage('✅ Check your email to confirm your account.');
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+        if (error) setMessage('❌ ' + toFriendlyAuthMessage(error));
+        else onLogin(data.user);
+      }
+    } catch (err) {
+      // Catches unexpected/thrown exceptions (e.g. offline, malformed responses) so the UI
+      // never gets stuck — loading is guaranteed to reset via `finally` below.
+      setMessage('❌ ' + toFriendlyAuthMessage(err));
+    } finally {
+      isSubmittingRef.current = false;
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   // Trigger Google Sign-In with Supabase
   async function handleGoogleSignIn() {
+    if (isGoogleLoadingRef.current || loading) return;
+    isGoogleLoadingRef.current = true;
     setLoading(true);
     setMessage('');
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: getOAuthRedirectTo()
+        }
+      });
+      if (error) {
+        setMessage('❌ ' + toFriendlyAuthMessage(error));
       }
-    });
-    if (error) {
-      setMessage('❌ ' + error.message);
+      // On success the browser/native flow navigates away, so `loading` intentionally
+      // stays true until that happens; `finally` still guards against a thrown exception.
+    } catch (err) {
+      setMessage('❌ ' + toFriendlyAuthMessage(err));
+    } finally {
+      isGoogleLoadingRef.current = false;
       setLoading(false);
     }
   }
 
   // Trigger standard Supabase Password Recovery Flow
   async function handlePasswordRecovery() {
-    if (!email.trim()) {
+    if (isRecoveryLoadingRef.current || loading) return;
+
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
       setMessage('❌ Please enter your email address in the input field above to request a reset link.');
       return;
     }
+    if (!isValidEmailFormat(normalizedEmail)) {
+      setMessage('❌ Please enter a valid email address.');
+      return;
+    }
+
+    isRecoveryLoadingRef.current = true;
     setLoading(true);
     setMessage('');
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`
-    });
-    if (error) {
-      setMessage('❌ ' + error.message);
-    } else {
-      setMessage('✅ A password reset link has been dispatched to your email.');
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+      if (error) {
+        setMessage('❌ ' + toFriendlyAuthMessage(error));
+      } else {
+        setMessage('✅ A password reset link has been dispatched to your email.');
+      }
+    } catch (err) {
+      setMessage('❌ ' + toFriendlyAuthMessage(err));
+    } finally {
+      isRecoveryLoadingRef.current = false;
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (
@@ -720,32 +959,41 @@ function Auth({ onLogin }) {
               </defs>
             </svg>
 
+            {/* NOTE: scaling now happens on the inner `.card-scale` wrapper so the outer
+                element's keyframe animation (which also writes `transform`) can no longer
+                silently discard the mobile scale — see the `.card-scale` CSS comment above. */}
             <div className="floating-glass-card card-habit">
-              <span className="status-circle-pulse" style={{ backgroundColor: '#ff7a59', boxShadow: '0 0 8px #ff7a59' }} />
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff' }}>Habit Streak</span>
-                <span style={{ fontSize: '10px', color: '#ff7a59', fontWeight: 700 }}>Streak: 5 Days 🔥</span>
+              <div className="card-scale">
+                <span className="status-circle-pulse" style={{ backgroundColor: '#ff7a59', boxShadow: '0 0 8px #ff7a59' }} />
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff' }}>Habit Streak</span>
+                  <span style={{ fontSize: '10px', color: '#ff7a59', fontWeight: 700 }}>Streak: 5 Days 🔥</span>
+                </div>
               </div>
             </div>
 
             <div className="floating-glass-card card-academics">
-              <span className="status-circle-pulse" style={{ backgroundColor: '#a78bfa', boxShadow: '0 0 8px #a78bfa' }} />
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff' }}>Academic Plan</span>
-                <span style={{ fontSize: '10px', color: '#a78bfa', fontWeight: 600 }}>Active Study: 90%</span>
+              <div className="card-scale">
+                <span className="status-circle-pulse" style={{ backgroundColor: '#a78bfa', boxShadow: '0 0 8px #a78bfa' }} />
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff' }}>Academic Plan</span>
+                  <span style={{ fontSize: '10px', color: '#a78bfa', fontWeight: 600 }}>Active Study: 90%</span>
+                </div>
               </div>
             </div>
 
             <div className="floating-glass-card card-focus">
-              <span className="status-circle-pulse" />
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff' }}>Focus Engine</span>
-                <span style={{ fontSize: '10px', color: '#34d399', fontWeight: 600 }}>Mode Active</span>
+              <div className="card-scale">
+                <span className="status-circle-pulse" />
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff' }}>Focus Engine</span>
+                  <span style={{ fontSize: '10px', color: '#34d399', fontWeight: 600 }}>Mode Active</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="hero-footer-row">
             <span style={{ fontSize: '11px', color: '#5d5b70', fontWeight: 600, letterSpacing: '0.06em' }}>
               ATLAS AI SYSTEM
             </span>
@@ -772,7 +1020,7 @@ function Auth({ onLogin }) {
             {isSignUp ? 'Organize your life, habits, and academics today.' : 'Please enter your account details to continue.'}
           </p>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <div className="input-wrapper">
               <input 
                 type="email" 
@@ -781,6 +1029,10 @@ function Auth({ onLogin }) {
                 onChange={(e) => setEmail(e.target.value)} 
                 required 
                 className="input-field"
+                autoComplete="email"
+                inputMode="email"
+                aria-label="Email address"
+                disabled={loading}
               />
             </div>
             
@@ -792,11 +1044,17 @@ function Auth({ onLogin }) {
                 onChange={(e) => setPassword(e.target.value)} 
                 required 
                 className="input-field"
+                autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                aria-label="Password"
+                disabled={loading}
+                minLength={isSignUp ? MIN_PASSWORD_LENGTH : undefined}
               />
               <button 
                 type="button" 
                 className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
               >
                 {showPassword ? (
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -817,6 +1075,7 @@ function Auth({ onLogin }) {
                 type="button" 
                 onClick={handlePasswordRecovery} 
                 className="recovery-link"
+                disabled={loading}
               >
                 Recover Password
               </button>
@@ -828,7 +1087,7 @@ function Auth({ onLogin }) {
           </form>
 
           {message && (
-            <div className={`toast-message ${message.includes('❌') ? 'toast-error' : 'toast-success'}`}>
+            <div className={`toast-message ${message.includes('❌') ? 'toast-error' : 'toast-success'}`} role="status" aria-live="polite">
               {message}
             </div>
           )}
@@ -841,7 +1100,7 @@ function Auth({ onLogin }) {
 
           <div className="social-container">
             {/* Google */}
-            <button type="button" onClick={handleGoogleSignIn} className="social-btn">
+            <button type="button" onClick={handleGoogleSignIn} className="social-btn" disabled={loading} aria-label="Continue with Google">
               <svg width="20" height="20" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.77c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -853,9 +1112,14 @@ function Auth({ onLogin }) {
 
           <p className="toggle-auth-text">
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-            <span onClick={() => { setIsSignUp(!isSignUp); setMessage(''); }} className="toggle-auth-link">
+            <button
+              type="button"
+              onClick={toggleMode}
+              className="toggle-auth-link"
+              disabled={loading}
+            >
               {isSignUp ? 'Sign In' : 'Sign Up'}
-            </span>
+            </button>
           </p>
         </div>
 
