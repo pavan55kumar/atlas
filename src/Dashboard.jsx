@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { App } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
@@ -68,7 +68,13 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
   // Helper to allow child components to navigate seamlessly 
   // Flattens history so ANY internal page -> Back -> Overview
   const handleNavigate = (path) => {
-    const target = path.startsWith('/') ? path : `/${path}`
+    let target = path.startsWith('/') ? path : `/${path}`
+    
+    // Ensure Overview navigation always targets the root path '/' 
+    // to prevent blank pages if 'overview' is passed by Sidebar/Search
+    if (target === '/overview' || target === 'overview') {
+      target = '/'
+    }
 
     // If a modal is open on Web, we must close it and pop its dummy history state
     // before performing the actual navigation to avoid history corruption.
@@ -234,7 +240,7 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
   const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
   
-  const isOverview = location.pathname === '/'
+  const isOverview = location.pathname === '/' || location.pathname === '/overview'
   const currentTitle = isOverview ? `${greeting}, ${displayName}` : (pathToTitle[location.pathname] || 'Atlas')
 
   return (
@@ -310,6 +316,9 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             >
               <Routes location={location}>
+                {/* Safely redirect any accidental direct routes to /overview back to / */}
+                <Route path="/overview" element={<Navigate to="/" replace />} />
+                
                 <Route path="/" element={<Overview userId={user.id} onNavigate={handleNavigate} />} />
                 <Route path="/tasks" element={<PageCard><Tasks userId={user.id} /></PageCard>} />
                 <Route path="/habits" element={<PageCard><Habits userId={user.id} /></PageCard>} />
