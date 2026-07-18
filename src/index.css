@@ -45,7 +45,7 @@ body {
 
 :root[data-theme="dark"] body {
   background:
-    radial-gradient(circle at 15% 20%, rgba(124,92,255,.12), transparent 45%),
+    radial-gradient(circle at 15% 20%, #8d1c1c40, transparent 45%),
     radial-gradient(circle at 85% 80%, rgba(255,170,120,.08), transparent 35%),
     var(--bg);
 }
