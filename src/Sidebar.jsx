@@ -231,9 +231,9 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         style={{
-          width: expanded ? '220px' : '72px', // Reduced width
+          width: expanded ? '220px' : '72px',
           flexShrink: 0,
-          padding: '20px 10px', // Tightened padding
+          padding: '20px 10px',
           minHeight: '100vh',
           transition: 'width 0.3s cubic-bezier(.22,1,.36,1)',
           overflow: 'hidden',
@@ -248,7 +248,7 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
             alt="Atlas"
             className="atlas-logo"
             style={{
-              width: '30px', // Slightly smaller logo
+              width: '30px',
               height: '30px',
               borderRadius: '8px',
               objectFit: 'cover',
@@ -307,7 +307,7 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
                 top: 0,
                 left: 0,
                 bottom: 0,
-                width: '264px', // Reduced mobile width
+                width: '240px', // Reduced mobile width to match the requested minimal size
                 maxWidth: '85vw',
                 borderRight: '1px solid var(--border)',
                 zIndex: 999,
