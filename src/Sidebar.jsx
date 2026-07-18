@@ -106,23 +106,32 @@ function NavList({ page, onNavigate, showAllLabels }) {
                 role={isCollapsible ? 'button' : undefined}
                 tabIndex={isCollapsible ? 0 : undefined}
                 aria-expanded={isCollapsible ? isOpen : undefined}
-                className="atlas-section-header"
+                className={`atlas-section-header ${isCollapsible ? 'is-collapsible' : ''}`}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '0 12px',
                   marginBottom: '6px',
+                  minHeight: '38px',
+                  borderRadius: '8px',
                   cursor: isCollapsible ? 'pointer' : 'default',
                   outline: 'none',
+                  WebkitTapHighlightColor: 'transparent',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
                 }}
               >
                 <span className="atlas-section-label" style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--text-tertiary)' }}>
                   {section.label.toUpperCase()}
                 </span>
                 {isCollapsible && (
-                  <motion.div animate={{ rotate: isOpen ? 0 : -90 }} transition={{ duration: 0.2 }}>
-                    <ChevronDown size={14} color="var(--text-tertiary)" />
+                  <motion.div
+                    className="atlas-section-chevron"
+                    animate={{ rotate: isOpen ? 0 : -90 }}
+                    transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <ChevronDown size={14} />
                   </motion.div>
                 )}
               </div>
@@ -178,8 +187,8 @@ function NavList({ page, onNavigate, showAllLabels }) {
                               bottom: '25%',
                               width: '3px',
                               borderRadius: '0 4px 4px 0',
-                              background: 'linear-gradient(to bottom, #d07eff, #8b5cf6)',
-                              boxShadow: '0 0 8px rgba(208, 126, 255, 0.6), 0 0 4px rgba(245, 158, 11, 0.3)',
+                              background: 'linear-gradient(to bottom, #a78bfa, #7c3aed)',
+                              boxShadow: '0 0 4px rgba(139, 92, 246, 0.35)',
                             }}
                           />
                         )}
@@ -202,19 +211,49 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
   const [expanded, setExpanded] = useState(false)
   const hoverTimeout = useRef(null)
 
+  // Tracks whether *this* component pushed a history entry to trap the Android/iOS
+  // hardware/gesture back action while the drawer is open. Purely additive: it never
+  // touches app routes, and only ever pops the single entry it pushed itself.
+  const pushedHistoryRef = useRef(false)
+
   useEffect(() => {
     if (mobileOpen) {
       document.body.style.overflow = 'hidden'
-      const handleEsc = (e) => e.key === 'Escape' && onCloseMobile()
+
+      // Trap "back" so it closes the drawer instead of navigating the underlying app.
+      window.history.pushState({ atlasDrawerOpen: true }, '')
+      pushedHistoryRef.current = true
+
+      const handlePopState = () => {
+        pushedHistoryRef.current = false
+        onCloseMobile()
+      }
+      const handleEsc = (e) => e.key === 'Escape' && closeDrawer()
+
+      window.addEventListener('popstate', handlePopState)
       window.addEventListener('keydown', handleEsc)
       return () => {
         document.body.style.overflow = ''
+        window.removeEventListener('popstate', handlePopState)
         window.removeEventListener('keydown', handleEsc)
       }
     } else {
       document.body.style.overflow = ''
     }
-  }, [mobileOpen, onCloseMobile])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mobileOpen])
+
+  // Use this (instead of onCloseMobile directly) for every in-drawer close action
+  // (X button, overlay tap, item selection) so the trapped history entry above is
+  // always cleaned up and never left dangling as a stray forward-navigation.
+  function closeDrawer() {
+    if (pushedHistoryRef.current) {
+      pushedHistoryRef.current = false
+      window.history.back()
+    } else {
+      onCloseMobile()
+    }
+  }
 
   const handleMouseEnter = () => {
     hoverTimeout.current = setTimeout(() => setExpanded(true), 150)
@@ -286,7 +325,7 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              onClick={onCloseMobile}
+              onClick={closeDrawer}
               style={{
                 position: 'fixed',
                 inset: 0,
@@ -315,7 +354,7 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
                 flexDirection: 'column',
                 paddingTop: 'env(safe-area-inset-top)',
                 paddingBottom: 'env(safe-area-inset-bottom)',
-                boxShadow: '4px 0 40px rgba(0,0,0,0.4)'
+                boxShadow: '4px 0 32px rgba(0,0,0,0.35)'
               }}
             >
               <div style={{
@@ -344,7 +383,7 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
                   <span className="atlas-brand-text" style={{ fontSize: '13px', fontWeight: 800, letterSpacing: '0.15em' }}>ATLAS</span>
                 </div>
                 <button
-                  onClick={onCloseMobile}
+                  onClick={closeDrawer}
                   aria-label="Close menu"
                   className="atlas-close-btn"
                   style={{
@@ -362,7 +401,7 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
                   page={page}
                   onNavigate={(key) => {
                     onNavigate(key)
-                    onCloseMobile()
+                    closeDrawer()
                   }}
                   showAllLabels={true}
                 />
@@ -373,10 +412,12 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
       </AnimatePresence>
 
       <style>{`
+        /* Deep black-purple surface matching the Overview dashboard's card language.
+           Near-opaque (not glassy/translucent) with only a whisper of blur for depth. */
         .atlas-sidebar-shell {
-          background-color: rgba(6, 6, 9, 0.75);
-          backdrop-filter: blur(16px) saturate(140%);
-          -webkit-backdrop-filter: blur(16px) saturate(140%);
+          background-color: rgba(9, 8, 14, 0.97);
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
         }
 
         .atlas-sidebar-shell::before {
@@ -384,8 +425,8 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
           position: absolute;
           inset: 0;
           background: 
-            radial-gradient(circle at 30% 10%, rgba(139, 92, 246, 0.06) 0%, transparent 40%),
-            radial-gradient(circle at 70% 90%, rgba(208, 126, 255, 0.04) 0%, transparent 40%);
+            radial-gradient(circle at 30% 8%, rgba(139, 92, 246, 0.05) 0%, transparent 42%),
+            radial-gradient(circle at 75% 92%, rgba(167, 139, 250, 0.035) 0%, transparent 42%);
           pointer-events: none;
           z-index: 0;
         }
@@ -400,10 +441,10 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
         }
 
         .atlas-logo {
-          box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 4px 12px rgba(208, 126, 255, 0.25);
+          box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 4px 10px rgba(124, 58, 237, 0.18);
         }
         .atlas-brand-text {
-          background: linear-gradient(135deg, #ffffff 0%, #c4b5fd 50%, #d07eff 100%);
+          background: linear-gradient(135deg, #ffffff 0%, #c4b5fd 50%, #a78bfa 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -420,54 +461,72 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
           width: 3px;
           height: 3px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #d07eff, #8b5cf6);
-          box-shadow: 0 0 6px rgba(208, 126, 255, 0.6);
+          background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+          box-shadow: 0 0 4px rgba(139, 92, 246, 0.45);
+        }
+
+        .atlas-section-header {
+          transition: background 0.2s ease;
+        }
+        .atlas-section-header.is-collapsible:active {
+          background: rgba(139, 92, 246, 0.08);
+        }
+        @media (hover: hover) {
+          .atlas-section-header.is-collapsible:hover {
+            background: rgba(255, 255, 255, 0.025);
+          }
+        }
+        .atlas-section-chevron {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-tertiary, #64748b);
+          opacity: 0.85;
+          flex-shrink: 0;
         }
 
         .sidebar-nav-item {
           background: transparent;
           color: var(--text-muted);
-          transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+          transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
         }
 
         @media (hover: hover) {
           .sidebar-nav-item:hover {
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.035);
             color: var(--text);
-            border-color: rgba(139, 92, 246, 0.15);
-            box-shadow: inset 0 0 12px rgba(139, 92, 246, 0.05);
+            border-color: rgba(139, 92, 246, 0.12);
           }
         }
         .sidebar-nav-item:active {
-          background: rgba(139, 92, 246, 0.12);
+          background: rgba(139, 92, 246, 0.1);
           transform: scale(0.98);
         }
 
+        /* Active state: soft ambient purple tint + diffuse shadow, no bright glass edge or glow */
         .sidebar-nav-item.active {
-          background: linear-gradient(90deg, rgba(139, 92, 246, 0.15) 0%, rgba(255, 255, 255, 0.02) 100%);
+          background: linear-gradient(90deg, rgba(139, 92, 246, 0.13) 0%, rgba(255, 255, 255, 0.015) 100%);
           color: #ffffff;
-          border-color: rgba(139, 92, 246, 0.3);
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 1px 0 0 rgba(208, 126, 255, 0.4);
+          border-color: rgba(139, 92, 246, 0.16);
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
         }
         .sidebar-nav-item.active svg {
-          color: #d07eff;
-          filter: drop-shadow(0 0 4px rgba(208, 126, 255, 0.5));
+          color: #a78bfa;
+          filter: none;
         }
 
         .atlas-close-btn {
-          background: rgba(255, 255, 255, 0.04);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
+          background: rgba(255, 255, 255, 0.03);
           color: var(--text);
           transition: all 0.2s ease;
         }
         .atlas-close-btn:hover {
-          background: rgba(208, 126, 255, 0.1);
-          border-color: rgba(208, 126, 255, 0.3);
+          background: rgba(139, 92, 246, 0.09);
+          border-color: rgba(139, 92, 246, 0.22);
         }
         .atlas-close-btn:active {
           transform: scale(0.95);
-          background: rgba(208, 126, 255, 0.2);
+          background: rgba(139, 92, 246, 0.16);
         }
 
         /* =========================================
@@ -478,7 +537,7 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
         .light-theme .atlas-sidebar-shell,
         .light .atlas-sidebar-shell,
         [data-theme="light"] .atlas-sidebar-shell {
-          background-color: rgba(248, 250, 252, 0.85);
+          background-color: rgba(248, 250, 252, 0.97);
           border-color: rgba(15, 23, 42, 0.06);
         }
 
@@ -488,8 +547,8 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
         .light .atlas-sidebar-shell::before,
         [data-theme="light"] .atlas-sidebar-shell::before {
           background: 
-            radial-gradient(circle at 30% 10%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
-            radial-gradient(circle at 70% 90%, rgba(208, 126, 255, 0.05) 0%, transparent 40%);
+            radial-gradient(circle at 30% 10%, rgba(139, 92, 246, 0.06) 0%, transparent 40%),
+            radial-gradient(circle at 70% 90%, rgba(208, 126, 255, 0.04) 0%, transparent 40%);
         }
 
         body.light-theme .atlas-brand-text,
@@ -508,10 +567,10 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
         .light-theme .sidebar-nav-item.active,
         .light .sidebar-nav-item.active,
         [data-theme="light"] .sidebar-nav-item.active {
-          background: linear-gradient(90deg, rgba(99, 102, 241, 0.12) 0%, rgba(255, 255, 255, 0.4) 100%);
+          background: linear-gradient(90deg, rgba(99, 102, 241, 0.11) 0%, rgba(255, 255, 255, 0.4) 100%);
           color: #0f172a;
-          border-color: rgba(99, 102, 241, 0.2);
-          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08), inset 1px 0 0 rgba(99, 102, 241, 0.3);
+          border-color: rgba(99, 102, 241, 0.18);
+          box-shadow: 0 2px 10px rgba(99, 102, 241, 0.08);
         }
         
         body.light-theme .sidebar-nav-item.active svg,
@@ -548,6 +607,14 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
         [data-theme="light"] .atlas-close-btn:hover {
           background: rgba(99, 102, 241, 0.1);
           border-color: rgba(99, 102, 241, 0.2);
+        }
+
+        body.light-theme .atlas-section-chevron,
+        body.light .atlas-section-chevron,
+        .light-theme .atlas-section-chevron,
+        .light .atlas-section-chevron,
+        [data-theme="light"] .atlas-section-chevron {
+          color: var(--text-tertiary, #94a3b8);
         }
         
         @media (max-width: 768px) {

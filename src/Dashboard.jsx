@@ -357,11 +357,25 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
         .dash-content-pad { padding: 0 48px 48px; }
         .dash-header-title { font-size: 34px; font-family: 'Space Grotesk', 'Inter', sans-serif; }
         @media (max-width: 768px) {
-          .mobile-menu-btn { display: flex !important; }
-          .dash-header-pad { padding: 20px 16px 16px; }
-          .dash-content-pad { padding: 0 16px 32px; }
-          .dash-header-title { font-size: 24px; }
-        }
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  .dash-header-pad {
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-bottom: 16px;
+  }
+
+  .dash-content-pad {
+    padding: 0 16px 32px;
+  }
+
+  .dash-header-title {
+    font-size: 24px;
+  }
+}
       `}</style>
     </div>
   )
