@@ -7,12 +7,8 @@ import {
 import { supabase } from './lib/supabase'
 
 // Premium Handcrafted Theme Adaptive Glassmorphic Stylesheet
-// NOTE: Only visual/layout rules were touched in this pass. No functional logic,
-// state, hooks, event handlers, API calls, or theme-variable *values* were changed,
-// aside from what's needed to support the fixed Read Aloud control below and
-// baseline tap/focus hygiene (items 9 & 11 from the polish spec).
 const styleSheet = `
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
   
   :root {
     --atlas-font: 'Plus Jakarta Sans', -apple-system, sans-serif;
@@ -79,10 +75,6 @@ const styleSheet = `
     overflow-x: clip;
   }
 
-  /* --- Item 9 & 11: kill the default mobile tap-highlight flash on every
-     interactive element in this page, while keeping a real, visible,
-     accessible focus style for keyboard users (focus-visible only, so
-     mouse/touch clicks stay clean). --- */
   .ai-workspace-container button,
   .ai-workspace-container [role="button"],
   .ai-workspace-container .suggestion-pill-card,
@@ -206,25 +198,17 @@ const styleSheet = `
     100% { opacity: 1; }
   }
 
-  /* --- Suggestion Horizontal Carousel --- */
+  /* --- Suggestion Wrapping Grid --- */
   .suggestions-carousel {
     display: flex;
+    flex-wrap: wrap; /* Allow wrapping to prevent horizontal overflow */
     gap: 10px;
-    overflow-x: auto;
-    padding: 2px 2px 8px 2px;
     margin-bottom: 20px;
     z-index: 10;
     position: relative;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; /* Firefox */
-  }
-
-  .suggestions-carousel::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
   }
 
   .suggestion-pill-card {
-    flex-shrink: 0;
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: 12px;
@@ -279,6 +263,7 @@ const styleSheet = `
     display: flex;
     flex-direction: column;
     gap: 16px;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Custom Message bubbles */
@@ -302,6 +287,9 @@ const styleSheet = `
     font-size: 14px;
     line-height: 1.5;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 
   /* User Bubble: Radiant Indigo Gradient */
@@ -376,6 +364,7 @@ const styleSheet = `
     display: flex;
     flex-direction: column;
     gap: 12px;
+    flex-shrink: 0; /* Prevent dock from being squished */
   }
 
   /* Context chip linking displays */
@@ -412,17 +401,19 @@ const styleSheet = `
     align-items: center;
     background: var(--input-bg);
     border: 1px solid var(--input-border);
-    border-radius: 100px;
-    padding: 6px 6px 6px 18px;
-    gap: 10px;
+    border-radius: 999px; /* Premium pill shape */
+    padding: 6px 6px 6px 20px;
+    gap: 8px;
     transition: all 0.25s;
     width: 100%;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
   }
 
   .capsule-input-bar.focused-glow {
     border-color: var(--input-focus-border);
-    box-shadow: 0 0 0 3px var(--input-focus-glow);
+    box-shadow: 0 0 0 4px var(--input-focus-glow); /* Accessible outer glow */
   }
 
   .capsule-field {
@@ -431,10 +422,15 @@ const styleSheet = `
     background: none;
     border: none;
     color: var(--text-primary);
-    font-size: 14px;
+    font-size: 16px; /* Prevents iOS auto-zoom on focus */
     font-weight: 500;
-    outline: none;
-    box-sizing: border-box;
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    padding: 10px 8px;
+    line-height: 1.4;
+    -webkit-tap-highlight-color: transparent !important;
   }
 
   .capsule-field::placeholder {
@@ -447,13 +443,15 @@ const styleSheet = `
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
-    padding: 8px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
     flex-shrink: 0; /* Prevents compression on small screens */
+    -webkit-tap-highlight-color: transparent;
   }
 
   .btn-dock-mic.active-listening {
@@ -463,8 +461,8 @@ const styleSheet = `
   }
 
   .btn-dock-send {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: var(--btn-primary-bg);
     color: #ffffff;
@@ -476,6 +474,7 @@ const styleSheet = `
     box-shadow: 0 4px 12px var(--btn-primary-glow);
     transition: transform 0.15s;
     flex-shrink: 0; /* Prevents compression on small screens */
+    -webkit-tap-highlight-color: transparent;
   }
 
   .btn-dock-send:hover {
@@ -486,8 +485,7 @@ const styleSheet = `
     transform: scale(0.95);
   }
 
-  /* Premium Pill switch for Voice - now a real <button>, doubles as the
-     Read Aloud / Stop Reading control (see item 12 fix in the component). */
+  /* Premium Pill switch for Voice */
   .voice-switch-container {
     display: flex;
     justify-content: flex-end;
@@ -517,8 +515,6 @@ const styleSheet = `
     background: rgba(139, 92, 246, 0.08);
   }
 
-  /* While actively speaking, give the pill a distinct "live" treatment so
-     it visually reads as a Stop control, not just an active toggle. */
   .voice-toggle-pill.speaking {
     color: #f472b6;
     border-color: rgba(244, 114, 182, 0.35);
@@ -619,9 +615,8 @@ const styleSheet = `
 
   /* ======================================================================
      MOBILE PREMIUM POLISH (<= 900px)
-     Everything below is layout/visual only — no functionality is affected.
-     Rebuilt on an 8pt spacing rhythm with safe-area-aware padding, no
-     horizontal overflow, 44dp+ touch targets, and richer glass depth.
+     Rebuilt with dvh (dynamic viewport height) to natively handle 
+     Android keyboard resizing without breaking layout or clipping.
      ====================================================================== */
   @media (max-width: 900px) {
 
@@ -630,14 +625,13 @@ const styleSheet = `
     }
 
     .ai-workspace-container {
-      padding-top: max(16px, env(safe-area-inset-top));
-      padding-bottom: max(24px, env(safe-area-inset-bottom));
-      padding-left: max(20px, env(safe-area-inset-left));
-      padding-right: max(20px, env(safe-area-inset-right));
+      padding-top: max(12px, env(safe-area-inset-top));
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
       overflow-x: clip;
     }
 
-    /* Keep the ambient glow but stop it from ever contributing to page width */
     .sphere-primary {
       width: 260px;
       height: 260px;
@@ -654,220 +648,173 @@ const styleSheet = `
       filter: blur(70px);
     }
 
-    /* --- Hero card: calmer padding, cleaner hierarchy, badges that never
-       wrap mid-word --- */
     .ai-hero-header {
       flex-direction: column;
-      align-items: stretch;
-      gap: 16px;
-      padding: 20px;
-      margin-bottom: 16px;
-      border-radius: 22px;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      border-radius: 20px;
       border-color: var(--glass-border);
     }
 
     .hero-info {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
     }
 
     .hero-info h1 {
-      font-size: 21px;
-      line-height: 1.25;
+      font-size: 20px;
+      line-height: 1.2;
       letter-spacing: -0.01em;
     }
 
     .hero-info p {
-      font-size: 13px;
-      line-height: 1.5;
-      max-width: 34ch;
+      font-size: 12px;
+      line-height: 1.4;
+      max-width: 100%;
     }
 
     .hero-status-pills {
       gap: 8px;
-      justify-content: flex-start;
     }
 
     .status-pill {
-      font-size: 10px;
+      font-size: 9px;
       letter-spacing: 0.04em;
-      padding: 8px 14px;
-      min-height: 32px;
+      padding: 5px 10px;
     }
 
-    /* --- Suggestions: true pill shape, snap scrolling, edge fade so the
-       cut-off card at the edge reads as "more content" not "broken layout" --- */
     .suggestions-carousel {
-      margin: 0 -20px 20px -20px;
-      padding: 2px 20px 10px 20px;
-      scroll-snap-type: x proximity;
-      -webkit-mask-image: linear-gradient(to right, transparent 0, #000 20px, #000 calc(100% - 28px), transparent 100%);
-      mask-image: linear-gradient(to right, transparent 0, #000 20px, #000 calc(100% - 28px), transparent 100%);
+      gap: 8px;
+      margin-bottom: 12px;
     }
 
     .suggestion-pill-card {
-      scroll-snap-align: start;
+      padding: 8px 14px;
+      min-height: 36px;
+      font-size: 11.5px;
       border-radius: 100px;
-      padding: 11px 18px;
-      min-height: 44px;
-      font-size: 12.5px;
     }
 
-    /* --- Chat card becomes the clear hero of the page --- */
     .ai-split-workspace {
       grid-template-columns: 1fr;
-      gap: 16px;
+      gap: 0;
     }
 
     .system-summary-pane {
       display: none; /* Hide summary pane strictly on mobile viewports */
     }
 
+    /* 
+      The Magic Fix: Using dvh (dynamic viewport height) instead of vh.
+      When the Android keyboard opens, the browser's dvh shrinks to the 
+      visible area. This forces the container to shrink natively, keeping 
+      the input dock perfectly visible above the keyboard without JS hacks.
+    */
     .chat-workspace-pane {
       width: 100%;
-      height: calc(100dvh - 300px);
-      min-height: 460px;
+      height: 65vh; /* Fallback for older browsers */
+      height: calc(100dvh - 210px); /* Dynamically adjusts to keyboard */
+      min-height: 300px;
       max-height: 720px;
-      border-radius: 26px;
+      border-radius: 24px;
       border-color: var(--glass-border);
       box-shadow: var(--card-shadow), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+      transition: height 0.2s ease; /* Smooth resize when keyboard opens */
     }
 
     .chat-messages-container {
-      padding: 20px 16px;
+      padding: 16px 12px;
       gap: 12px;
     }
 
     .msg-bubble {
-      max-width: 86%;
+      max-width: 88%;
       padding: 12px 16px;
       font-size: 14px;
     }
 
-    /* --- Orb: bigger, softer, more "alive" without extra animation cost --- */
     .empty-chat-orb-state {
-      padding: 16px 8px;
+      padding: 10px;
     }
 
     .pulse-orb-outer {
-      width: 104px;
-      height: 104px;
-      margin-bottom: 24px;
+      width: 80px;
+      height: 80px;
+      margin-bottom: 16px;
     }
 
     .pulse-orb-orbit {
       border-color: rgba(139, 92, 246, 0.22);
     }
 
-    .pulse-orb-orbit::before {
-      content: '';
-      position: absolute;
-      inset: -14px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(139, 92, 246, 0.16) 0%, rgba(139, 92, 246, 0) 70%);
-      filter: blur(6px);
-    }
-
     .pulse-orb-center {
-      width: 52px;
-      height: 52px;
-      box-shadow: 0 0 40px rgba(92, 71, 245, 0.55);
+      width: 40px;
+      height: 40px;
+      box-shadow: 0 0 30px rgba(92, 71, 245, 0.55);
     }
 
     .empty-chat-orb-state h3 {
-      font-size: 19px !important;
-      line-height: 1.35 !important;
-      letter-spacing: -0.01em;
-      max-width: 26ch;
-      margin-left: auto;
-      margin-right: auto;
+      font-size: 16px !important;
+      line-height: 1.3 !important;
+      max-width: 100%;
     }
 
     .empty-chat-orb-state p {
-      font-size: 13.5px !important;
-      line-height: 1.6 !important;
-      max-width: 30ch !important;
+      font-size: 12px !important;
+      line-height: 1.5 !important;
+      max-width: 90% !important;
     }
 
-    /* --- Input dock: taller, calmer, everything reachable with a thumb --- */
     .input-dock-layer {
-      padding: 14px 16px max(14px, env(safe-area-inset-bottom)) 16px;
-      gap: 12px;
+      padding: 12px 12px max(12px, env(safe-area-inset-bottom)) 12px;
+      gap: 10px;
     }
 
     .linked-context-chips-row {
+      flex-direction: column;
+      align-items: flex-start;
       gap: 8px;
     }
 
     .linked-context-chips {
       gap: 6px;
-      row-gap: 8px;
     }
 
     .context-mini-badge {
-      font-size: 10.5px;
-      padding: 5px 11px;
+      font-size: 10px;
+      padding: 4px 10px;
       border-radius: 100px;
-      min-height: 26px;
-      display: inline-flex;
-      align-items: center;
+    }
+
+    .voice-switch-container {
+      align-self: flex-end;
     }
 
     .voice-toggle-pill {
-      padding: 7px 14px;
-      min-height: 36px;
-      border-radius: 100px;
+      padding: 6px 12px;
+      font-size: 10px;
     }
 
     .capsule-input-bar {
-      padding: 5px 5px 5px 18px;
-      min-height: 52px;
-      gap: 6px;
+      padding: 5px 5px 5px 16px;
+      min-height: 54px;
+      gap: 4px;
+      border-radius: 999px; /* Pill shape maintained */
     }
 
     .capsule-field {
-      font-size: 15px;
+      font-size: 16px; /* Maintains 16px to prevent iOS auto-zoom */
     }
 
-    .btn-dock-mic {
-      width: 40px;
-      height: 40px;
-      padding: 0;
-    }
-
-    .btn-dock-send {
-      width: 40px;
-      height: 40px;
+    .btn-dock-mic, .btn-dock-send {
+      width: 44px;
+      height: 44px;
     }
   }
 
-  @media (max-width: 480px) {
-    .ai-workspace-container {
-      padding-left: 16px;
-      padding-right: 16px;
-    }
-
-    .suggestions-carousel {
-      margin: 0 -16px 18px -16px;
-      padding-left: 16px;
-      padding-right: 16px;
-    }
-
-    .hero-status-pills {
-      margin-top: 2px;
-    }
-
-    .hero-info p {
-      max-width: 100%;
-    }
-
-    .chat-workspace-pane {
-      border-radius: 22px;
-    }
-  }
-
-  /* Respect reduced-motion preferences without altering default behavior */
   @media (prefers-reduced-motion: reduce) {
     .pulse-orb-orbit,
     .pulse-orb-center,
@@ -888,24 +835,12 @@ function AIChat({ userId }) {
   const [listening, setListening] = useState(false)
   const [voiceSupported, setVoiceSupported] = useState(true)
 
-  // --- Read Aloud state -----------------------------------------------
-  // `speakReplies`  : persistent user preference — when true, every new
-  //                   assistant reply is automatically read aloud as it
-  //                   arrives (unchanged from the original feature intent).
-  // `isSpeaking`    : true only while SpeechSynthesis is actively talking,
-  //                   regardless of whether it was triggered automatically
-  //                   or by a manual tap. Drives the "Stop Reading" state.
-  // `speechSupported`: false when the browser has no SpeechSynthesis API,
-  //                   so we can disable the control and explain why
-  //                   instead of silently failing.
   const [speakReplies, setSpeakReplies] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [speechSupported, setSpeechSupported] = useState(true)
 
-  // Custom focus state tracker for the input pill
   const [isInputFocused, setIsInputFocused] = useState(false)
 
-  // System stats fetched locally from database to update the Summary Pane
   const [localStats, setLocalStats] = useState({
     pendingTasks: 0,
     activeHabits: 0,
@@ -915,20 +850,29 @@ function AIChat({ userId }) {
 
   const scrollRef = useRef(null)
   const recognitionRef = useRef(null)
-  // Cache of available SpeechSynthesis voices. Chrome (and some mobile
-  // browsers) populate this list asynchronously via `onvoiceschanged`, so
-  // reading `getVoices()` once on mount is not reliable — we keep this ref
-  // fresh and always read from it at speak-time instead.
   const voicesRef = useRef([])
-  // Keep the latest `messages` array in a ref so the Read Aloud button can
-  // always find the most recent assistant reply without needing to be
-  // recreated (and re-subscribed) every time a message is added.
   const messagesRef = useRef(messages)
+  const inputDockRef = useRef(null)
 
   useEffect(() => {
     messagesRef.current = messages
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
+
+  // --- Fallback Mobile Keyboard Scrolling ---
+  // The dvh CSS fix handles 99% of cases natively, but this provides a 
+  // smooth scroll fallback for older WebViews.
+  useEffect(() => {
+    const handleResize = () => {
+      if (isInputFocused && inputDockRef.current) {
+        inputDockRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize)
+      return () => window.visualViewport.removeEventListener('resize', handleResize)
+    }
+  }, [isInputFocused])
 
   useEffect(() => {
     fetchSystemStats()
@@ -951,24 +895,16 @@ function AIChat({ userId }) {
       recognitionRef.current = recognition
     }
 
-    // --- Read Aloud setup --------------------------------------------
     if (!('speechSynthesis' in window)) {
-      // Older/embedded WebViews and some mobile browsers don't implement
-      // SpeechSynthesis at all — disable the control and say so, rather
-      // than letting every click silently do nothing.
       setSpeechSupported(false)
     } else {
       const loadVoices = () => {
         voicesRef.current = window.speechSynthesis.getVoices()
       }
       loadVoices()
-      // Chrome fires this once the voice list is actually ready.
       window.speechSynthesis.onvoiceschanged = loadVoices
     }
 
-    // Cleanup: stop speech recognition and any in-flight speech synthesis
-    // when the component unmounts, so nothing keeps talking on a page
-    // the user has already navigated away from.
     return () => {
       recognitionRef.current?.stop?.()
       if ('speechSynthesis' in window) {
@@ -978,7 +914,6 @@ function AIChat({ userId }) {
     }
   }, [])
 
-  // Fetches core statistics from Supabase to feed the Live summary panel on the right (No logic changes)
   async function fetchSystemStats() {
     try {
       const today = new Date().toISOString().split('T')[0]
@@ -1015,9 +950,6 @@ function AIChat({ userId }) {
     }
   }
 
-  // Picks the most natural-sounding available voice: prefers a short list
-  // of known high-quality voices, falls back to any en-US voice, then any
-  // English voice, then whatever the browser has as its default.
   const pickVoice = useCallback(() => {
     const voices = voicesRef.current.length ? voicesRef.current : window.speechSynthesis.getVoices()
     if (!voices.length) return null
@@ -1035,16 +967,11 @@ function AIChat({ userId }) {
     )
   }, [])
 
-  // Immediately halts any speech in progress. Safe to call even when
-  // nothing is speaking.
   const stopReading = useCallback(() => {
     if ('speechSynthesis' in window) window.speechSynthesis.cancel()
     setIsSpeaking(false)
   }, [])
 
-  // Reads a single piece of text aloud. Always cancels any speech already
-  // in progress first, so overlapping utterances are impossible no matter
-  // how quickly this gets called back-to-back.
   const readAloud = useCallback((text) => {
     if (!speechSupported || !text || !('speechSynthesis' in window)) return
 
@@ -1056,9 +983,6 @@ function AIChat({ userId }) {
     const voice = pickVoice()
     if (voice) utterance.voice = voice
 
-    // Keep the button state accurate: it flips to "Stop Reading" once
-    // speech actually starts, and resets automatically the moment it
-    // finishes or errors out — no manual bookkeeping required elsewhere.
     utterance.onstart = () => setIsSpeaking(true)
     utterance.onend = () => setIsSpeaking(false)
     utterance.onerror = () => setIsSpeaking(false)
@@ -1066,10 +990,6 @@ function AIChat({ userId }) {
     window.speechSynthesis.speak(utterance)
   }, [speechSupported, pickVoice])
 
-  // The single control in the input dock does double duty, matching how
-  // production chat apps (e.g. ChatGPT) handle this:
-  //  - While idle: tapping it reads the latest assistant reply aloud.
-  //  - While speaking: tapping it (now labeled "Stop Reading") cancels it.
   const toggleReadAloud = useCallback(() => {
     if (!speechSupported) return
 
@@ -1082,10 +1002,6 @@ function AIChat({ userId }) {
     if (lastAssistantMessage) readAloud(lastAssistantMessage.content)
   }, [speechSupported, isSpeaking, stopReading, readAloud])
 
-  // Toggling the persistent "auto read future replies" preference. If the
-  // user turns it off while a reply happens to be speaking right now, stop
-  // that speech immediately too — flipping the setting off should feel
-  // instant, not "takes effect next message".
   const handleAutoReadToggle = useCallback(() => {
     setSpeakReplies((prev) => {
       const next = !prev
@@ -1152,8 +1068,6 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
       } else {
         const reply = data.choices?.[0]?.message?.content || "I didn't quite catch that — could you rephrase?"
         setMessages([...newMessages, { role: 'assistant', content: reply }])
-        // Only auto-read when the user has explicitly opted into it, and
-        // only ever the single latest reply — never the whole conversation.
         if (speakReplies) readAloud(reply)
       }
     } catch (err) {
@@ -1162,9 +1076,6 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
     setLoading(false)
   }
 
-  // Pre-configured custom action quick triggers. Memoized since this array
-  // never changes across renders — avoids recreating it (and the objects
-  // inside it) on every keystroke in the input field.
   const actionSuggestions = useMemo(() => [
     { label: "📅 Plan my day", query: "Can you help me plan my tasks and events for today?" },
     { label: "🎯 What should I work on?", query: "Review my pending tasks and tell me what my high priority task should be." },
@@ -1202,7 +1113,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
         </div>
       </motion.div>
 
-      {/* --- Swipeable Custom Suggestions Carousel --- */}
+      {/* --- Wrapping Custom Suggestions Grid --- */}
       <div className="suggestions-carousel">
         {actionSuggestions.map((suggestion, idx) => (
           <motion.button
@@ -1266,7 +1177,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
           </div>
 
           {/* Action Dock & Floating capsule inputs */}
-          <div className="input-dock-layer">
+          <div className="input-dock-layer" ref={inputDockRef}>
             
             {/* Quick context chip display (Tasks, Calendar, Habits connected indices) */}
             <div className="linked-context-chips-row">
@@ -1276,9 +1187,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
                 <span className="context-mini-badge" style={{ borderColor: 'rgba(236, 72, 153, 0.2)', color: '#ec4899' }}>● Habits</span>
               </div>
 
-              {/* Read Aloud control: tap to read the latest assistant reply,
-                  tap again while speaking to stop it. Long-press-free,
-                  single source of truth (`isSpeaking`) drives the label. */}
+              {/* Read Aloud control */}
               <div className="voice-switch-container">
                 <motion.button
                   type="button"
@@ -1316,10 +1225,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
               </div>
             </div>
 
-            {/* Secondary, explicit "auto-read future replies" preference —
-                separate from the manual Read Aloud action above, so users
-                can opt into hands-free listening without losing the
-                ability to manually stop mid-sentence. */}
+            {/* Secondary, explicit "auto-read future replies" preference */}
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <label
                 style={{
@@ -1370,7 +1276,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
                     aria-label={listening ? 'Stop voice input' : 'Start voice input'}
                     aria-pressed={listening}
                   >
-                    {listening ? <MicOff size={16} /> : <Mic size={16} />}
+                    {listening ? <MicOff size={18} /> : <Mic size={18} />}
                   </motion.button>
                 )}
 
@@ -1383,7 +1289,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
                   title="Send query"
                   aria-label="Send message"
                 >
-                  <Send size={15} />
+                  <Send size={16} />
                 </motion.button>
               </div>
             </form>
@@ -1446,4 +1352,4 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
   )
 }
 
-export default AIChat;
+export default AIChat
