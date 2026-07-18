@@ -58,7 +58,6 @@ const SECTIONS = [
 ]
 
 function NavList({ page, onNavigate, showAllLabels }) {
-  // Initialize open state for all collapsible sections dynamically
   const [openSections, setOpenSections] = useState(() => {
     const initial = {};
     SECTIONS.forEach((s) => {
@@ -69,7 +68,6 @@ function NavList({ page, onNavigate, showAllLabels }) {
     return initial;
   });
 
-  // Ensure the section containing the active page is always open
   useEffect(() => {
     setOpenSections((prev) => {
       const next = { ...prev };
@@ -131,12 +129,6 @@ function NavList({ page, onNavigate, showAllLabels }) {
             )}
 
             <AnimatePresence initial={false}>
-              {/* 
-                Render items if:
-                1. It's not collapsible 
-                2. It is collapsible but open 
-                3. The sidebar is collapsed (showAllLabels is false) - we must show all icons!
-              */}
               {(!isCollapsible || isOpen || !showAllLabels) && (
                 <motion.div
                   initial={showAllLabels ? { height: 0, opacity: 0 } : false}
@@ -210,7 +202,6 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
   const [expanded, setExpanded] = useState(false)
   const hoverTimeout = useRef(null)
 
-  // Scroll lock & Escape key for mobile drawer
   useEffect(() => {
     if (mobileOpen) {
       document.body.style.overflow = 'hidden'
@@ -382,17 +373,12 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
       </AnimatePresence>
 
       <style>{`
-        /* =========================================
-           ATLAS COMMAND CENTER VISUAL SYSTEM
-           ========================================= */
-        
         .atlas-sidebar-shell {
-          background-color: rgba(6, 6, 9, 0.7); /* Obsidian glass */
+          background-color: rgba(6, 6, 9, 0.7);
           backdrop-filter: blur(24px) saturate(180%);
           -webkit-backdrop-filter: blur(24px) saturate(180%);
         }
 
-        /* Subtle Topographic Atmosphere */
         .atlas-sidebar-shell::before {
           content: '';
           position: absolute;
@@ -402,7 +388,6 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
           z-index: 0;
         }
 
-        /* Ambient Royal Purple Glow at the top */
         .atlas-sidebar-shell::after {
           content: '';
           position: absolute;
@@ -413,13 +398,11 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
           z-index: 0;
         }
 
-        /* Ensure content stays above pseudo-elements */
         .sidebar-desktop > * {
           position: relative;
           z-index: 1;
         }
 
-        /* Branding & Logo */
         .atlas-logo {
           box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 4px 12px rgba(208, 126, 255, 0.25);
         }
@@ -431,7 +414,6 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
           color: transparent;
         }
 
-        /* Section Headers */
         .atlas-section-label {
           display: inline-flex;
           align-items: center;
@@ -446,14 +428,12 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
           box-shadow: 0 0 6px rgba(208, 126, 255, 0.6);
         }
 
-        /* Navigation Items */
         .sidebar-nav-item {
           background: transparent;
           color: var(--text-muted);
           transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
-        /* Hover/Pressed States */
         @media (hover: hover) {
           .sidebar-nav-item:hover {
             background: rgba(255, 255, 255, 0.04);
@@ -467,7 +447,6 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
           transform: scale(0.98);
         }
 
-        /* Active State - Mission Selected */
         .sidebar-nav-item.active {
           background: linear-gradient(90deg, rgba(139, 92, 246, 0.15) 0%, rgba(255, 255, 255, 0.02) 100%);
           color: #ffffff;
@@ -479,7 +458,6 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
           filter: drop-shadow(0 0 4px rgba(208, 126, 255, 0.5));
         }
 
-        /* Mobile Close Button */
         .atlas-close-btn {
           background: rgba(255, 255, 255, 0.04);
           backdrop-filter: blur(8px);
@@ -497,43 +475,87 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
         }
 
         /* =========================================
-           LIGHT THEME OVERRIDES
+           LIGHT THEME OVERRIDES (Robust selectors)
            ========================================= */
-        body.light-theme .atlas-sidebar-shell {
-          background-color: rgba(248, 250, 252, 0.8); /* Frosted off-white */
+        body.light-theme .atlas-sidebar-shell,
+        body.light .atlas-sidebar-shell,
+        .light-theme .atlas-sidebar-shell,
+        .light .atlas-sidebar-shell,
+        [data-theme="light"] .atlas-sidebar-shell {
+          background-color: rgba(248, 250, 252, 0.85);
           border-color: rgba(15, 23, 42, 0.06);
         }
-        body.light-theme .atlas-sidebar-shell::before {
+
+        body.light-theme .atlas-sidebar-shell::before,
+        body.light .atlas-sidebar-shell::before,
+        .light-theme .atlas-sidebar-shell::before,
+        .light .atlas-sidebar-shell::before,
+        [data-theme="light"] .atlas-sidebar-shell::before {
           background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50 Q 25 25, 50 50 T 100 50' fill='none' stroke='%23000' stroke-width='0.5' opacity='0.02'/%3E%3Cpath d='M0 80 Q 25 55, 50 80 T 100 80' fill='none' stroke='%23000' stroke-width='0.5' opacity='0.02'/%3E%3Cpath d='M0 20 Q 25 -5, 50 20 T 100 20' fill='none' stroke='%23000' stroke-width='0.5' opacity='0.02'/%3E%3C/svg%3E");
         }
-        body.light-theme .atlas-sidebar-shell::after {
+
+        body.light-theme .atlas-sidebar-shell::after,
+        body.light .atlas-sidebar-shell::after,
+        .light-theme .atlas-sidebar-shell::after,
+        .light .atlas-sidebar-shell::after,
+        [data-theme="light"] .atlas-sidebar-shell::after {
           background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
         }
-        body.light-theme .atlas-brand-text {
+
+        body.light-theme .atlas-brand-text,
+        body.light .atlas-brand-text,
+        .light-theme .atlas-brand-text,
+        .light .atlas-brand-text,
+        [data-theme="light"] .atlas-brand-text {
           background: linear-gradient(135deg, #0f172a 0%, #6d5ef2 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
-        body.light-theme .sidebar-nav-item.active {
+
+        body.light-theme .sidebar-nav-item.active,
+        body.light .sidebar-nav-item.active,
+        .light-theme .sidebar-nav-item.active,
+        .light .sidebar-nav-item.active,
+        [data-theme="light"] .sidebar-nav-item.active {
           background: linear-gradient(90deg, rgba(99, 102, 241, 0.12) 0%, rgba(255, 255, 255, 0.4) 100%);
           color: #0f172a;
           border-color: rgba(99, 102, 241, 0.2);
           box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08), inset 1px 0 0 rgba(99, 102, 241, 0.3);
         }
-        body.light-theme .sidebar-nav-item.active svg {
+        
+        body.light-theme .sidebar-nav-item.active svg,
+        body.light .sidebar-nav-item.active svg,
+        .light-theme .sidebar-nav-item.active svg,
+        .light .sidebar-nav-item.active svg,
+        [data-theme="light"] .sidebar-nav-item.active svg {
           color: #6d5ef2;
           filter: none;
         }
-        body.light-theme .sidebar-nav-item:hover {
+
+        body.light-theme .sidebar-nav-item:hover,
+        body.light .sidebar-nav-item:hover,
+        .light-theme .sidebar-nav-item:hover,
+        .light .sidebar-nav-item:hover,
+        [data-theme="light"] .sidebar-nav-item:hover {
           background: rgba(15, 23, 42, 0.04);
           border-color: rgba(99, 102, 241, 0.1);
         }
-        body.light-theme .atlas-close-btn {
+
+        body.light-theme .atlas-close-btn,
+        body.light .atlas-close-btn,
+        .light-theme .atlas-close-btn,
+        .light .atlas-close-btn,
+        [data-theme="light"] .atlas-close-btn {
           background: rgba(255, 255, 255, 0.6);
           color: #0f172a;
         }
-        body.light-theme .atlas-close-btn:hover {
+        
+        body.light-theme .atlas-close-btn:hover,
+        body.light .atlas-close-btn:hover,
+        .light-theme .atlas-close-btn:hover,
+        .light .atlas-close-btn:hover,
+        [data-theme="light"] .atlas-close-btn:hover {
           background: rgba(99, 102, 241, 0.1);
           border-color: rgba(99, 102, 241, 0.2);
         }
