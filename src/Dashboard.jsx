@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { App } from '@capacitor/app'
@@ -61,13 +61,71 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
   const location = useLocation()
   const navigate = useNavigate()
 
+  // Refs to manage history and prevent race conditions/double events
+  const hasModalHistory = useRef(false)
+  const pendingNavigation = useRef(null)
+
   // Helper to allow child components to navigate seamlessly 
-  // (handles both '/tasks' and 'tasks' formats)
+  // Flattens history so ANY internal page -> Back -> Overview
   const handleNavigate = (path) => {
     const target = path.startsWith('/') ? path : `/${path}`
-    navigate(target)
+
+    // If a modal is open on Web, we must close it and pop its dummy history state
+    // before performing the actual navigation to avoid history corruption.
+    if (!Capacitor.isNativePlatform() && (searchOpen || mobileNavOpen)) {
+      if (hasModalHistory.current) {
+        if (!pendingNavigation.current) {
+          pendingNavigation.current = target
+          hasModalHistory.current = false
+          window.history.back()
+        } else {
+          pendingNavigation.current = target
+        }
+        return
+      }
+    }
+
+    const isCurrentOverview = location.pathname === '/'
+    const isTargetOverview = target === '/'
+
+    if (isTargetOverview) {
+      navigate(target, { replace: true })
+    } else if (isCurrentOverview) {
+      navigate(target)
+    } else {
+      navigate(target, { replace: true })
+    }
+    
     setMobileNavOpen(false)
     setSearchOpen(false)
+  }
+
+  const closeSearch = () => {
+    if (!searchOpen) return
+    if (Capacitor.isNativePlatform()) {
+      setSearchOpen(false)
+    } else if (mobileNavOpen) {
+      setSearchOpen(false)
+    } else if (hasModalHistory.current) {
+      hasModalHistory.current = false
+      window.history.back()
+    } else {
+      setSearchOpen(false)
+    }
+  }
+
+  const closeMobileNav = () => {
+    if (!mobileNavOpen) return
+    if (Capacitor.isNativePlatform()) {
+      setMobileNavOpen(false)
+    } else if (searchOpen) {
+      setMobileNavOpen(false)
+    } else if (hasModalHistory.current) {
+      hasModalHistory.current = false
+      window.history.back()
+    } else {
+      setMobileNavOpen(false)
+    }
   }
 
   // Cmd/Ctrl + K shortcut
@@ -82,37 +140,91 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
     return () => window.removeEventListener('keydown', handleKey)
   }, [])
 
+  // Web Browser & PWA: Push dummy history state when modal opens
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) return
+
+    if ((searchOpen || mobileNavOpen) && !hasModalHistory.current) {
+      window.history.pushState({ isModal: true }, '')
+      hasModalHistory.current = true
+    }
+  }, [searchOpen, mobileNavOpen])
+
+  // Web Browser & PWA: Listen for popstate to close modals gracefully
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) return
+
+    const handlePopState = () => {
+      if (pendingNavigation.current) {
+        const target = pendingNavigation.current
+        pendingNavigation.current = null
+        
+        const isCurrentOverview = location.pathname === '/'
+        const isTargetOverview = target === '/'
+
+        if (isTargetOverview) {
+          navigate(target, { replace: true })
+        } else if (isCurrentOverview) {
+          navigate(target)
+        } else {
+          navigate(target, { replace: true })
+        }
+        
+        setSearchOpen(false)
+        setMobileNavOpen(false)
+        hasModalHistory.current = false
+      } else if (searchOpen) {
+        setSearchOpen(false)
+        hasModalHistory.current = false
+      } else if (mobileNavOpen) {
+        setMobileNavOpen(false)
+        hasModalHistory.current = false
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [searchOpen, mobileNavOpen, location.pathname, navigate])
+
   // Capacitor Native Android Back Button Handler
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
 
+    let active = true
     let listener
+
     App.addListener('backButton', () => {
+      if (!active) return
+      
       if (searchOpen) {
         setSearchOpen(false)
         return
       }
-
       if (mobileNavOpen) {
         setMobileNavOpen(false)
         return
       }
 
-      // Check if there's a previous page in React Router history
-      const canGoBack = window.history.state && window.history.state.idx > 0
+      // Check React Router's internal history stack
+      const historyCanGoBack = window.history.state && window.history.state.idx > 0
       
-      if (canGoBack) {
+      if (historyCanGoBack) {
         navigate(-1)
       } else if (location.pathname !== '/') {
-        navigate('/')
+        navigate('/', { replace: true })
       } else {
         App.exitApp()
       }
     }).then(l => {
-      listener = l
+      if (active) {
+        listener = l
+      } else {
+        l.remove()
+      }
     })
 
     return () => {
+      active = false
       listener?.remove()
     }
   }, [searchOpen, mobileNavOpen, location.pathname, navigate])
@@ -131,7 +243,7 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
         activePath={location.pathname}
         onNavigate={handleNavigate}
         mobileOpen={mobileNavOpen}
-        onCloseMobile={() => setMobileNavOpen(false)}
+        onCloseMobile={closeMobileNav}
       />
 
       <div style={{ flex: 1, maxWidth: '1040px', minWidth: 0 }}>
@@ -226,7 +338,7 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
         </div>
 
         {searchOpen && (
-          <SearchModal userId={user.id} onNavigate={handleNavigate} onClose={() => setSearchOpen(false)} />
+          <SearchModal userId={user.id} onNavigate={handleNavigate} onClose={closeSearch} />
         )}
       </div>
 
