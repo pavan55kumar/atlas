@@ -346,13 +346,17 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
                 zIndex: 2
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: '32px', height: '32px', borderRadius: '10px', flexShrink: 0,
-                    background: 'linear-gradient(135deg, #ff9a8b 0%, #d07eff 50%, #8b5cf6 100%)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}>
-                    <Sparkles size={16} color="#fff" />
-                  </div>
+                  <img
+  src="/pwa-512x512.png"
+  alt="Atlas"
+  style={{
+    width: '32px',
+    height: '32px',
+    borderRadius: '9px',
+    objectFit: 'cover',
+    flexShrink: 0
+  }}
+/>
                   <span style={{ fontSize: '14px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text)' }}>ATLAS</span>
                 </div>
                 <button
