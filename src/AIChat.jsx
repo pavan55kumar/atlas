@@ -6,59 +6,20 @@ import {
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
 
-// Premium Handcrafted Theme Adaptive Glassmorphic Stylesheet
+// ============================================================================
+// STYLES — Premium AI Workspace Theme-Adaptive Stylesheet
+// ============================================================================
 const styleSheet = `
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
   
   :root {
     --atlas-font: 'Plus Jakarta Sans', -apple-system, sans-serif;
     
-    /* Dark Theme Handcrafted Glassmorphism */
-    --canvas-bg: #090810;
-    --glass-bg: rgba(18, 16, 30, 0.65);
-    --glass-border: rgba(255, 255, 255, 0.05);
-    --glass-border-glow: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(236, 72, 153, 0.3) 100%);
-    --text-primary: #ffffff;
-    --text-secondary: #94a3b8;
-    --text-tertiary: #64748b;
-    --input-bg: rgba(26, 23, 44, 0.6);
-    --input-border: rgba(255, 255, 255, 0.06);
-    --input-focus-border: #8b5cf6;
-    --input-focus-glow: rgba(139, 92, 246, 0.25);
-    
-    /* Dynamic purple-pink gradients matching your mockup */
-    --btn-primary-bg: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-    --btn-primary-glow: rgba(139, 92, 246, 0.4);
-    --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    
-    /* Ambient light spheres */
-    --aurora-primary: rgba(139, 92, 246, 0.12);
-    --aurora-secondary: rgba(236, 72, 153, 0.08);
+    /* Subtle ambient overlays */
+    --aurora-primary: rgba(124, 92, 255, 0.08);
+    --aurora-secondary: rgba(255, 170, 120, 0.04);
   }
 
-  /* Light Theme Handcrafted Glassmorphism */
-  body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
-    --canvas-bg: #f8fafc;
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(15, 23, 42, 0.06);
-    --glass-border-glow: linear-gradient(135deg, rgba(92, 71, 245, 0.15) 0%, rgba(224, 83, 93, 0.15) 100%);
-    --text-primary: #1e1b4b;
-    --text-secondary: #475569;
-    --text-tertiary: #94a3b8;
-    --input-bg: rgba(241, 245, 249, 0.75);
-    --input-border: rgba(15, 23, 42, 0.08);
-    --input-focus-border: #6366f1;
-    --input-focus-glow: rgba(99, 102, 241, 0.15);
-    
-    --btn-primary-bg: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-    --btn-primary-glow: rgba(99, 102, 241, 0.2);
-    --card-shadow: 0 15px 35px rgba(31, 38, 135, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-    
-    --aurora-primary: #ffe3d8;
-    --aurora-secondary: #eedcff;
-  }
-
-  /* Global overflow safety net — scoped to this page's own subtree only */
   .ai-workspace-container,
   .ai-workspace-container * {
     box-sizing: border-box;
@@ -66,13 +27,12 @@ const styleSheet = `
 
   .ai-workspace-container {
     font-family: var(--atlas-font);
-    color: var(--text-primary);
+    color: var(--text);
     max-width: 1200px;
     width: 100%;
     margin: 0 auto;
     position: relative;
     padding: 10px 12px;
-    overflow-x: clip;
   }
 
   .ai-workspace-container button,
@@ -80,7 +40,6 @@ const styleSheet = `
   .ai-workspace-container .suggestion-pill-card,
   .ai-workspace-container .voice-toggle-pill {
     -webkit-tap-highlight-color: transparent;
-    tap-highlight-color: transparent;
     outline: none;
     user-select: none;
     -webkit-user-select: none;
@@ -93,7 +52,7 @@ const styleSheet = `
   .ai-workspace-container [role="button"]:focus-visible,
   .ai-workspace-container .suggestion-pill-card:focus-visible,
   .ai-workspace-container .voice-toggle-pill:focus-visible {
-    outline: 2px solid var(--input-focus-border);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 
@@ -102,7 +61,7 @@ const styleSheet = `
     opacity: 0.55;
   }
 
-  /* --- Glowing Backdrop Aurora Spheres --- */
+  /* --- Glowing Backdrop Aurora Orbs --- */
   .aurora-blur-sphere {
     position: absolute;
     border-radius: 50%;
@@ -115,29 +74,27 @@ const styleSheet = `
   .sphere-primary {
     top: 5%;
     left: -10%;
-    width: 450px;
-    height: 450px;
+    width: 400px;
+    height: 400px;
     background: var(--aurora-primary);
   }
 
   .sphere-secondary {
     bottom: 10%;
     right: -10%;
-    width: 400px;
-    height: 400px;
+    width: 350px;
+    height: 350px;
     background: var(--aurora-secondary);
   }
 
-  /* --- Hero Header & Glowing Status Chips --- */
+  /* --- Compact Premium Header --- */
   .ai-hero-header {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 24px;
-    padding: 24px 32px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 28px;
     margin-bottom: 20px;
     box-shadow: var(--card-shadow);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -146,16 +103,16 @@ const styleSheet = `
   }
 
   .hero-info h1 {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 800;
     margin: 0 0 4px 0;
     letter-spacing: -0.02em;
-    color: var(--text-primary);
+    color: var(--text);
   }
 
   .hero-info p {
     font-size: 13px;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     margin: 0;
     font-weight: 500;
   }
@@ -172,11 +129,11 @@ const styleSheet = `
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    padding: 6px 14px;
+    padding: 6px 12px;
     border-radius: 100px;
-    background: rgba(139, 92, 246, 0.06);
-    color: #a78bfa;
-    border: 1px solid rgba(139, 92, 246, 0.12);
+    background: var(--surface);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -186,9 +143,9 @@ const styleSheet = `
   .status-pulse-bullet {
     width: 5px;
     height: 5px;
-    background-color: #34d399;
+    background-color: var(--accent);
     border-radius: 50%;
-    box-shadow: 0 0 8px #34d399;
+    box-shadow: 0 0 8px var(--accent);
     animation: statusPulse 1.5s infinite alternate;
     flex-shrink: 0;
   }
@@ -198,44 +155,50 @@ const styleSheet = `
     100% { opacity: 1; }
   }
 
-  /* --- Suggestion Wrapping Grid --- */
+  /* --- Horizontally Scrollable Suggestion Carousel --- */
   .suggestions-carousel {
     display: flex;
-    flex-wrap: wrap; /* Allow wrapping to prevent horizontal overflow */
     gap: 10px;
+    overflow-x: auto;
+    padding: 4px 0;
     margin-bottom: 20px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     z-index: 10;
     position: relative;
   }
 
+  .suggestions-carousel::-webkit-scrollbar {
+    display: none;
+  }
+
   .suggestion-pill-card {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    padding: 10px 18px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 8px 16px;
     font-size: 12px;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 8px;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: var(--card-shadow);
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .suggestion-pill-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(139, 92, 246, 0.3);
-    color: var(--text-primary);
-    box-shadow: 0 8px 16px rgba(139, 92, 246, 0.08);
+    border-color: var(--accent);
+    color: var(--text);
   }
 
-  /* --- Double Pane Dashboard Layout --- */
+  /* --- Workspace Splits --- */
   .ai-split-workspace {
     display: grid;
     grid-template-columns: 1fr 280px;
-    gap: 24px;
+    gap: 20px;
     z-index: 10;
     position: relative;
   }
@@ -244,29 +207,27 @@ const styleSheet = `
   .chat-workspace-pane {
     display: flex;
     flex-direction: column;
-    height: 580px;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 28px;
+    height: 560px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
     box-shadow: var(--card-shadow);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     overflow: hidden;
     position: relative;
   }
 
-  /* Conversation display layer */
+  /* Message Display area */
   .chat-messages-container {
     flex: 1;
     overflow-y: auto;
-    padding: 24px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Custom Message bubbles */
+  /* Message bubbles alignment */
   .message-bubble-row {
     display: flex;
     width: 100%;
@@ -281,34 +242,32 @@ const styleSheet = `
   }
 
   .msg-bubble {
-    max-width: 72%;
-    padding: 14px 18px;
-    border-radius: 18px;
-    font-size: 14px;
+    max-width: 76%;
+    padding: 12px 16px;
+    border-radius: 14px;
+    font-size: 13.5px;
     line-height: 1.5;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
   }
 
-  /* User Bubble: Radiant Indigo Gradient */
+  /* User Bubble Style */
   .is-user .msg-bubble {
-    background: var(--btn-primary-bg);
+    background: var(--accent);
     color: #ffffff;
     border-bottom-right-radius: 4px;
-    box-shadow: 0 6px 16px var(--btn-primary-glow);
   }
 
-  /* Assistant Bubble: Slate Glassmorphic Card */
+  /* Assistant Bubble Style */
   .is-assistant .msg-bubble {
-    background: var(--input-bg);
-    border: 1px solid var(--glass-border);
-    color: var(--text-primary);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
     border-bottom-left-radius: 4px;
   }
 
-  /* --- Glowing AI Pulse Orb Empty State --- */
+  /* --- Elegant Breathing AI Pulse Orb Empty State --- */
   .empty-chat-orb-state {
     display: flex;
     flex-direction: column;
@@ -321,9 +280,9 @@ const styleSheet = `
 
   .pulse-orb-outer {
     position: relative;
-    width: 90px;
-    height: 90px;
-    margin-bottom: 20px;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -333,17 +292,17 @@ const styleSheet = `
     position: absolute;
     width: 100%;
     height: 100%;
-    border: 1.5px dashed rgba(139, 92, 246, 0.25);
+    border: 1.5px dashed rgba(124, 92, 255, 0.25);
     border-radius: 50%;
     animation: rotateOrb 16s infinite linear;
   }
 
   .pulse-orb-center {
-    width: 44px;
-    height: 44px;
-    background: radial-gradient(circle, #7c3aed 0%, #5c47f5 100%);
+    width: 40px;
+    height: 40px;
+    background: radial-gradient(circle, var(--accent) 0%, #5c47f5 100%);
     border-radius: 50%;
-    box-shadow: 0 0 30px rgba(92, 71, 245, 0.7);
+    box-shadow: 0 0 24px rgba(124, 92, 255, 0.45);
     animation: breatheCore 3s infinite alternate ease-in-out;
   }
 
@@ -352,28 +311,28 @@ const styleSheet = `
   }
 
   @keyframes breatheCore {
-    0% { transform: scale(0.9); box-shadow: 0 0 15px rgba(92, 71, 245, 0.4); }
-    100% { transform: scale(1.1); box-shadow: 0 0 35px rgba(92, 71, 245, 0.85); }
+    0% { transform: scale(0.9); box-shadow: 0 0 12px rgba(124, 92, 255, 0.3); }
+    100% { transform: scale(1.1); box-shadow: 0 0 28px rgba(124, 92, 255, 0.6); }
   }
 
-  /* --- Action Dock & Pill Inputs --- */
+  /* --- Input Area Dock --- */
   .input-dock-layer {
-    padding: 16px 20px;
-    border-top: 1px solid var(--glass-border);
-    background: rgba(14, 13, 22, 0.15);
+    padding: 14px 18px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    flex-shrink: 0; /* Prevent dock from being squished */
+    gap: 10px;
+    flex-shrink: 0;
   }
 
-  /* Context chip linking displays */
+  /* Micro context chips and voice controls */
   .linked-context-chips-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
   }
 
   .linked-context-chips {
@@ -386,106 +345,100 @@ const styleSheet = `
   .context-mini-badge {
     font-size: 10px;
     font-weight: 600;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--glass-border);
-    color: var(--text-secondary);
-    padding: 3px 10px;
-    border-radius: 8px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 3px 8px;
+    border-radius: 6px;
     flex-shrink: 0;
   }
 
-  /* Capsule floating input bar */
+  /* Floating pill-shape input capsule */
   .capsule-input-bar {
     position: relative;
     display: flex;
     align-items: center;
-    background: var(--input-bg);
-    border: 1px solid var(--input-border);
-    border-radius: 999px; /* Premium pill shape */
-    padding: 6px 6px 6px 20px;
-    gap: 8px;
-    transition: all 0.25s;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 5px 6px 5px 16px;
+    gap: 6px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
     width: 100%;
     box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
     outline: none;
   }
 
   .capsule-input-bar.focused-glow {
-    border-color: var(--input-focus-border);
-    box-shadow: 0 0 0 4px var(--input-focus-glow); /* Accessible outer glow */
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.15);
   }
 
   .capsule-field {
     flex: 1;
-    min-width: 0; /* Prevents text overflow cutting off layout elements */
+    min-width: 0;
     background: none;
     border: none;
-    color: var(--text-primary);
-    font-size: 16px; /* Prevents iOS auto-zoom on focus */
+    color: var(--text);
+    font-size: 15px;
     font-weight: 500;
     outline: none !important;
     box-shadow: none !important;
-    -webkit-appearance: none !important;
-    appearance: none !important;
-    padding: 10px 8px;
+    padding: 8px 4px;
     line-height: 1.4;
-    -webkit-tap-highlight-color: transparent !important;
   }
 
   .capsule-field::placeholder {
-    color: var(--text-secondary);
+    color: var(--text-muted);
     opacity: 0.6;
   }
 
   .btn-dock-mic {
     background: none;
     border: none;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     cursor: pointer;
-    width: 44px;
-    height: 44px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
-    flex-shrink: 0; /* Prevents compression on small screens */
-    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    flex-shrink: 0;
   }
 
   .btn-dock-mic.active-listening {
-    background: rgba(239, 68, 68, 0.15);
+    background: rgba(239, 68, 68, 0.1);
     color: #ef4444;
-    box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.25);
   }
 
   .btn-dock-send {
-    width: 44px;
-    height: 44px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
-    background: var(--btn-primary-bg);
+    background: var(--accent);
     color: #ffffff;
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 12px var(--btn-primary-glow);
-    transition: transform 0.15s;
-    flex-shrink: 0; /* Prevents compression on small screens */
-    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 4px 10px rgba(124, 92, 255, 0.25);
+    transition: transform 0.1s ease;
+    flex-shrink: 0;
   }
 
   .btn-dock-send:hover {
-    transform: scale(1.05);
+    transform: scale(1.03);
   }
 
   .btn-dock-send:active {
-    transform: scale(0.95);
+    transform: scale(0.97);
   }
 
-  /* Premium Pill switch for Voice */
+  /* Compact switch for Voice replies */
   .voice-switch-container {
     display: flex;
     justify-content: flex-end;
@@ -495,36 +448,33 @@ const styleSheet = `
   .voice-toggle-pill {
     display: flex;
     align-items: center;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--glass-border);
-    padding: 6px 14px;
+    gap: 6px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
     border-radius: 100px;
     font-size: 11px;
     font-weight: 700;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     cursor: pointer;
-    user-select: none;
-    transition: all 0.2s;
+    transition: border-color 0.15s ease, color 0.15s ease;
     flex-shrink: 0;
   }
 
   .voice-toggle-pill.active {
-    color: var(--text-primary);
-    border-color: rgba(139, 92, 246, 0.25);
-    background: rgba(139, 92, 246, 0.08);
+    color: var(--text);
+    border-color: var(--accent);
   }
 
   .voice-toggle-pill.speaking {
     color: #f472b6;
-    border-color: rgba(244, 114, 182, 0.35);
-    background: rgba(244, 114, 182, 0.1);
+    border-color: rgba(244, 114, 182, 0.3);
   }
 
   .voice-toggle-pill .speaking-bar {
-    width: 3px;
-    height: 10px;
-    border-radius: 2px;
+    width: 2.5px;
+    height: 8px;
+    border-radius: 1px;
     background: currentColor;
     display: inline-block;
     animation: speakingBounce 0.9s infinite ease-in-out;
@@ -538,55 +488,54 @@ const styleSheet = `
     50% { transform: scaleY(1); }
   }
 
-  /* --- Right Side: Live System Summary Pane (Desktop Only) --- */
+  /* --- Right Side: System Summary Pane (Desktop Only) --- */
   .system-summary-pane {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
   }
 
   .summary-pane-card {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    padding: 18px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
     box-shadow: var(--card-shadow);
-    backdrop-filter: blur(20px);
   }
 
   .summary-pane-card h4 {
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-secondary);
-    margin: 0 0 12px 0;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin: 0 0 10px 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
 
   .metrics-summary-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
 
   .summary-metric-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 13px;
+    font-size: 12.5px;
   }
 
   .summary-metric-label {
-    color: var(--text-secondary);
+    color: var(--text-muted);
     font-weight: 500;
   }
 
   .summary-metric-value {
     font-weight: 700;
-    color: var(--text-primary);
+    color: var(--text);
   }
 
   /* Typing loader animation */
@@ -600,7 +549,7 @@ const styleSheet = `
   .typing-dot {
     width: 6px;
     height: 6px;
-    background-color: var(--text-secondary);
+    background-color: var(--text-muted);
     border-radius: 50%;
     animation: typingBounce 1.4s infinite ease-in-out both;
   }
@@ -614,37 +563,29 @@ const styleSheet = `
   }
 
   /* ======================================================================
-     MOBILE PREMIUM POLISH (<= 900px)
-     Rebuilt with dvh (dynamic viewport height) to natively handle 
-     Android keyboard resizing without breaking layout or clipping.
+     MOBILE PORTRAIT RESPONSIVENESS
      ====================================================================== */
   @media (max-width: 900px) {
-
-    html, body {
-      overflow-x: hidden;
-    }
-
     .ai-workspace-container {
-      padding-top: max(12px, env(safe-area-inset-top));
-      padding-bottom: max(16px, env(safe-area-inset-bottom));
-      padding-left: max(12px, env(safe-area-inset-left));
-      padding-right: max(12px, env(safe-area-inset-right));
-      overflow-x: clip;
+      padding-top: max(8px, env(safe-area-inset-top));
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      padding-left: max(10px, env(safe-area-inset-left));
+      padding-right: max(10px, env(safe-area-inset-right));
     }
 
     .sphere-primary {
-      width: 260px;
-      height: 260px;
+      width: 250px;
+      height: 250px;
       top: 0%;
-      left: -20%;
+      left: -15%;
       filter: blur(70px);
     }
 
     .sphere-secondary {
-      width: 240px;
-      height: 240px;
+      width: 220px;
+      height: 220px;
       bottom: 8%;
-      right: -20%;
+      right: -15%;
       filter: blur(70px);
     }
 
@@ -652,38 +593,17 @@ const styleSheet = `
       flex-direction: column;
       align-items: flex-start;
       gap: 12px;
-      padding: 16px 20px;
+      padding: 14px 20px;
       margin-bottom: 12px;
-      border-radius: 20px;
-      border-color: var(--glass-border);
-    }
-
-    .hero-info {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+      border-radius: 14px;
     }
 
     .hero-info h1 {
       font-size: 20px;
-      line-height: 1.2;
-      letter-spacing: -0.01em;
     }
 
     .hero-info p {
       font-size: 12px;
-      line-height: 1.4;
-      max-width: 100%;
-    }
-
-    .hero-status-pills {
-      gap: 8px;
-    }
-
-    .status-pill {
-      font-size: 9px;
-      letter-spacing: 0.04em;
-      padding: 5px 10px;
     }
 
     .suggestions-carousel {
@@ -692,126 +612,68 @@ const styleSheet = `
     }
 
     .suggestion-pill-card {
-      padding: 8px 14px;
-      min-height: 36px;
-      font-size: 11.5px;
-      border-radius: 100px;
+      padding: 6px 12px;
+      font-size: 11px;
     }
 
     .ai-split-workspace {
       grid-template-columns: 1fr;
-      gap: 0;
     }
 
     .system-summary-pane {
-      display: none; /* Hide summary pane strictly on mobile viewports */
+      display: none; /* Hide metrics sidebar strictly on mobile layouts */
     }
 
-    /* 
-      The Magic Fix: Using dvh (dynamic viewport height) instead of vh.
-      When the Android keyboard opens, the browser's dvh shrinks to the 
-      visible area. This forces the container to shrink natively, keeping 
-      the input dock perfectly visible above the keyboard without JS hacks.
-    */
     .chat-workspace-pane {
       width: 100%;
-      height: 65vh; /* Fallback for older browsers */
-      height: calc(100dvh - 210px); /* Dynamically adjusts to keyboard */
-      min-height: 300px;
-      max-height: 720px;
-      border-radius: 24px;
-      border-color: var(--glass-border);
-      box-shadow: var(--card-shadow), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
-      transition: height 0.2s ease; /* Smooth resize when keyboard opens */
+      height: calc(100dvh - 190px);
+      min-height: 280px;
+      max-height: 680px;
+      border-radius: 18px;
     }
 
     .chat-messages-container {
-      padding: 16px 12px;
-      gap: 12px;
+      padding: 14px 10px;
+      gap: 10px;
     }
 
     .msg-bubble {
-      max-width: 88%;
-      padding: 12px 16px;
-      font-size: 14px;
-    }
-
-    .empty-chat-orb-state {
-      padding: 10px;
-    }
-
-    .pulse-orb-outer {
-      width: 80px;
-      height: 80px;
-      margin-bottom: 16px;
-    }
-
-    .pulse-orb-orbit {
-      border-color: rgba(139, 92, 246, 0.22);
-    }
-
-    .pulse-orb-center {
-      width: 40px;
-      height: 40px;
-      box-shadow: 0 0 30px rgba(92, 71, 245, 0.55);
+      max-width: 86%;
+      padding: 10px 14px;
+      font-size: 13.5px;
     }
 
     .empty-chat-orb-state h3 {
       font-size: 16px !important;
-      line-height: 1.3 !important;
-      max-width: 100%;
     }
 
     .empty-chat-orb-state p {
-      font-size: 12px !important;
-      line-height: 1.5 !important;
-      max-width: 90% !important;
+      font-size: 11.5px !important;
     }
 
     .input-dock-layer {
-      padding: 12px 12px max(12px, env(safe-area-inset-bottom)) 12px;
-      gap: 10px;
+      padding: 10px 10px max(10px, env(safe-area-inset-bottom)) 10px;
+      gap: 8px;
     }
 
     .linked-context-chips-row {
       flex-direction: column;
       align-items: flex-start;
-      gap: 8px;
-    }
-
-    .linked-context-chips {
       gap: 6px;
     }
 
-    .context-mini-badge {
-      font-size: 10px;
-      padding: 4px 10px;
-      border-radius: 100px;
-    }
-
-    .voice-switch-container {
-      align-self: flex-end;
-    }
-
-    .voice-toggle-pill {
-      padding: 6px 12px;
-      font-size: 10px;
-    }
-
     .capsule-input-bar {
-      padding: 5px 5px 5px 16px;
-      min-height: 54px;
-      gap: 4px;
-      border-radius: 999px; /* Pill shape maintained */
+      padding: 4px 4px 4px 14px;
+      min-height: 48px;
     }
 
     .capsule-field {
-      font-size: 16px; /* Maintains 16px to prevent iOS auto-zoom */
+      font-size: 16px; /* Prevents auto zoom-focus on iOS devices */
     }
 
     .btn-dock-mic, .btn-dock-send {
-      width: 44px;
-      height: 44px;
+      width: 36px;
+      height: 36px;
     }
   }
 
@@ -859,9 +721,7 @@ function AIChat({ userId }) {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
-  // --- Fallback Mobile Keyboard Scrolling ---
-  // The dvh CSS fix handles 99% of cases natively, but this provides a 
-  // smooth scroll fallback for older WebViews.
+  // Mobile layout adjustment
   useEffect(() => {
     const handleResize = () => {
       if (isInputFocused && inputDockRef.current) {
@@ -935,7 +795,7 @@ function AIChat({ userId }) {
         eventsCount: eventsRes.count || 0
       })
     } catch (e) {
-      // Graceful fallback
+      // Fallback
     }
   }
 
@@ -1113,7 +973,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
         </div>
       </motion.div>
 
-      {/* --- Wrapping Custom Suggestions Grid --- */}
+      {/* --- Scrollable Suggestion Carousel --- */}
       <div className="suggestions-carousel">
         {actionSuggestions.map((suggestion, idx) => (
           <motion.button
@@ -1130,7 +990,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
         ))}
       </div>
 
-      {/* --- Double Pane Layout --- */}
+      {/* --- Split Workspace Pane Layout --- */}
       <div className="ai-split-workspace">
         
         {/* Left Pane: Custom Conversation Module */}
@@ -1139,7 +999,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
           <div ref={scrollRef} className="chat-messages-container">
             {messages.length === 1 ? (
               
-              /* Elegant empty chat illustration with breathing AI Pulse Orb in center */
+              /* Elegant empty chat layout with breathing AI Pulse Orb in center */
               <div className="empty-chat-orb-state">
                 <div className="pulse-orb-outer">
                   <div className="pulse-orb-orbit" />
@@ -1148,7 +1008,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
                 <h3 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 4px 0' }}>
                   What would you like to accomplish today?
                 </h3>
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '280px', margin: 0, lineHeight: 1.5 }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '280px', margin: 0, lineHeight: 1.5 }}>
                   Ask me to evaluate your schedule, map study sessions, or check habit streaks.
                 </p>
               </div>
@@ -1179,15 +1039,15 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
           {/* Action Dock & Floating capsule inputs */}
           <div className="input-dock-layer" ref={inputDockRef}>
             
-            {/* Quick context chip display (Tasks, Calendar, Habits connected indices) */}
+            {/* Quick context chip display */}
             <div className="linked-context-chips-row">
               <div className="linked-context-chips">
                 <span className="context-mini-badge" style={{ borderColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }}>● Linked Tasks</span>
-                <span className="context-mini-badge" style={{ borderColor: 'rgba(139, 92, 246, 0.2)', color: '#a78bfa' }}>● Calendar</span>
+                <span className="context-mini-badge" style={{ borderColor: 'rgba(139, 92, 246, 0.2)', color: 'var(--accent)' }}>● Calendar</span>
                 <span className="context-mini-badge" style={{ borderColor: 'rgba(236, 72, 153, 0.2)', color: '#ec4899' }}>● Habits</span>
               </div>
 
-              {/* Read Aloud control */}
+              {/* Read Aloud controls */}
               <div className="voice-switch-container">
                 <motion.button
                   type="button"
@@ -1225,7 +1085,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
               </div>
             </div>
 
-            {/* Secondary, explicit "auto-read future replies" preference */}
+            {/* Auto-read future replies preference */}
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <label
                 style={{
@@ -1234,7 +1094,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
                   gap: '6px',
                   fontSize: '11px',
                   fontWeight: 600,
-                  color: 'var(--text-secondary)',
+                  color: 'var(--text-muted)',
                   cursor: speechSupported ? 'pointer' : 'default',
                   opacity: speechSupported ? 1 : 0.5,
                   userSelect: 'none'
@@ -1246,7 +1106,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
                   onChange={handleAutoReadToggle}
                   disabled={!speechSupported}
                   aria-label="Automatically read new assistant replies aloud"
-                  style={{ accentColor: '#8b5cf6', width: '13px', height: '13px' }}
+                  style={{ accentColor: 'var(--accent)', width: '13px', height: '13px' }}
                 />
                 Auto-read new replies
               </label>
@@ -1295,7 +1155,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
             </form>
 
             {(!voiceSupported || !speechSupported) && (
-              <p style={{ fontSize: '11px', color: 'var(--text-secondary)', textAlign: 'center', margin: 0 }}>
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
                 {!voiceSupported && !speechSupported
                   ? 'Voice input and read aloud are supported natively in Chrome, Edge, and Safari.'
                   : !voiceSupported
@@ -1312,7 +1172,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
           
           <div className="summary-pane-card">
             <h4>
-              <Brain size={14} color="#7c3aed" />
+              <Brain size={14} color="var(--accent)" />
               <span>Workspace Indexes</span>
             </h4>
             <div className="metrics-summary-list">
@@ -1322,7 +1182,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
               </div>
               <div className="summary-metric-item">
                 <span className="summary-metric-label">Active Habits</span>
-                <span className="summary-metric-value" style={{ color: '#8b5cf6' }}>{localStats.activeHabits}</span>
+                <span className="summary-metric-value" style={{ color: 'var(--accent)' }}>{localStats.activeHabits}</span>
               </div>
               <div className="summary-metric-item">
                 <span className="summary-metric-label">Goal Completion</span>
@@ -1340,7 +1200,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
               <Sparkle size={14} color="#e1b12c" />
               <span>AI Core Status</span>
             </h4>
-            <div style={{ fontSize: '12px', lineHeight: 1.6, color: 'var(--text-secondary)' }}>
+            <div style={{ fontSize: '12px', lineHeight: 1.6, color: 'var(--text-muted)' }}>
               Atlas Copilot is fully linked to local database tables, enabling direct contextual prompt evaluations.
             </div>
           </div>
