@@ -54,6 +54,23 @@ const pathToTitle = {
   '/changelog': "What's New"
 }
 
+// --- Navigation Hierarchy Helpers ---
+const INFO_CHILD_PAGES = ['/privacy', '/terms', '/changelog', '/licenses'];
+
+const getInfoLevel = (path) => {
+  if (path === '/') return 0;
+  if (path === '/about') return 1;
+  if (INFO_CHILD_PAGES.includes(path)) return 2;
+  return 1; // Normal pages are treated as Level 1 to preserve flattening to Overview
+};
+
+const getBackTarget = (path) => {
+  if (path === '/') return null; 
+  if (path === '/about') return '/';
+  if (INFO_CHILD_PAGES.includes(path)) return '/about';
+  return '/'; // Normal pages go back to Overview
+};
+
 function Dashboard({ user, onLogout, theme, onToggleTheme }) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -66,12 +83,11 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
   const pendingNavigation = useRef(null)
 
   // Helper to allow child components to navigate seamlessly 
-  // Flattens history so ANY internal page -> Back -> Overview
+  // Builds the history stack correctly to support the back hierarchy
   const handleNavigate = (path) => {
     let target = path.startsWith('/') ? path : `/${path}`
     
     // Ensure Overview navigation always targets the root path '/' 
-    // to prevent blank pages if 'overview' is passed by Sidebar/Search
     if (target === '/overview' || target === 'overview') {
       target = '/'
     }
@@ -91,14 +107,21 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
       }
     }
 
-    const isCurrentOverview = location.pathname === '/'
+    const currentLevel = getInfoLevel(location.pathname)
+    const targetLevel = getInfoLevel(target)
     const isTargetOverview = target === '/'
 
+    // If navigating to Overview, replace to keep it as the root
     if (isTargetOverview) {
       navigate(target, { replace: true })
-    } else if (isCurrentOverview) {
+    } 
+    // If stepping DOWN the info hierarchy (e.g., Overview -> About, About -> Privacy), push
+    else if (targetLevel > currentLevel) {
       navigate(target)
-    } else {
+    }
+    // For all other cases (e.g., normal page to normal page, about to normal page), 
+    // preserve the flatten behavior (replace) so back goes to Overview.
+    else {
       navigate(target, { replace: true })
     }
     
@@ -165,12 +188,13 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
         const target = pendingNavigation.current
         pendingNavigation.current = null
         
-        const isCurrentOverview = location.pathname === '/'
+        const currentLevel = getInfoLevel(location.pathname)
+        const targetLevel = getInfoLevel(target)
         const isTargetOverview = target === '/'
 
         if (isTargetOverview) {
           navigate(target, { replace: true })
-        } else if (isCurrentOverview) {
+        } else if (targetLevel > currentLevel) {
           navigate(target)
         } else {
           navigate(target, { replace: true })
@@ -216,10 +240,15 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
       
       if (historyCanGoBack) {
         navigate(-1)
-      } else if (location.pathname !== '/') {
-        navigate('/', { replace: true })
       } else {
-        App.exitApp()
+        // If no history, use the hierarchy to determine back target
+        const backTarget = getBackTarget(location.pathname)
+        if (backTarget) {
+          navigate(backTarget, { replace: true })
+        } else {
+          // On Overview with no history, exit the app
+          App.exitApp()
+        }
       }
     }).then(l => {
       if (active) {

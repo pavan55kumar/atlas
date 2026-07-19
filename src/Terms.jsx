@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 // ============================================================================
 // Prioritize Vite environment variables. Replace fallback with your actual 
 // centralized support email if environment variables are not configured.
-const ATLAS_SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || "support@atlas.app";
+const ATLAS_SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || "pavanshettigar.dev@gmail.com";
 
 const LAST_UPDATED = "July 19, 2026";
 
