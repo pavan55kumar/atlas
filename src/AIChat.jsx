@@ -90,8 +90,8 @@ const styleSheet = `
 
   /* --- Compact Premium Header (Level 2) --- */
   .ai-hero-header {
-    background: linear-gradient(165deg, color-mix(in srgb, var(--surface-2) 92%, #0a0a10 8%) 0%, color-mix(in srgb, var(--surface-2) 80%, #050507 20%) 100%);
-    border: 1px solid color-mix(in srgb, var(--border) 60%, #7C5CFF 12%);
+    background: linear-gradient(165deg, color-mix(in srgb, var(--surface-2), #0a0a10 8%) 0%, color-mix(in srgb, var(--surface-2), #050507 20%) 100%);
+    border: 1px solid color-mix(in srgb, var(--border), #7C5CFF 12%);
     border-radius: 16px;
     padding: 20px 28px;
     margin-bottom: 20px;
@@ -205,8 +205,8 @@ const styleSheet = `
   }
 
   .suggestion-pill-card {
-    background: color-mix(in srgb, var(--surface-2) 90%, #7C5CFF 4%);
-    border: 1px solid color-mix(in srgb, var(--border) 70%, #7C5CFF 8%);
+    background: color-mix(in srgb, var(--surface-2), #7C5CFF 4%);
+    border: 1px solid color-mix(in srgb, var(--border), #7C5CFF 8%);
     border-radius: 100px;
     padding: 8px 16px;
     font-size: 12px;
@@ -223,7 +223,7 @@ const styleSheet = `
 
   .suggestion-pill-card:hover {
     background: var(--surface);
-    border-color: color-mix(in srgb, var(--border) 50%, #7C5CFF 20%);
+    border-color: color-mix(in srgb, var(--border), #7C5CFF 20%);
     color: var(--text);
     box-shadow: 0 4px 12px rgba(124, 92, 255, 0.08);
   }
@@ -242,8 +242,8 @@ const styleSheet = `
     display: flex;
     flex-direction: column;
     height: 560px;
-    background: linear-gradient(165deg, color-mix(in srgb, var(--surface-2) 95%, #0a0a10 5%) 0%, color-mix(in srgb, var(--surface-2) 88%, #050507 12%) 100%);
-    border: 1px solid color-mix(in srgb, var(--border) 60%, #7C5CFF 10%);
+    background: linear-gradient(165deg, color-mix(in srgb, var(--surface-2), #0a0a10 5%) 0%, color-mix(in srgb, var(--surface-2), #050507 12%) 100%);
+    border: 1px solid color-mix(in srgb, var(--border), #7C5CFF 10%);
     border-radius: 20px;
     box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.04) inset;
     overflow: hidden;
@@ -386,8 +386,8 @@ const styleSheet = `
   /* --- Input Area Dock (Level 3) --- */
   .input-dock-layer {
     padding: 14px 18px;
-    border-top: 1px solid color-mix(in srgb, var(--border) 60%, #7C5CFF 10%);
-    background: color-mix(in srgb, var(--surface) 90%, #7C5CFF 2%);
+    border-top: 1px solid color-mix(in srgb, var(--border), #7C5CFF 10%);
+    background: color-mix(in srgb, var(--surface), #7C5CFF 2%);
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -429,8 +429,8 @@ const styleSheet = `
     position: relative;
     display: flex;
     align-items: center;
-    background: color-mix(in srgb, var(--surface-2) 90%, #7C5CFF 5%);
-    border: 1px solid color-mix(in srgb, var(--border) 60%, #7C5CFF 10%);
+    background: color-mix(in srgb, var(--surface-2), #7C5CFF 5%);
+    border: 1px solid color-mix(in srgb, var(--border), #7C5CFF 10%);
     border-radius: 999px;
     padding: 5px 6px 5px 16px;
     gap: 6px;
@@ -571,8 +571,8 @@ const styleSheet = `
   }
 
   .summary-pane-card {
-    background: linear-gradient(165deg, color-mix(in srgb, var(--surface-2) 92%, #0a0a10 8%) 0%, color-mix(in srgb, var(--surface-2) 80%, #050507 20%) 100%);
-    border: 1px solid color-mix(in srgb, var(--border) 60%, #7C5CFF 10%);
+    background: linear-gradient(165deg, color-mix(in srgb, var(--surface-2), #0a0a10 8%) 0%, color-mix(in srgb, var(--surface-2), #050507 20%) 100%);
+    border: 1px solid color-mix(in srgb, var(--border), #7C5CFF 10%);
     border-radius: 16px;
     padding: 16px;
     box-shadow: 0 15px 30px rgba(0,0,0,0.2);
