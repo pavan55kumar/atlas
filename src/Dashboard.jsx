@@ -5,6 +5,7 @@ import { App } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import { Sun, Moon, LogOut, Search, Menu } from 'lucide-react'
 
+import AmbientBackground from './AmbientBackground'
 import Sidebar from './Sidebar'
 import Overview from './Overview'
 import Tasks from './Tasks'
@@ -273,140 +274,146 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
   const currentTitle = isOverview ? `${greeting}, ${displayName}` : (pathToTitle[location.pathname] || 'Atlas')
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <Sidebar
-        activePath={location.pathname}
-        onNavigate={handleNavigate}
-        mobileOpen={mobileNavOpen}
-        onCloseMobile={closeMobileNav}
-      />
+    <>
+      {/* 1. Mount the persistent ambient background globally */}
+      <AmbientBackground />
 
-      <div style={{ flex: 1, maxWidth: '1040px', minWidth: 0 }}>
-        <div style={headerWrap}>
-          <div className="dash-header-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', minWidth: 0 }}>
-              <button
-                className="mobile-menu-btn"
-                onClick={() => setMobileNavOpen(true)}
-                style={mobileMenuButtonStyle}
-              >
-                <Menu size={16} />
-              </button>
-              <div style={{ minWidth: 0 }}>
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '6px',
-                    padding: '5px 12px', borderRadius: '999px',
-                    border: '1px solid var(--border)', background: 'var(--surface-2)',
-                    marginBottom: '12px'
-                  }}
+      {/* 2. Wrap existing content to ensure it sits above the background */}
+      <div style={{ display: 'flex', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
+        <Sidebar
+          activePath={location.pathname}
+          onNavigate={handleNavigate}
+          mobileOpen={mobileNavOpen}
+          onCloseMobile={closeMobileNav}
+        />
+
+        <div style={{ flex: 1, maxWidth: '1040px', minWidth: 0 }}>
+          <div style={headerWrap}>
+            <div className="dash-header-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', minWidth: 0 }}>
+                <button
+                  className="mobile-menu-btn"
+                  onClick={() => setMobileNavOpen(true)}
+                  style={mobileMenuButtonStyle}
                 >
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
-                  <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.04em', color: 'var(--text-muted)' }}>
-                    {dateStr}
-                  </span>
-                </motion.div>
-                <motion.h1
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.08 }}
-                  className="dash-header-title"
-                  style={{ fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.05 }}
-                >
-                  {currentTitle}
-                </motion.h1>
+                  <Menu size={16} />
+                </button>
+                <div style={{ minWidth: 0 }}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '6px',
+                      padding: '5px 12px', borderRadius: '999px',
+                      border: '1px solid var(--border)', background: 'var(--surface-2)',
+                      marginBottom: '12px'
+                    }}
+                  >
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
+                    <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.04em', color: 'var(--text-muted)' }}>
+                      {dateStr}
+                    </span>
+                  </motion.div>
+                  <motion.h1
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.08 }}
+                    className="dash-header-title"
+                    style={{ fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.05 }}
+                  >
+                    {currentTitle}
+                  </motion.h1>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                <button onClick={() => setSearchOpen(true)} style={iconButton}>
+                  <Search size={16} />
+                </button>
+                <button onClick={onToggleTheme} style={iconButton}>
+                  {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                </button>
+                <button onClick={onLogout} style={iconButton}>
+                  <LogOut size={16} />
+                </button>
               </div>
             </div>
-
-            <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-              <button onClick={() => setSearchOpen(true)} style={iconButton}>
-                <Search size={16} />
-              </button>
-              <button onClick={onToggleTheme} style={iconButton}>
-                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-              </button>
-              <button onClick={onLogout} style={iconButton}>
-                <LogOut size={16} />
-              </button>
-            </div>
           </div>
+
+          <div className="dash-content-pad">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <Routes location={location}>
+                  {/* Safely redirect any accidental direct routes to /overview back to / */}
+                  <Route path="/overview" element={<Navigate to="/" replace />} />
+                  
+                  <Route path="/" element={<Overview userId={user.id} onNavigate={handleNavigate} />} />
+                  <Route path="/tasks" element={<PageCard><Tasks userId={user.id} /></PageCard>} />
+                  <Route path="/habits" element={<PageCard><Habits userId={user.id} /></PageCard>} />
+                  <Route path="/goals" element={<PageCard><Goals userId={user.id} /></PageCard>} />
+                  <Route path="/notes" element={<PageCard><Notes userId={user.id} /></PageCard>} />
+                  <Route path="/calendar" element={<PageCard><CalendarWidget userId={user.id} /></PageCard>} />
+                  <Route path="/analytics" element={<PageCard><Analytics userId={user.id} /></PageCard>} />
+                  <Route path="/focus" element={<PageCard><FocusMode /></PageCard>} />
+                  <Route path="/schedule-ai" element={<PageCard><AISchedule /></PageCard>} />
+                  <Route path="/expenses" element={<PageCard><Expenses userId={user.id} /></PageCard>} />
+                  <Route path="/subjects" element={<PageCard><Subjects userId={user.id} /></PageCard>} />
+                  <Route path="/attendance" element={<PageCard><AttendanceTracker userId={user.id} /></PageCard>} />
+                  <Route path="/assignments" element={<PageCard><AssignmentManager userId={user.id} /></PageCard>} />
+                  <Route path="/cgpa" element={<PageCard><CGPAPlanner userId={user.id} /></PageCard>} />
+                  <Route path="/study-planner" element={<PageCard><StudyPlanner userId={user.id} /></PageCard>} />
+                  <Route path="/ai" element={<PageCard><AIChat userId={user.id} /></PageCard>} />
+                  <Route path="/settings" element={<PageCard><Settings user={user} theme={theme} onToggleTheme={onToggleTheme} /></PageCard>} />
+                  <Route path="/about" element={<PageCard><About onNavigate={handleNavigate} /></PageCard>} />
+                  <Route path="/privacy" element={<PageCard><PrivacyPolicy /></PageCard>} />
+                  <Route path="/terms" element={<PageCard><Terms /></PageCard>} />
+                  <Route path="/licenses" element={<PageCard><Licenses /></PageCard>} />
+                  <Route path="/changelog" element={<PageCard><Changelog /></PageCard>} />
+                </Routes>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {searchOpen && (
+            <SearchModal userId={user.id} onNavigate={handleNavigate} onClose={closeSearch} />
+          )}
         </div>
 
-        <div className="dash-content-pad">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <Routes location={location}>
-                {/* Safely redirect any accidental direct routes to /overview back to / */}
-                <Route path="/overview" element={<Navigate to="/" replace />} />
-                
-                <Route path="/" element={<Overview userId={user.id} onNavigate={handleNavigate} />} />
-                <Route path="/tasks" element={<PageCard><Tasks userId={user.id} /></PageCard>} />
-                <Route path="/habits" element={<PageCard><Habits userId={user.id} /></PageCard>} />
-                <Route path="/goals" element={<PageCard><Goals userId={user.id} /></PageCard>} />
-                <Route path="/notes" element={<PageCard><Notes userId={user.id} /></PageCard>} />
-                <Route path="/calendar" element={<PageCard><CalendarWidget userId={user.id} /></PageCard>} />
-                <Route path="/analytics" element={<PageCard><Analytics userId={user.id} /></PageCard>} />
-                <Route path="/focus" element={<PageCard><FocusMode /></PageCard>} />
-                <Route path="/schedule-ai" element={<PageCard><AISchedule /></PageCard>} />
-                <Route path="/expenses" element={<PageCard><Expenses userId={user.id} /></PageCard>} />
-                <Route path="/subjects" element={<PageCard><Subjects userId={user.id} /></PageCard>} />
-                <Route path="/attendance" element={<PageCard><AttendanceTracker userId={user.id} /></PageCard>} />
-                <Route path="/assignments" element={<PageCard><AssignmentManager userId={user.id} /></PageCard>} />
-                <Route path="/cgpa" element={<PageCard><CGPAPlanner userId={user.id} /></PageCard>} />
-                <Route path="/study-planner" element={<PageCard><StudyPlanner userId={user.id} /></PageCard>} />
-                <Route path="/ai" element={<PageCard><AIChat userId={user.id} /></PageCard>} />
-                <Route path="/settings" element={<PageCard><Settings user={user} theme={theme} onToggleTheme={onToggleTheme} /></PageCard>} />
-                <Route path="/about" element={<PageCard><About onNavigate={handleNavigate} /></PageCard>} />
-                <Route path="/privacy" element={<PageCard><PrivacyPolicy /></PageCard>} />
-                <Route path="/terms" element={<PageCard><Terms /></PageCard>} />
-                <Route path="/licenses" element={<PageCard><Licenses /></PageCard>} />
-                <Route path="/changelog" element={<PageCard><Changelog /></PageCard>} />
-              </Routes>
-            </motion.div>
-          </AnimatePresence>
-        </div>
+        <style>{`
+          .mobile-menu-btn { display: none; }
+          .dash-header-pad { padding: 44px 48px 32px; }
+          .dash-content-pad { padding: 0 48px 48px; }
+          .dash-header-title { font-size: 34px; font-family: 'Space Grotesk', 'Inter', sans-serif; }
+          @media (max-width: 768px) {
+    .mobile-menu-btn {
+      display: flex !important;
+    }
 
-        {searchOpen && (
-          <SearchModal userId={user.id} onNavigate={handleNavigate} onClose={closeSearch} />
-        )}
+    .dash-header-pad {
+      padding-top: calc(20px + env(safe-area-inset-top, 0px));
+      padding-left: 16px;
+      padding-right: 16px;
+      padding-bottom: 16px;
+    }
+
+    .dash-content-pad {
+      padding: 0 16px 32px;
+    }
+
+    .dash-header-title {
+      font-size: 24px;
+    }
+  }
+        `}</style>
       </div>
-
-      <style>{`
-        .mobile-menu-btn { display: none; }
-        .dash-header-pad { padding: 44px 48px 32px; }
-        .dash-content-pad { padding: 0 48px 48px; }
-        .dash-header-title { font-size: 34px; font-family: 'Space Grotesk', 'Inter', sans-serif; }
-        @media (max-width: 768px) {
-  .mobile-menu-btn {
-    display: flex !important;
-  }
-
-  .dash-header-pad {
-    padding-top: calc(20px + env(safe-area-inset-top, 0px));
-    padding-left: 16px;
-    padding-right: 16px;
-    padding-bottom: 16px;
-  }
-
-  .dash-content-pad {
-    padding: 0 16px 32px;
-  }
-
-  .dash-header-title {
-    font-size: 24px;
-  }
-}
-      `}</style>
-    </div>
+    </>
   )
 }
 

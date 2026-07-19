@@ -3,6 +3,7 @@ import { supabase } from './lib/supabase'
 import Auth from './Auth'
 import Dashboard from './Dashboard'
 
+
 function App() {
   const [theme, setTheme] = useState('dark')
   const [user, setUser] = useState(null)

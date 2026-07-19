@@ -43,18 +43,13 @@ body {
   min-height: 100vh;
 }
 
+/* Transformed body gradients to map behind the animated ambient system layout */
 :root[data-theme="dark"] body {
-  background:
-    radial-gradient(circle at 15% 20%, rgba(124,92,255,.12), transparent 45%),
-    radial-gradient(circle at 85% 80%, rgba(255,170,120,.08), transparent 35%),
-    var(--bg);
+  background-color: var(--bg);
 }
 
 :root[data-theme="light"] body {
-  background:
-    radial-gradient(circle at 15% 15%, #FFF4E8, transparent 45%),
-    radial-gradient(circle at 85% 80%, #F7F1FF, transparent 35%),
-    var(--bg);
+  background-color: var(--bg);
 }
 
 input, button { font-family: 'Inter', sans-serif; }
@@ -78,10 +73,13 @@ button {
   transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), border-color 0.3s ease;
 }
 
-.card:hover {
-  transform: translateY(-4px) scale(1.005);
-  box-shadow: 0 30px 70px rgba(0,0,0,0.12);
-  border-color: rgba(124,92,255,0.25);
+/* Upgraded hover selector to prevent sticky highlights on Android/iOS Capacitor gestures */
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    transform: translateY(-4px) scale(1.005);
+    box-shadow: 0 30px 70px rgba(0,0,0,0.12);
+    border-color: rgba(124,92,255,0.25);
+  }
 }
 
 .empty-state {
@@ -90,10 +88,6 @@ button {
 }
 .empty-state svg { opacity: 0.3; }
 .empty-state span { font-size: 13px; }
-@keyframes skeleton-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
 
 ::-webkit-scrollbar {
   width: 8px;
@@ -110,25 +104,132 @@ button {
   background: var(--text-muted);
 }
 
-
-/* Remove Android blue tap highlight */
 * {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Or target only interactive elements */
-button,
-a,
-input,
-textarea,
-select,
-div,
-span {
+button, a, input, textarea, select, div, span {
   -webkit-tap-highlight-color: transparent;
 }
-[role="button"],
-.motion-button,
-button {
+
+[role="button"], .motion-button, button {
   -webkit-tap-highlight-color: transparent;
-  outline: none;
+}
+
+/* ============================================================================
+   LAYERED AMBIENT BACKGROUND SYSTEM (GPU-ACCELERATED)
+   ============================================================================ */
+.ambient-bg-wrapper {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--bg);
+  transition: background-color 0.3s ease;
+}
+
+/* Large Slow Drifting Orbs */
+.ambient-aurora-primary,
+.ambient-aurora-secondary {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  will-change: transform;
+  pointer-events: none;
+}
+
+.ambient-aurora-primary {
+  width: 500px;
+  height: 500px;
+  top: -10%;
+  left: -5%;
+  background: radial-gradient(circle, rgba(124, 92, 255, 0.08) 0%, rgba(124, 92, 255, 0) 70%);
+  animation: aurora-drift-primary 36s ease-in-out infinite alternate;
+}
+
+.ambient-aurora-secondary {
+  width: 450px;
+  height: 450px;
+  bottom: -5%;
+  right: -5%;
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.06) 0%, rgba(96, 165, 250, 0) 70%);
+  animation: aurora-drift-secondary 30s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-drift-primary {
+  0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+  50% { transform: translate3d(8%, 10%, 0) scale(1.1) rotate(180deg); }
+  100% { transform: translate3d(-5%, -4%, 0) scale(0.9) rotate(360deg); }
+}
+
+@keyframes aurora-drift-secondary {
+  0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+  50% { transform: translate3d(-10%, -8%, 0) scale(0.9) rotate(-180deg); }
+  100% { transform: translate3d(4%, 6%, 0) scale(1.1) rotate(-360deg); }
+}
+
+/* Subtle Organic Noise Texture */
+.ambient-noise-texture {
+  position: absolute;
+  inset: 0;
+  opacity: 0.015;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* High-Performance Micro Particles */
+.ambient-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ambient-particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background-color: var(--accent);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: particle-rise 15s linear infinite;
+}
+
+.p1 { left: 15%; top: 80%; animation-duration: 18s; animation-delay: 0s; }
+.p2 { left: 45%; top: 90%; animation-duration: 22s; animation-delay: -3s; }
+.p3 { left: 75%; top: 85%; animation-duration: 16s; animation-delay: -6s; }
+.p4 { left: 30%; top: 75%; animation-duration: 25s; animation-delay: -9s; }
+.p5 { left: 85%; top: 95%; animation-duration: 19s; animation-delay: -12s; }
+.p6 { left: 60%; top: 70%; animation-duration: 21s; animation-delay: -4s; }
+.p7 { left: 10%; top: 60%; animation-duration: 15s; animation-delay: -8s; }
+.p8 { left: 50%; top: 65%; animation-duration: 24s; animation-delay: -15s; }
+
+@keyframes particle-rise {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  20% { opacity: 0.15; }
+  80% { opacity: 0.15; }
+  100% { transform: translate3d(15px, -150px, 0); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-aurora-primary, .ambient-aurora-secondary, .ambient-particle {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* Light Theme Overrides */
+:root[data-theme="light"] .ambient-aurora-primary {
+  background: radial-gradient(circle, rgba(109, 94, 242, 0.03) 0%, rgba(109, 94, 242, 0) 70%);
+}
+:root[data-theme="light"] .ambient-aurora-secondary {
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.02) 0%, rgba(99, 102, 241, 0) 70%);
+}
+:root[data-theme="light"] .ambient-noise-texture {
+  opacity: 0.008;
+}
+:root[data-theme="light"] .ambient-particle {
+  background-color: #6d5ef2;
 }
