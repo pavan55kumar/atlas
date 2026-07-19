@@ -1,9 +1,6 @@
 import { useEffect, useState, useCallback, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  GraduationCap, BookOpen, Award, Layers, Trash2, Plus,
-  ChevronDown, School, X
-} from 'lucide-react'
+import { Trash2, Plus, ChevronDown, School } from 'lucide-react'
 import { supabase } from './lib/supabase'
 
 const EASE = [0.22, 1, 0.36, 1]
@@ -13,31 +10,25 @@ const styleSheet = `
     width: 100%;
     max-width: 1000px;
     margin: 0 auto;
-    padding: 0 0 40px 0;
+    padding: 0 0 calc(24px + env(safe-area-inset-bottom)) 0;
     font-family: 'Inter', sans-serif;
     color: var(--text);
   }
 
   /* ========== HEADER ========== */
-  .subjects-header {
+  .academic-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 28px;
-    gap: 16px;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 12px;
   }
-  .subjects-header h1 {
-    font-size: 24px;
-    font-weight: 700;
+  .academic-title {
+    font-size: 18px;
+    font-weight: 600;
     color: var(--text);
-    margin: 0 0 4px 0;
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-  }
-  .subjects-header p {
-    font-size: 14px;
-    color: var(--text-muted);
     margin: 0;
+    letter-spacing: -0.01em;
   }
   .header-badges {
     display: flex;
@@ -59,7 +50,7 @@ const styleSheet = `
     box-sizing: border-box;
   }
   .sgpa-badge {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--accent);
     background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
@@ -77,83 +68,83 @@ const styleSheet = `
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
-    margin-bottom: 32px;
+    margin-bottom: 28px;
   }
   .summary-card {
     background: var(--surface-2);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
+    border-radius: 14px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
   }
   .summary-label {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
   .summary-value {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
     color: var(--text);
     line-height: 1.1;
     letter-spacing: -0.02em;
   }
   .summary-sub {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-muted);
   }
 
   /* ========== SECTION & FORM ========== */
-  .section-header {
+  .subjects-section-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-end;
     margin-bottom: 16px;
+    gap: 12px;
   }
   .section-title {
     font-size: 16px;
     font-weight: 600;
     color: var(--text);
-    margin: 0;
+    margin: 0 0 4px 0;
   }
   .section-sub {
     font-size: 13px;
     color: var(--text-muted);
-    margin-top: 2px;
+    margin: 0;
   }
   .add-subject-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    color: var(--text);
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+    border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border));
+    color: var(--accent);
     padding: 8px 14px;
     border-radius: 10px;
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     font-family: inherit;
-    height: 38px;
+    height: 36px;
+    flex-shrink: 0;
   }
   .add-subject-btn:hover {
-    background: var(--surface);
-    border-color: var(--accent);
-    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 18%, var(--surface-2));
   }
+  .btn-text-mobile { display: none; }
 
   .add-form-card {
     background: var(--surface-2);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 24px;
-    overflow: hidden;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
   }
   .form-grid {
     display: grid;
@@ -237,11 +228,11 @@ const styleSheet = `
   .subject-card {
     background: var(--surface-2);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
+    border-radius: 14px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
     transition: border-color 0.2s ease;
   }
   .subject-card:hover {
@@ -249,39 +240,28 @@ const styleSheet = `
   }
   .card-top {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 12px;
   }
   .subject-icon {
-    width: 36px; 
-    height: 36px;
-    border-radius: 10px;
-    background: var(--surface);
+    width: 32px; 
+    height: 32px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--accent) 10%, var(--surface));
     display: flex; 
     align-items: center; 
     justify-content: center;
     color: var(--accent);
-    border: 1px solid var(--border);
+    border: 1px solid color-mix(in srgb, var(--accent) 15%, var(--border));
+    flex-shrink: 0;
   }
-  .status-badge {
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 8px;
-    border-radius: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .status-active {
-    color: #f59e0b;
-    background: rgba(245, 158, 11, 0.1);
-  }
-  .status-graded {
-    color: #10b981;
-    background: rgba(16, 185, 129, 0.1);
+  .subject-info {
+    flex: 1;
+    min-width: 0;
   }
   .subject-info h4 {
     margin: 0 0 4px 0;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--text);
     white-space: nowrap;
@@ -296,11 +276,30 @@ const styleSheet = `
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  .status-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .status-active {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.15);
+  }
+  .status-graded {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.15);
+  }
   .card-bottom {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 16px;
+    padding-top: 14px;
     border-top: 1px solid var(--border);
   }
   .btn-delete {
@@ -394,23 +393,22 @@ const styleSheet = `
   .mobile-accordion-item {
     background: var(--surface-2);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    margin-bottom: 12px;
-    /* overflow: hidden is intentionally omitted to prevent clipping the dropdown */
+    border-radius: 14px;
+    margin-bottom: 10px;
   }
   .accordion-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px;
+    padding: 14px 16px;
     cursor: pointer;
-    user-select: none;
     background: transparent;
     border: none;
     width: 100%;
     text-align: left;
     font-family: inherit;
     color: var(--text);
+    min-height: 44px;
   }
   .mobile-row-left {
     display: flex;
@@ -423,7 +421,7 @@ const styleSheet = `
     min-width: 0;
   }
   .mobile-subject-info h4 {
-    margin: 0 0 2px 0;
+    margin: 0 0 4px 0;
     font-size: 15px;
     font-weight: 600;
     color: var(--text);
@@ -445,33 +443,22 @@ const styleSheet = `
     gap: 10px;
     flex-shrink: 0;
   }
-  .grade-badge {
-    font-size: 12px;
-    font-weight: 600;
-    color: #10b981;
-    background: rgba(16, 185, 129, 0.1);
-    padding: 4px 8px;
-    border-radius: 6px;
-  }
   .accordion-drawer {
     padding: 0 16px 16px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
   }
   .accordion-controls {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 12px;
+    padding-top: 16px;
     border-top: 1px solid var(--border);
+    gap: 12px;
   }
 
   /* ========== EMPTY & LOADING ========== */
   .empty-state {
     text-align: center;
     padding: 48px 20px;
-    background: var(--surface-2);
     border: 1px dashed var(--border);
     border-radius: 16px;
   }
@@ -495,9 +482,9 @@ const styleSheet = `
   .skeleton-card {
     background: var(--surface-2);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
-    height: 140px;
+    border-radius: 14px;
+    padding: 16px;
+    height: 110px;
   }
   .skeleton-line {
     height: 12px;
@@ -569,40 +556,49 @@ const styleSheet = `
 
   /* ========== RESPONSIVE ========== */
   @media (max-width: 768px) {
+    .academic-header {
+      margin-bottom: 20px;
+    }
+    .academic-title {
+      font-size: 16px;
+    }
+    .header-badges {
+      gap: 8px;
+    }
+    .semester-badge, .sgpa-badge {
+      height: 30px;
+      padding: 4px 10px;
+      font-size: 11px;
+    }
     .summary-grid {
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
       margin-bottom: 24px;
     }
     .summary-card {
-      padding: 16px;
+      padding: 14px;
     }
     .summary-value {
-      font-size: 22px;
-    }
-    .subjects-header h1 {
       font-size: 20px;
     }
-    .subjects-header p {
-      display: none;
-    }
-    .header-badges {
-      height: auto;
-    }
-    .semester-badge, .sgpa-badge {
-      height: 30px;
-      font-size: 11px;
-      padding: 4px 10px;
+    .subjects-section-header {
+      align-items: flex-end;
+      margin-bottom: 12px;
     }
     .form-grid {
       grid-template-columns: 1fr;
-    }
-    .add-subject-btn {
-      width: 100%;
-      justify-content: center;
+      gap: 12px;
     }
     .subjects-grid {
       display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .btn-text-desktop { display: none; }
+    .btn-text-mobile { display: inline; }
+    .add-subject-btn {
+      padding: 8px 12px;
     }
   }
 
@@ -756,11 +752,8 @@ function Subjects({ userId }) {
     <div className="atlas-subjects-container">
       <style dangerouslySetInnerHTML={{ __html: styleSheet }} />
 
-      <div className="subjects-header">
-        <div>
-          <h1>Subjects</h1>
-          <p>Manage your courses, credits, faculty and semester grades.</p>
-        </div>
+      <div className="academic-header">
+        <h2 className="academic-title">Academic Overview</h2>
         <div className="header-badges">
           <span className="semester-badge">Current Semester</span>
           {sgpa && <span className="sgpa-badge">SGPA {sgpa}</span>}
@@ -781,7 +774,7 @@ function Subjects({ userId }) {
         <div className="summary-card">
           <span className="summary-label">SGPA</span>
           <span className="summary-value">{sgpa ?? '—'}</span>
-          <span className="summary-sub">Based on graded</span>
+          <span className="summary-sub">{sgpa ? 'Based on graded courses' : 'No grades yet'}</span>
         </div>
         <div className="summary-card">
           <span className="summary-label">Graded</span>
@@ -790,14 +783,15 @@ function Subjects({ userId }) {
         </div>
       </div>
 
-      <div className="section-header">
+      <div className="subjects-section-header">
         <div>
-          <h2 className="section-title">Your Subjects</h2>
+          <h3 className="section-title">Your Subjects</h3>
           <p className="section-sub">{totalSubjectsCount} courses · {totalCredits} total credits</p>
         </div>
         <button className="add-subject-btn" onClick={() => setIsAddFormExpanded(!isAddFormExpanded)}>
           <Plus size={16} />
-          <span>{isAddFormExpanded ? 'Cancel' : 'Add Subject'}</span>
+          <span className="btn-text-desktop">{isAddFormExpanded ? 'Cancel' : 'Add Subject'}</span>
+          <span className="btn-text-mobile">{isAddFormExpanded ? 'Cancel' : 'Add'}</span>
         </button>
       </div>
 
@@ -806,9 +800,10 @@ function Subjects({ userId }) {
           <motion.div
             className="add-form-card"
             initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-            animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+            animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
             exit={{ opacity: 0, height: 0, marginBottom: 0 }}
             transition={{ duration: 0.2, ease: EASE }}
+            style={{ overflow: 'hidden' }}
           >
             <form onSubmit={addSubject}>
               <div className="form-grid">
@@ -873,7 +868,7 @@ function Subjects({ userId }) {
       ) : subjects.length === 0 ? (
         <div className="empty-state">
           <span className="empty-icon">
-            <GraduationCap size={40} />
+            <School size={40} />
           </span>
           <h3 className="empty-title">No subjects yet</h3>
           <p className="empty-text">Add your semester subjects to track credits, grades and SGPA.</p>
@@ -1016,16 +1011,15 @@ const DesktopSubjectCard = memo(function DesktopSubjectCard({ subject, onUpdateG
     >
       <div className="card-top">
         <div className="subject-icon">
-          <School size={18} />
+          <School size={16} />
+        </div>
+        <div className="subject-info">
+          <h4>{subject.name}</h4>
+          <p>{subject.credits} Credits {subject.faculty ? `· ${subject.faculty}` : ''}</p>
         </div>
         <span className={`status-badge ${isGraded ? 'status-graded' : 'status-active'}`}>
-          {isGraded ? `Graded: ${getGradeLetter(subject.grade_point)}` : 'Not graded'}
+          {isGraded ? `${getGradeLetter(subject.grade_point)} · ${subject.grade_point}` : 'Not graded'}
         </span>
-      </div>
-
-      <div className="subject-info">
-        <h4>{subject.name}</h4>
-        <p>{subject.credits} Credits {subject.faculty ? `· ${subject.faculty}` : ''}</p>
       </div>
 
       <div className="card-bottom">
@@ -1059,7 +1053,7 @@ const MobileSubjectAccordionItem = memo(function MobileSubjectAccordionItem({ su
       >
         <div className="mobile-row-left">
           <div className="subject-icon">
-            <School size={18} />
+            <School size={16} />
           </div>
           <div className="mobile-subject-info">
             <h4>{subject.name}</h4>
@@ -1069,7 +1063,7 @@ const MobileSubjectAccordionItem = memo(function MobileSubjectAccordionItem({ su
 
         <div className="mobile-row-right">
           {isGraded ? (
-            <span className="grade-badge">{getGradeLetter(subject.grade_point)} · {subject.grade_point}</span>
+            <span className={`status-badge status-graded`}>{getGradeLetter(subject.grade_point)} · {subject.grade_point}</span>
           ) : (
             <span className="status-badge status-active">Not graded</span>
           )}
