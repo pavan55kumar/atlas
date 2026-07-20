@@ -56,76 +56,98 @@ const pathToTitle = {
 }
 
 // --- Navigation Hierarchy Helpers ---
-const INFO_CHILD_PAGES = ['/privacy', '/terms', '/changelog', '/licenses'];
+// Info children live UNDER About in the hierarchy.
+const INFO_CHILD_PAGES = ['/privacy', '/terms', '/changelog', '/licenses']
 
+// Level is used only to decide push vs replace when navigating forward.
+//   0 -> Overview (root)
+//   1 -> normal dashboard pages + About (flattened: back always -> Overview, except About's children)
+//   2 -> Info children (back -> About)
 const getInfoLevel = (path) => {
-  if (path === '/') return 0;
-  if (path === '/about') return 1;
-  if (INFO_CHILD_PAGES.includes(path)) return 2;
-  return 1; // Normal pages are treated as Level 1 to preserve flattening to Overview
-};
+  if (path === '/' || path === '/overview') return 0
+  if (path === '/about') return 1
+  if (INFO_CHILD_PAGES.includes(path)) return 2
+  return 1 // Normal dashboard pages are Level 1 (flatten to Overview on back)
+}
 
+// Deterministic back-target resolver for native Android back button.
+// Returns the path to navigate to, or null if we are at the root (Overview)
+// and should exit the app.
 const getBackTarget = (path) => {
-  if (path === '/') return null; 
-  if (path === '/about') return '/';
-  if (INFO_CHILD_PAGES.includes(path)) return '/about';
-  return '/'; // Normal pages go back to Overview
-};
+  if (path === '/' || path === '/overview') return null     // root -> exit
+  if (INFO_CHILD_PAGES.includes(path)) return '/about'      // info child -> About
+  if (path === '/about') return '/'                          // About -> Overview
+  return '/'                                                 // any normal page -> Overview
+}
 
 function Dashboard({ user, onLogout, theme, onToggleTheme }) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  
+
   const location = useLocation()
   const navigate = useNavigate()
 
-  // Refs to manage history and prevent race conditions/double events
+  // --- Refs that mirror the latest state for the native back listener ---
+  // The Capacitor backButton listener is registered ONCE (see useEffect below),
+  // so it must read the latest values via refs to avoid stale closures.
+  const pathnameRef = useRef(location.pathname)
+  const searchOpenRef = useRef(searchOpen)
+  const mobileNavOpenRef = useRef(mobileNavOpen)
+
+  useEffect(() => { pathnameRef.current = location.pathname }, [location.pathname])
+  useEffect(() => { searchOpenRef.current = searchOpen }, [searchOpen])
+  useEffect(() => { mobileNavOpenRef.current = mobileNavOpen }, [mobileNavOpen])
+
+  // --- Web/PWA modal-history refs (unchanged behavior) ---
   const hasModalHistory = useRef(false)
   const pendingNavigation = useRef(null)
 
-  // Helper to allow child components to navigate seamlessly 
-  // Builds the history stack correctly to support the back hierarchy
+  // Unified navigation handler used by Sidebar, Overview, About, Search, etc.
+  // - Native Android: deterministic. We still pick push vs replace to keep the
+  //   WebView history tidy, but the hardware back button is fully resolved by
+  //   the Capacitor listener using getBackTarget().
+  // - Web/PWA: same level rules, PLUS the modal-history dance so opening a
+  //   modal then navigating doesn't corrupt browser history.
   const handleNavigate = (path) => {
     let target = path.startsWith('/') ? path : `/${path}`
-    
-    // Ensure Overview navigation always targets the root path '/' 
+
+    // /overview is just an alias for the root.
     if (target === '/overview' || target === 'overview') {
       target = '/'
     }
 
-    // If a modal is open on Web, we must close it and pop its dummy history state
-    // before performing the actual navigation to avoid history corruption.
-    if (!Capacitor.isNativePlatform() && (searchOpen || mobileNavOpen)) {
-      if (hasModalHistory.current) {
-        if (!pendingNavigation.current) {
-          pendingNavigation.current = target
-          hasModalHistory.current = false
-          window.history.back()
-        } else {
-          pendingNavigation.current = target
-        }
-        return
+    const isNative = Capacitor.isNativePlatform()
+
+    // Web/PWA only: if a modal is currently open and has a dummy history entry,
+    // pop that entry first, then perform the real navigation in the popstate
+    // handler. This prevents history corruption on browser back.
+    if (!isNative && (searchOpen || mobileNavOpen) && hasModalHistory.current) {
+      if (!pendingNavigation.current) {
+        pendingNavigation.current = target
+        hasModalHistory.current = false
+        window.history.back()
+      } else {
+        pendingNavigation.current = target
       }
+      return
     }
 
     const currentLevel = getInfoLevel(location.pathname)
     const targetLevel = getInfoLevel(target)
     const isTargetOverview = target === '/'
 
-    // If navigating to Overview, replace to keep it as the root
     if (isTargetOverview) {
+      // Always replace when going to root so Overview is the single root entry.
       navigate(target, { replace: true })
-    } 
-    // If stepping DOWN the info hierarchy (e.g., Overview -> About, About -> Privacy), push
-    else if (targetLevel > currentLevel) {
+    } else if (targetLevel > currentLevel) {
+      // Stepping DOWN the hierarchy (Overview -> About, About -> Privacy, etc.)
       navigate(target)
-    }
-    // For all other cases (e.g., normal page to normal page, about to normal page), 
-    // preserve the flatten behavior (replace) so back goes to Overview.
-    else {
+    } else {
+      // Same level or moving up/sideways: replace to preserve flatten-to-root
+      // semantics so back from any normal page always lands on Overview.
       navigate(target, { replace: true })
     }
-    
+
     setMobileNavOpen(false)
     setSearchOpen(false)
   }
@@ -134,9 +156,9 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
     if (!searchOpen) return
     if (Capacitor.isNativePlatform()) {
       setSearchOpen(false)
-    } else if (mobileNavOpen) {
-      setSearchOpen(false)
-    } else if (hasModalHistory.current) {
+      return
+    }
+    if (hasModalHistory.current) {
       hasModalHistory.current = false
       window.history.back()
     } else {
@@ -148,9 +170,9 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
     if (!mobileNavOpen) return
     if (Capacitor.isNativePlatform()) {
       setMobileNavOpen(false)
-    } else if (searchOpen) {
-      setMobileNavOpen(false)
-    } else if (hasModalHistory.current) {
+      return
+    }
+    if (hasModalHistory.current) {
       hasModalHistory.current = false
       window.history.back()
     } else {
@@ -170,7 +192,8 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
     return () => window.removeEventListener('keydown', handleKey)
   }, [])
 
-  // Web Browser & PWA: Push dummy history state when modal opens
+  // Web/PWA: push a dummy history state when a modal opens so browser back
+  // closes the modal instead of leaving the page.
   useEffect(() => {
     if (Capacitor.isNativePlatform()) return
 
@@ -180,7 +203,7 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
     }
   }, [searchOpen, mobileNavOpen])
 
-  // Web Browser & PWA: Listen for popstate to close modals gracefully
+  // Web/PWA: popstate listener to close modals or finish pending navigation.
   useEffect(() => {
     if (Capacitor.isNativePlatform()) return
 
@@ -188,7 +211,7 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
       if (pendingNavigation.current) {
         const target = pendingNavigation.current
         pendingNavigation.current = null
-        
+
         const currentLevel = getInfoLevel(location.pathname)
         const targetLevel = getInfoLevel(target)
         const isTargetOverview = target === '/'
@@ -200,7 +223,7 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
         } else {
           navigate(target, { replace: true })
         }
-        
+
         setSearchOpen(false)
         setMobileNavOpen(false)
         hasModalHistory.current = false
@@ -217,68 +240,81 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
     return () => window.removeEventListener('popstate', handlePopState)
   }, [searchOpen, mobileNavOpen, location.pathname, navigate])
 
+  // ---------------------------------------------------------------
   // Capacitor Native Android Back Button Handler
+  // Registered EXACTLY ONCE on mount. Reads latest state from refs.
+  // Never re-registered on route/state changes -> no accumulation,
+  // no stale closures, no double events.
+  // ---------------------------------------------------------------
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
 
     let active = true
     let listener
 
-    App.addListener('backButton', () => {
+    const handleBack = () => {
       if (!active) return
-      
-      if (searchOpen) {
+
+      // Always read the LATEST values from refs.
+      const currentPath = pathnameRef.current
+      const search = searchOpenRef.current
+      const mobileNav = mobileNavOpenRef.current
+
+      // PRIORITY 1: Search modal open -> close it only.
+      if (search) {
         setSearchOpen(false)
         return
       }
-      if (mobileNavOpen) {
+
+      // PRIORITY 2: Mobile sidebar/drawer open -> close it only.
+      if (mobileNav) {
         setMobileNavOpen(false)
         return
       }
 
-      // Check React Router's internal history stack
-      const historyCanGoBack = window.history.state && window.history.state.idx > 0
-      
-      if (historyCanGoBack) {
-        navigate(-1)
+      // PRIORITY 3-6: Deterministic, pathname-based back resolution.
+      // We deliberately do NOT use window.history.state.idx or navigate(-1),
+      // because the Capacitor WebView history can contain unexpected entries.
+      const backTarget = getBackTarget(currentPath)
+
+      if (backTarget) {
+        // Use replace so the back target becomes the new "current" entry
+        // and repeated back presses remain predictable.
+        navigate(backTarget, { replace: true })
       } else {
-        // If no history, use the hierarchy to determine back target
-        const backTarget = getBackTarget(location.pathname)
-        if (backTarget) {
-          navigate(backTarget, { replace: true })
-        } else {
-          // On Overview with no history, exit the app
-          App.exitApp()
-        }
+        // On Overview (root) -> exit the Android app.
+        App.exitApp()
       }
-    }).then(l => {
+    }
+
+    App.addListener('backButton', handleBack).then((l) => {
       if (active) {
         listener = l
       } else {
+        // Component already unmounted before the listener resolved.
         l.remove()
       }
     })
 
     return () => {
       active = false
-      listener?.remove()
+      if (listener) listener.remove()
     }
-  }, [searchOpen, mobileNavOpen, location.pathname, navigate])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // <-- empty deps: register once
 
   const displayName = user.email.split('@')[0].split('.')[0]
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
   const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-  
+
   const isOverview = location.pathname === '/' || location.pathname === '/overview'
   const currentTitle = isOverview ? `${greeting}, ${displayName}` : (pathToTitle[location.pathname] || 'Atlas')
 
   return (
     <>
-      {/* 1. Mount the persistent ambient background globally */}
       <AmbientBackground />
 
-      {/* 2. Wrap existing content to ensure it sits above the background */}
       <div style={{ display: 'flex', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
         <Sidebar
           activePath={location.pathname}
@@ -351,9 +387,9 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
                 transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
               >
                 <Routes location={location}>
-                  {/* Safely redirect any accidental direct routes to /overview back to / */}
+                  {/* /overview is an alias for the root, never two entries. */}
                   <Route path="/overview" element={<Navigate to="/" replace />} />
-                  
+
                   <Route path="/" element={<Overview userId={user.id} onNavigate={handleNavigate} />} />
                   <Route path="/tasks" element={<PageCard><Tasks userId={user.id} /></PageCard>} />
                   <Route path="/habits" element={<PageCard><Habits userId={user.id} /></PageCard>} />
@@ -372,10 +408,12 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
                   <Route path="/ai" element={<PageCard><AIChat userId={user.id} /></PageCard>} />
                   <Route path="/settings" element={<PageCard><Settings user={user} theme={theme} onToggleTheme={onToggleTheme} /></PageCard>} />
                   <Route path="/about" element={<PageCard><About onNavigate={handleNavigate} /></PageCard>} />
-                  <Route path="/privacy" element={<PageCard><PrivacyPolicy /></PageCard>} />
-                  <Route path="/terms" element={<PageCard><Terms /></PageCard>} />
-                  <Route path="/licenses" element={<PageCard><Licenses /></PageCard>} />
-                  <Route path="/changelog" element={<PageCard><Changelog /></PageCard>} />
+                  {/* Info children receive onNavigate so their visible Back buttons
+                      can explicitly return to /about instead of window.history.back(). */}
+                  <Route path="/privacy" element={<PageCard><PrivacyPolicy onNavigate={handleNavigate} /></PageCard>} />
+                  <Route path="/terms" element={<PageCard><Terms onNavigate={handleNavigate} /></PageCard>} />
+                  <Route path="/licenses" element={<PageCard><Licenses onNavigate={handleNavigate} /></PageCard>} />
+                  <Route path="/changelog" element={<PageCard><Changelog onNavigate={handleNavigate} /></PageCard>} />
                 </Routes>
               </motion.div>
             </AnimatePresence>
@@ -392,25 +430,22 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
           .dash-content-pad { padding: 0 48px 48px; }
           .dash-header-title { font-size: 34px; font-family: 'Space Grotesk', 'Inter', sans-serif; }
           @media (max-width: 768px) {
-    .mobile-menu-btn {
-      display: flex !important;
-    }
-
-    .dash-header-pad {
-      padding-top: calc(20px + env(safe-area-inset-top, 0px));
-      padding-left: 16px;
-      padding-right: 16px;
-      padding-bottom: 16px;
-    }
-
-    .dash-content-pad {
-      padding: 0 16px 32px;
-    }
-
-    .dash-header-title {
-      font-size: 24px;
-    }
-  }
+            .mobile-menu-btn {
+              display: flex !important;
+            }
+            .dash-header-pad {
+              padding-top: calc(20px + env(safe-area-inset-top, 0px));
+              padding-left: 16px;
+              padding-right: 16px;
+              padding-bottom: 16px;
+            }
+            .dash-content-pad {
+              padding: 0 16px 32px;
+            }
+            .dash-header-title {
+              font-size: 24px;
+            }
+          }
         `}</style>
       </div>
     </>
