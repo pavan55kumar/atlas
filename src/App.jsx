@@ -4,6 +4,7 @@ import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import Auth from './Auth'
 import Dashboard from './Dashboard'
+import ForceUpdate from './components/ForceUpdate'
 
 function App() {
   const [theme, setTheme] = useState('dark')
@@ -160,95 +161,13 @@ useEffect(() => {
   }
 
   // Mandatory update screen
-  if (updateRequired) {
+ if (updateRequired) {
     return (
-      <div
-        style={{
-          minHeight: '100dvh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '24px',
-          background: 'var(--bg)',
-          color: 'var(--text)',
-          textAlign: 'center'
-        }}
-      >
-        <div
-          style={{
-            width: '100%',
-            maxWidth: '420px',
-            padding: '32px 24px',
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: '24px'
-          }}
-        >
-          <h1
-            style={{
-              fontSize: '26px',
-              marginBottom: '12px'
-            }}
-          >
-            Update Required
-          </h1>
-
-          <p
-            style={{
-              color: 'var(--text-muted)',
-              lineHeight: '1.6',
-              marginBottom: '24px'
-            }}
-          >
-            A newer version of Atlas is required to continue.
-            Please update the app to access the latest features
-            and improvements.
-          </p>
-
-          {updateInfo?.latest_version && (
-            <p
-              style={{
-                fontSize: '13px',
-                color: 'var(--text-muted)',
-                marginBottom: '20px'
-              }}
-            >
-              Latest version: {updateInfo.latest_version}
-            </p>
-          )}
-
-          {updateInfo?.update_url ? (
-            <button
-              onClick={() => {
-                window.location.href = updateInfo.update_url
-              }}
-              style={{
-                width: '100%',
-                padding: '14px 20px',
-                border: 'none',
-                borderRadius: '12px',
-                background: 'var(--accent)',
-                color: '#fff',
-                fontSize: '15px',
-                fontWeight: '600'
-              }}
-            >
-              Update Atlas
-            </button>
-          ) : (
-            <p
-              style={{
-                fontSize: '13px',
-                color: 'var(--text-muted)'
-              }}
-            >
-              Please contact the Atlas developer to get the latest version.
-            </p>
-          )}
-        </div>
-      </div>
+        <ForceUpdate
+            updateInfo={updateInfo}
+        />
     )
-  }
+}
 
   // Wait for authentication check
   if (checkingSession) {
