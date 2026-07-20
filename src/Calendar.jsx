@@ -180,14 +180,14 @@ function CalendarWidget({ userId }) {
       <div className="aurora-blur-sphere sphere-tertiary" />
       <div className="calendar-noise-overlay" aria-hidden="true" />
 
-      {/* --- KPI Summary Grid --- */}
+           {/* --- KPI Summary Grid --- */}
       <motion.div
         className="stats-carousel-grid"
         initial="hidden"
         animate="visible"
         variants={{
-          hidden: { opacity: 0 },
-          visible: { opacity: 1, transition: { staggerChildren: motionOK ? 0.05 : 0 } }
+          hidden: { opacity: 0, x: 0 },
+          visible: { opacity: 1, x: 0, transition: { staggerChildren: motionOK ? 0.05 : 0 } }
         }}
       >
         <SummaryCard
@@ -543,10 +543,10 @@ function SummaryCard({ label, value, icon, desc, sparklinePath, accent, motionOK
       className="kpi-card-glass"
       tabIndex={0}
       variants={{
-        hidden: { opacity: 0, y: 15 },
-        visible: { opacity: 1, y: 0, transition: { type: 'spring' } }
+        hidden: { opacity: 0, y: 15, x: 0 },
+        visible: { opacity: 1, y: 0, x: 0, transition: { type: 'spring' } }
       }}
-      whileHover={{ y: -4, transition: { duration: 0.25 } }}
+      whileHover={{ y: -4, x: 0, transition: { duration: 0.25 } }}
     >
       <div className="kpi-header-row">
         <span className="kpi-label">{label}</span>
