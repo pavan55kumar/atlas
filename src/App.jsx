@@ -25,6 +25,53 @@ function App() {
     checkAppVersion()
   }, [])
 
+  // Listen for native deep link OAuth redirects
+ // Listen for native deep link OAuth redirects
+useEffect(() => {
+  let listenerHandle
+
+  if (Capacitor.isNativePlatform()) {
+    CapacitorApp.addListener('appUrlOpen', async (event) => {
+      try {
+        // Only handle the Atlas OAuth callback
+        if (!event.url?.startsWith('atlas://auth/callback')) {
+          return
+        }
+
+        const parsedUrl = new URL(event.url)
+        const code = parsedUrl.searchParams.get('code')
+
+        if (!code) {
+          console.error(
+            'OAuth callback received without authorization code'
+          )
+          return
+        }
+
+        const { error } =
+          await supabase.auth.exchangeCodeForSession(code)
+
+        if (error) {
+          console.error(
+            'OAuth session exchange failed:',
+            error.message
+          )
+        }
+      } catch (error) {
+        console.error('Deep link handling error:', error)
+      }
+    }).then((handle) => {
+      listenerHandle = handle
+    })
+  }
+
+  return () => {
+    if (listenerHandle) {
+      listenerHandle.remove()
+    }
+  }
+}, [])
+
   async function checkAppVersion() {
     try {
       // Version enforcement only applies to native Android.

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Capacitor } from '@capacitor/core'
 import { supabase } from './lib/supabase'
 import { inputStyle, primaryButton } from './styles' // Kept for import compatibility
 
@@ -761,25 +762,14 @@ function toFriendlyAuthMessage(error) {
   return 'Something went wrong. Please try again.'
 }
 
-// Determines the correct OAuth redirect target for web/PWA vs. the native Capacitor Android app.
-// Web keeps the existing architecture (window.location.origin) untouched.
-// Native builds should register a custom URL scheme / App Link and handle it via
-// Capacitor's `App.addListener('appUrlOpen', ...)` at the app root, then hand the resulting
-// URL off to `supabase.auth` (e.g. via `getSessionFromUrl` / exchanging the code).
-// The scheme below is a placeholder — replace ATLAS_NATIVE_AUTH_REDIRECT with the app's
-// actual registered deep link if this is wired up to run inside the Android shell.
-const ATLAS_NATIVE_AUTH_REDIRECT = 'atlas://auth-callback'
+// Determines the correct OAuth redirect target based on the platform.
+const ATLAS_NATIVE_AUTH_REDIRECT = 'atlas://auth/callback'
 
 function getOAuthRedirectTo() {
-  if (typeof window === 'undefined') return undefined
-  const isNativePlatform =
-    typeof window.Capacitor !== 'undefined' &&
-    typeof window.Capacitor.isNativePlatform === 'function' &&
-    window.Capacitor.isNativePlatform()
-
-  if (isNativePlatform) {
+  if (Capacitor.isNativePlatform()) {
     return ATLAS_NATIVE_AUTH_REDIRECT
   }
+
   return window.location.origin
 }
 

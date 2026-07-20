@@ -233,3 +233,115 @@ button, a, input, textarea, select, div, span {
 :root[data-theme="light"] .ambient-particle {
   background-color: #6d5ef2;
 }
+/* ============================================================================
+   MOBILE UX & NATIVE APP OPTIMIZATIONS
+   ============================================================================ */
+
+/* Prevent accidental horizontal page overflow */
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+html,
+body {
+  overflow-x: hidden;
+}
+
+/* Better mobile scrolling */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+}
+
+/* Better touch interaction */
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/* Prevent iOS automatic input zoom */
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+/* Mobile card optimization */
+@media (max-width: 600px) {
+  :root {
+    --sp-3: 18px;
+    --sp-4: 24px;
+    --sp-5: 36px;
+  }
+
+  .card {
+    border-radius: 18px;
+    padding: 18px;
+  }
+}
+
+/* Extra-small phones */
+@media (max-width: 360px) {
+  .card {
+    border-radius: 16px;
+    padding: 16px;
+  }
+}
+
+/* Reduce expensive ambient rendering on mobile */
+@media (max-width: 768px) {
+  .ambient-aurora-primary {
+    width: 340px;
+    height: 340px;
+    filter: blur(80px);
+  }
+
+  .ambient-aurora-secondary {
+    width: 300px;
+    height: 300px;
+    filter: blur(80px);
+  }
+
+  /* Hide some particles to reduce GPU work */
+  .ambient-particle.p5,
+  .ambient-particle.p6,
+  .ambient-particle.p7,
+  .ambient-particle.p8 {
+    display: none;
+  }
+}
+
+/* Safe-area helper for Capacitor / iPhone */
+.safe-area-page {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+/* Full reduced-motion protection */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
