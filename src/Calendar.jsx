@@ -131,7 +131,7 @@ function CalendarWidget({ userId }) {
 
   const motionOK = !prefersReducedMotion
 
-  function renderEventList(list, emptyTitle, emptySub, tag) {
+    function renderEventList(list, emptyTitle, emptySub, tag) {
     if (list.length === 0) {
       return (
         <div className="empty-events-banner">
@@ -150,9 +150,11 @@ function CalendarWidget({ userId }) {
     }
     return list.map((ev, index) => (
       <div className="timeline-event-wrapper" key={ev.id}>
-        <div className={`timeline-node-dot ${index === 0 ? 'active' : ''}`} />
         <div className="timeline-time-col">
           {ev.event_time ? ev.event_time.slice(0, 5) : "All Day"}
+        </div>
+        <div className="timeline-rail-col">
+          <div className={`timeline-node-dot ${index === 0 ? 'active' : ''}`} />
         </div>
         <div className="event-card-tactile">
           <div className="event-card-text">
