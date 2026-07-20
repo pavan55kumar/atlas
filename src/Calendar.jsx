@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, memo } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
   Clock3, Sparkles, Brain, CircleCheck,
@@ -131,7 +131,7 @@ function CalendarWidget({ userId }) {
 
   const motionOK = !prefersReducedMotion
 
-    function renderEventList(list, emptyTitle, emptySub, tag) {
+  function renderEventList(list, emptyTitle, emptySub, tag) {
     if (list.length === 0) {
       return (
         <div className="empty-events-banner">
@@ -180,60 +180,48 @@ function CalendarWidget({ userId }) {
       <div className="aurora-blur-sphere sphere-tertiary" />
       <div className="calendar-noise-overlay" aria-hidden="true" />
 
-      {/* --- KPI Summary Grid --- */}
-      <motion.div
-        className="stats-carousel-grid"
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: { opacity: 0 },
-          visible: { opacity: 1, transition: { staggerChildren: motionOK ? 0.05 : 0 } }
-        }}
-      >
-        <SummaryCard
-          label="Today's Events"
-          value={todayEventsCount}
-          icon={<CalendarClock size={15} />}
-          desc="Due within 24 hours"
-          sparklinePath="M0,15 C10,12 20,18 30,5 C40,2 50,14 60,8"
-          accent="#f59e0b"
-          motionOK={motionOK}
-        />
-        <SummaryCard
-          label="Upcoming"
-          value={upcomingCount}
-          icon={<Clock3 size={15} />}
-          desc="Scheduled events"
-          sparklinePath="M0,8 C10,14 20,5 30,12 C40,16 50,2 60,10"
-          accent="#60a5fa"
-          motionOK={motionOK}
-        />
-        <SummaryCard
-          label="Focus Score"
-          value="9.2"
-          icon={<Brain size={15} />}
-          desc="Target: 9.5 scale"
-          sparklinePath="M0,18 C10,15 20,10 30,10 C40,10 50,3 60,3"
-          accent="#8b5cf6"
-          motionOK={motionOK}
-        />
-        <SummaryCard
-          label="Accomplished"
-          value={completedEventsCount}
-          icon={<CircleCheck size={15} />}
-          desc="Finished logs"
-          sparklinePath="M0,4 C10,12 20,2 30,8 C40,14 50,2 60,15"
-          accent="#10b981"
-          motionOK={motionOK}
-        />
-      </motion.div>
-
       {/* --- Double Pane Dashboard Panel Layout --- */}
       <div className="calendar-dashboard-layout">
 
         <div className="left-pane">
 
-          {/* Calendar weekly ribbon navigation — the visual centerpiece */}
+          {/* --- KPI Summary Grid --- */}
+          <div className="stats-carousel-grid">
+            <SummaryCard
+              label="Today's Events"
+              value={todayEventsCount}
+              icon={<CalendarClock size={15} />}
+              desc="Due within 24 hours"
+              sparklinePath="M0,15 C10,12 20,18 30,5 C40,2 50,14 60,8"
+              accent="#f59e0b"
+            />
+            <SummaryCard
+              label="Upcoming"
+              value={upcomingCount}
+              icon={<Clock3 size={15} />}
+              desc="Scheduled events"
+              sparklinePath="M0,8 C10,14 20,5 30,12 C40,16 50,2 60,10"
+              accent="#60a5fa"
+            />
+            <SummaryCard
+              label="Focus Score"
+              value="9.2"
+              icon={<Brain size={15} />}
+              desc="Target: 9.5 scale"
+              sparklinePath="M0,18 C10,15 20,10 30,10 C40,10 50,3 60,3"
+              accent="#8b5cf6"
+            />
+            <SummaryCard
+              label="Accomplished"
+              value={completedEventsCount}
+              icon={<CircleCheck size={15} />}
+              desc="Finished logs"
+              sparklinePath="M0,4 C10,12 20,2 30,8 C40,14 50,2 60,15"
+              accent="#10b981"
+            />
+          </div>
+
+          {/* Calendar weekly ribbon navigation */}
           <div className="calendar-nav-card">
             <div className="calendar-nav-header">
               <AnimatePresence mode="wait">
@@ -535,19 +523,12 @@ function CalendarWidget({ userId }) {
   )
 }
 
-function SummaryCard({ label, value, icon, desc, sparklinePath, accent, motionOK }) {
+const SummaryCard = memo(function SummaryCard({ label, value, icon, desc, sparklinePath, accent }) {
   const gradId = 'cal-spark-' + label.toLowerCase().replace(/[^a-z0-9]+/g, '-')
   const accentColor = accent || '#8b5cf6'
+  
   return (
-    <motion.div
-      className="kpi-card-glass"
-      tabIndex={0}
-      variants={{
-        hidden: { opacity: 0, y: 15 },
-        visible: { opacity: 1, y: 0, transition: { type: 'spring' } }
-      }}
-      whileHover={{ y: -4, transition: { duration: 0.25 } }}
-    >
+    <div className="kpi-card-glass" tabIndex={0}>
       <div className="kpi-header-row">
         <span className="kpi-label">{label}</span>
         <span className="kpi-icon-wrapper" style={{ background: accentColor + '22', color: accentColor }}>{icon}</span>
@@ -562,19 +543,16 @@ function SummaryCard({ label, value, icon, desc, sparklinePath, accent, motionOK
               <stop offset="100%" stopColor={accentColor} stopOpacity="1" />
             </linearGradient>
           </defs>
-          <motion.path
+          <path
             d={sparklinePath}
             stroke={`url(#${gradId})`}
             strokeWidth="1.75"
             strokeLinecap="round"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ duration: motionOK ? 1.1 : 0, ease, delay: motionOK ? 0.25 : 0 }}
           />
         </svg>
       </div>
-    </motion.div>
+    </div>
   )
-}
+})
 
 export default CalendarWidget
