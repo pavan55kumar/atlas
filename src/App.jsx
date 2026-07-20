@@ -4,7 +4,7 @@ import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import Auth from './Auth'
 import Dashboard from './Dashboard'
-import ForceUpdate from './components/ForceUpdate'
+import ForceUpdate from './ForceUpdate'
 
 function App() {
   const [theme, setTheme] = useState('dark')
