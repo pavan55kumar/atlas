@@ -233,88 +233,101 @@ button, a, input, textarea, select, div, span {
 :root[data-theme="light"] .ambient-particle {
   background-color: #6d5ef2;
 }
+
 /* ============================================================================
-   MOBILE UX & NATIVE APP OPTIMIZATIONS
+   ATLAS — SAFE CROSS-DEVICE UX OPTIMIZATIONS
+   Does not modify page scrolling or root layout behavior
    ============================================================================ */
 
-/* Prevent accidental horizontal page overflow */
-html,
-body,
-#root {
-  width: 100%;
-  min-height: 100%;
-}
-
-html,
-body {
-  overflow-x: hidden;
-}
-
-/* Better mobile scrolling */
+/* Better text rendering across devices */
 html {
-  scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
-  min-height: 100vh;
-  min-height: 100dvh;
-  overscroll-behavior-y: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Better touch interaction */
+/* Better touch responsiveness on mobile */
 button,
 a,
 [role="button"] {
   touch-action: manipulation;
 }
 
-/* Prevent iOS automatic input zoom */
-@media (max-width: 768px) {
-  input,
-  textarea,
-  select {
-    font-size: 16px;
-  }
+/* Improve keyboard accessibility */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
-/* Mobile card optimization */
+/* Make media responsive by default */
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+/* Prevent long text from unexpectedly breaking layouts */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+/* ============================================================================
+   MOBILE PHONES
+   ============================================================================ */
+
 @media (max-width: 600px) {
+
+  /* Slightly tighter global spacing tokens */
   :root {
-    --sp-3: 18px;
-    --sp-4: 24px;
-    --sp-5: 36px;
+    --sp-3: 20px;
+    --sp-4: 28px;
+    --sp-5: 40px;
   }
 
+  /* More comfortable cards on narrow screens */
   .card {
-    border-radius: 18px;
-    padding: 18px;
+    border-radius: 20px;
+    padding: 20px;
   }
-}
 
-/* Extra-small phones */
-@media (max-width: 360px) {
-  .card {
-    border-radius: 16px;
-    padding: 16px;
+  /* Disable desktop hover transitions on touch devices */
+  button {
+    transition:
+      transform 0.18s var(--ease),
+      background 0.2s ease,
+      opacity 0.2s ease;
   }
-}
 
-/* Reduce expensive ambient rendering on mobile */
-@media (max-width: 768px) {
+  /* Optimize ambient background rendering */
   .ambient-aurora-primary {
-    width: 340px;
-    height: 340px;
+    width: 360px;
+    height: 360px;
     filter: blur(80px);
   }
 
   .ambient-aurora-secondary {
-    width: 300px;
-    height: 300px;
+    width: 320px;
+    height: 320px;
     filter: blur(80px);
   }
 
-  /* Hide some particles to reduce GPU work */
+  /* Reduce particle count on mobile GPUs */
   .ambient-particle.p5,
   .ambient-particle.p6,
   .ambient-particle.p7,
@@ -323,25 +336,116 @@ a,
   }
 }
 
-/* Safe-area helper for Capacitor / iPhone */
-.safe-area-page {
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  padding-left: env(safe-area-inset-left, 0px);
+/* ============================================================================
+   VERY SMALL PHONES
+   ============================================================================ */
+
+@media (max-width: 380px) {
+
+  :root {
+    --sp-2: 14px;
+    --sp-3: 18px;
+    --sp-4: 24px;
+    --sp-5: 32px;
+  }
+
+  .card {
+    padding: 17px;
+    border-radius: 18px;
+  }
 }
 
-/* Full reduced-motion protection */
+/* ============================================================================
+   TABLETS
+   ============================================================================ */
+
+@media (min-width: 601px) and (max-width: 1024px) {
+
+  .card {
+    border-radius: 22px;
+  }
+
+  .ambient-aurora-primary {
+    width: 440px;
+    height: 440px;
+  }
+
+  .ambient-aurora-secondary {
+    width: 400px;
+    height: 400px;
+  }
+}
+
+/* ============================================================================
+   TOUCH DEVICES
+   ============================================================================ */
+
+@media (hover: none) and (pointer: coarse) {
+
+  /* Prevent desktop hover effects from becoming sticky */
+  .card:hover {
+    transform: none;
+  }
+
+  /* Native-feeling touch feedback */
+  button:active,
+  a:active,
+  [role="button"]:active {
+    opacity: 0.82;
+  }
+}
+
+/* ============================================================================
+   DESKTOP / PRECISION POINTER
+   ============================================================================ */
+
+@media (hover: hover) and (pointer: fine) {
+
+  button:hover {
+    transform: translateY(-1px);
+  }
+
+  button:active {
+    transform: translateY(0) scale(0.98);
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY — REDUCED MOTION
+   ============================================================================ */
+
 @media (prefers-reduced-motion: reduce) {
+
   html {
     scroll-behavior: auto;
   }
 
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+  .ambient-aurora-primary,
+  .ambient-aurora-secondary,
+  .ambient-particle {
+    animation: none !important;
+  }
+
+  .card,
+  button,
+  a {
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================================================
+   HIGH CONTRAST
+   ============================================================================ */
+
+@media (prefers-contrast: more) {
+
+  :root[data-theme="dark"] {
+    --text-muted: #B5B5BD;
+    --border: rgba(255, 255, 255, 0.14);
+  }
+
+  :root[data-theme="light"] {
+    --text-muted: #62626C;
+    --border: rgba(0, 0, 0, 0.12);
   }
 }
