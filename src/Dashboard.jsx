@@ -316,12 +316,16 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
       <AmbientBackground />
 
       <div style={{ display: 'flex', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
-        <Sidebar
-          activePath={location.pathname}
-          onNavigate={handleNavigate}
-          mobileOpen={mobileNavOpen}
-          onCloseMobile={closeMobileNav}
-        />
+       <Sidebar
+  page={
+    location.pathname === '/' || location.pathname === '/overview'
+      ? 'overview'
+      : location.pathname.slice(1)
+  }
+  onNavigate={handleNavigate}
+  mobileOpen={mobileNavOpen}
+  onCloseMobile={closeMobileNav}
+/>
 
         <div style={{ flex: 1, maxWidth: '1040px', minWidth: 0 }}>
           <div style={headerWrap}>

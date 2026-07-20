@@ -7,6 +7,7 @@ import {
   Sparkles, ListOrdered,
   Settings, Info, ChevronDown, X
 } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
 
 const SECTIONS = [
   {
@@ -213,40 +214,67 @@ function Sidebar({ page, onNavigate, mobileOpen, onCloseMobile }) {
 
   const pushedHistoryRef = useRef(false)
 
-  useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = 'hidden'
+ useEffect(() => {
+  if (!mobileOpen) {
+    document.body.style.overflow = ''
+    return
+  }
 
-      window.history.pushState({ atlasDrawerOpen: true }, '')
-      pushedHistoryRef.current = true
+  document.body.style.overflow = 'hidden'
 
-      const handlePopState = () => {
-        pushedHistoryRef.current = false
-        onCloseMobile()
-      }
-      const handleEsc = (e) => e.key === 'Escape' && closeDrawer()
-
-      window.addEventListener('popstate', handlePopState)
-      window.addEventListener('keydown', handleEsc)
-      return () => {
-        document.body.style.overflow = ''
-        window.removeEventListener('popstate', handlePopState)
-        window.removeEventListener('keydown', handleEsc)
-      }
-    } else {
+  // Native Android:
+  // Do NOT manipulate browser/WebView history.
+  // Dashboard handles the Android hardware back button.
+  if (Capacitor.isNativePlatform()) {
+    return () => {
       document.body.style.overflow = ''
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mobileOpen])
+  }
 
-  function closeDrawer() {
-    if (pushedHistoryRef.current) {
-      pushedHistoryRef.current = false
-      window.history.back()
-    } else {
-      onCloseMobile()
+  // Web/PWA only:
+  // Add history entry so browser back closes the drawer.
+  window.history.pushState({ atlasDrawerOpen: true }, '')
+  pushedHistoryRef.current = true
+
+  const handlePopState = () => {
+    pushedHistoryRef.current = false
+    onCloseMobile()
+  }
+
+  const handleEsc = (e) => {
+    if (e.key === 'Escape') {
+      closeDrawer()
     }
   }
+
+  window.addEventListener('popstate', handlePopState)
+  window.addEventListener('keydown', handleEsc)
+
+  return () => {
+    document.body.style.overflow = ''
+    window.removeEventListener('popstate', handlePopState)
+    window.removeEventListener('keydown', handleEsc)
+  }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mobileOpen])
+
+function closeDrawer() {
+  // Native Android:
+  // Never manipulate browser history.
+  if (Capacitor.isNativePlatform()) {
+    onCloseMobile()
+    return
+  }
+
+  // Web/PWA:
+  if (pushedHistoryRef.current) {
+    pushedHistoryRef.current = false
+    window.history.back()
+  } else {
+    onCloseMobile()
+  }
+}
 
   const handleMouseEnter = () => {
     hoverTimeout.current = setTimeout(() => setExpanded(true), 150)
