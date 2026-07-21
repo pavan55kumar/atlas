@@ -53,4 +53,4 @@ export const rowStyle = {
   padding: '10px 12px',
   borderRadius: '10px',
   background: 'var(--surface-2)'
-}
+} 
