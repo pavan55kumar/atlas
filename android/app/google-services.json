@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "27460674569",
+    "project_id": "atlas-7a575",
+    "storage_bucket": "atlas-7a575.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:27460674569:android:c91c44f95d3d111e8a84d8",
+        "android_client_info": {
+          "package_name": "com.pavan.atlas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALyJUxdjEFMnwom29fpz18MLEzfYCbRLs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
