@@ -4,7 +4,6 @@ import {
   CheckCircle2, Flame, Target, Calendar as CalIcon, PlusCircle,
   Brain, Sparkles, Clock3, ArrowRight
 } from 'lucide-react'
-import { Capacitor } from '@capacitor/core'
 import { supabase } from './lib/supabase'
 import ProgressRing from './ProgressRing'
 import Sparkline from './Sparkline'
@@ -30,7 +29,7 @@ const fadeUp = function (delay) {
   }
 }
 
-const isNative = Capacitor.isNativePlatform()
+
 
 const RingKpi = memo(function RingKpi({ icon, accent, label, value, sub, delay, ringValue, ringColor }) {
   return (
