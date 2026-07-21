@@ -129,29 +129,7 @@ const QuickAction = memo(function QuickAction({ icon, label, color, onClick }) {
 // Shared ambient background markup, extracted only so the loading state
 // and the loaded state render the exact same background shell instead of
 // mounting/unmounting it — this is what removes the load-in "jump".
-function AmbientBackground() {
-  return (
-    <div className="ov-ambient-bg" aria-hidden="true">
-      {isNative ? (
-        // Reduced background elements for Android performance
-        <>
-          <span className="ov-particle ov-particle-1" />
-          <span className="ov-particle ov-particle-2" />
-        </>
-      ) : (
-        <>
-          <span className="ov-particle ov-particle-1" />
-          <span className="ov-particle ov-particle-2" />
-          <span className="ov-particle ov-particle-3" />
-          <span className="ov-speck ov-speck-1" />
-          <span className="ov-speck ov-speck-2" />
-          <span className="ov-speck ov-speck-3" />
-          <span className="ov-speck ov-speck-4" />
-        </>
-      )}
-    </div>
-  )
-}
+
 
 function Overview({ userId, onNavigate }) {
   const [stats, setStats] = useState(null)
@@ -210,7 +188,7 @@ function Overview({ userId, onNavigate }) {
   if (!stats) {
     return (
       <div className="ov-page">
-        <AmbientBackground />
+        
         <SkeletonKpiRow />
       </div>
     )
@@ -231,7 +209,7 @@ function Overview({ userId, onNavigate }) {
 
   return (
     <div className="ov-page">
-      <AmbientBackground />
+      
 
       {/* 1. Entrance Animation: Hero */}
       <motion.div {...fadeUp(0)} whileHover={{ y: -2 }} transition={springTap} className="card ov-hero ov-glass">
