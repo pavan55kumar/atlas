@@ -31,7 +31,11 @@
   --accent-gold: #e1b12c;
 }
 
-body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
+html[data-theme="light"],
+html.light-theme,
+html.light,
+body.light-theme,
+body.light {
   --canvas-bg: #f7f7fb;
   --glass-base: rgba(255, 255, 255, 0.68);
   --glass-sheen-1: rgba(255, 255, 255, 0.5);
@@ -79,8 +83,16 @@ main:has(> .tasks-wrapper) {
   padding: 0 !important;
 }
 
-* { -webkit-tap-highlight-color: transparent !important; }
-*:focus { outline: none !important; box-shadow: none !important; }
+/* FIX: these two rules were previously unscoped (`* { ... }` / `*:focus { ... }`),
+   which meant that once this file loaded, they applied to the ENTIRE app for
+   the rest of the session — not just the Tasks page — since it's a plain CSS
+   import, not a CSS module. That silently killed keyboard focus rings
+   everywhere (a real accessibility/UX regression on Vercel desktop) and could
+   fight with App.css's global :focus-visible rule. Scoped to .tasks-wrapper,
+   and switched from :focus to :focus-visible so keyboard users still get an
+   outline — only the "ugly outline after a mouse/touch click" is suppressed. */
+.tasks-wrapper * { -webkit-tap-highlight-color: transparent; }
+.tasks-wrapper *:focus:not(:focus-visible) { outline: none; box-shadow: none; }
 
 .aurora-blur-sphere {
   position: absolute;
@@ -104,11 +116,17 @@ main:has(> .tasks-wrapper) {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* ---------- Shared glass surface ---------- */
+/* ---------- Shared glass surface ----------
+   FIX: `.task-quest-card` removed from this shared backdrop-filter rule.
+   It repeats once per task — on a list of 30-50+ tasks that was 30-50
+   separately composited blur layers, a well-known cause of scroll jank on
+   Android WebViews. It gets its own rule below with the same background/
+   border/shadow but WITHOUT backdrop-filter, since the translucent
+   background gradient already reads as "glass" without needing the
+   per-row blur cost. */
 .subjects-hero-header,
 .kpi-card-glass,
 .task-form-card,
-.task-quest-card,
 .empty-quest-state {
   background-color: var(--glass-base);
   background-image: linear-gradient(165deg, var(--glass-sheen-1) 0%, var(--glass-sheen-2) 100%);
@@ -116,6 +134,15 @@ main:has(> .tasks-wrapper) {
   box-shadow: var(--card-shadow);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  position: relative;
+}
+
+/* Task rows: same visual surface, no per-row backdrop-filter cost */
+.task-quest-card {
+  background-color: var(--glass-base);
+  background-image: linear-gradient(165deg, var(--glass-sheen-1) 0%, var(--glass-sheen-2) 100%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--card-shadow);
   position: relative;
 }
 
@@ -265,12 +292,6 @@ body.light-theme .semester-pill, body.light .semester-pill, .light-theme .semest
   transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, box-shadow 0.3s ease;
 }
 
-.kpi-card-glass:hover {
-  transform: translateY(-4px);
-  border-color: rgba(139, 92, 246, 0.22);
-  box-shadow: var(--card-shadow-hover);
-}
-
 .kpi-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .kpi-label { font-size: 10px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.07em; }
 .kpi-icon-wrapper {
@@ -351,7 +372,6 @@ body.light-theme .pager-dot.active, body.light .pager-dot.active, .light-theme .
   z-index: 1;
   pointer-events: none;
 }
-.btn-add:hover { box-shadow: 0 10px 26px var(--btn-primary-glow), inset 0 1px 0 rgba(255, 255, 255, 0.22); }
 .btn-add-content { position: relative; z-index: 3; display: flex; align-items: center; gap: 8px; }
 .btn-ripple-layer { position: absolute; inset: 0; z-index: 2; overflow: hidden; border-radius: inherit; pointer-events: none; }
 .btn-ripple {
@@ -436,7 +456,6 @@ body.light-theme .priority-btn.active.medium, body.light .priority-btn.active.me
   gap: 6px;
   min-width: 0;
 }
-.filter-tab:hover { color: var(--text-primary); }
 .filter-tab.active { color: var(--text-primary); }
 .filter-tab-label { position: relative; z-index: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -478,7 +497,6 @@ body.light-theme .active-tab-indicator, body.light .active-tab-indicator, .light
   box-sizing: border-box;
   overflow: hidden;
 }
-.task-quest-card:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.1); box-shadow: var(--card-shadow-hover); }
 
 .task-quest-card.high-p { border-left: 2.5px solid var(--priority-high); background-image: linear-gradient(90deg, rgba(239, 68, 68, 0.05) 0%, transparent 40%), linear-gradient(165deg, var(--glass-sheen-1) 0%, var(--glass-sheen-2) 100%); }
 .task-quest-card.medium-p { border-left: 2.5px solid var(--priority-medium); background-image: linear-gradient(90deg, rgba(245, 158, 11, 0.05) 0%, transparent 40%), linear-gradient(165deg, var(--glass-sheen-1) 0%, var(--glass-sheen-2) 100%); }
@@ -494,13 +512,11 @@ body.light-theme .active-tab-indicator, body.light .active-tab-indicator, .light
   transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
   flex-shrink: 0;
 }
-.checkbox-wrapper:hover .custom-checkbox-node { border-color: var(--accent-purple); }
 .custom-checkbox-node.checked {
   background: linear-gradient(135deg, #a78bfa, var(--accent-purple));
   border-color: var(--accent-purple);
   box-shadow: 0 0 7px rgba(139, 92, 246, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.35);
 }
-body.light-theme .checkbox-wrapper:hover .custom-checkbox-node, body.light .checkbox-wrapper:hover .custom-checkbox-node, .light-theme .checkbox-wrapper:hover .custom-checkbox-node, .light .checkbox-wrapper:hover .custom-checkbox-node, [data-theme="light"] .checkbox-wrapper:hover .custom-checkbox-node { border-color: #6152e8; }
 body.light-theme .custom-checkbox-node.checked, body.light .custom-checkbox-node.checked, .light-theme .custom-checkbox-node.checked, .light .custom-checkbox-node.checked, [data-theme="light"] .custom-checkbox-node.checked { background: linear-gradient(135deg, #8172f2, #6152e8); border-color: #6152e8; box-shadow: 0 0 7px rgba(97, 82, 232, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.4); }
 
 .custom-checkbox-node svg { color: #ffffff; opacity: 0; transform: scale(0.6); transition: opacity 0.15s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1); }
@@ -524,7 +540,6 @@ body.light-theme .custom-checkbox-node.checked, body.light .custom-checkbox-node
   transition: transform 0.2s ease, background 0.2s ease;
   white-space: nowrap;
 }
-.quest-priority-badge:hover { transform: scale(1.04); }
 .badge-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
 .quest-priority-badge.badge-high { background: rgba(239, 68, 68, 0.10); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.18); }
 .quest-priority-badge.badge-medium { background: rgba(245, 158, 11, 0.10); color: #fbbf5e; border: 1px solid rgba(245, 158, 11, 0.18); }
@@ -537,7 +552,67 @@ body.light-theme .quest-priority-badge.badge-medium, body.light .quest-priority-
   transition: background 0.2s ease, color 0.2s ease;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.btn-delete-quest:hover { background: rgba(239, 68, 68, 0.08); color: #f87171; }
+
+/* ============================================================
+   FIX: all :hover-based interaction effects below were previously
+   bare `:hover` selectors. App.css already establishes the pattern
+   of gating hover effects behind `@media (hover: hover) and
+   (pointer: fine)` specifically because touch/Capacitor Android
+   WebViews can trigger :hover on tap and then get "stuck" in that
+   state until the user taps elsewhere. These rules didn't have that
+   guard, so tapping a KPI card, task row, priority badge, filter
+   tab, or delete button on Android could leave it visually stuck
+   lifted/highlighted. Wrapping them here fixes that, consistent
+   with the rest of the app.
+   ============================================================ */
+@media (hover: hover) and (pointer: fine) {
+  .kpi-card-glass:hover {
+    transform: translateY(-4px);
+    border-color: rgba(139, 92, 246, 0.22);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  .btn-add:hover {
+    box-shadow: 0 10px 26px var(--btn-primary-glow), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+
+  .checkbox-wrapper:hover .custom-checkbox-node {
+    border-color: var(--accent-purple);
+  }
+  body.light-theme .checkbox-wrapper:hover .custom-checkbox-node,
+  body.light .checkbox-wrapper:hover .custom-checkbox-node,
+  .light-theme .checkbox-wrapper:hover .custom-checkbox-node,
+  .light .checkbox-wrapper:hover .custom-checkbox-node,
+  [data-theme="light"] .checkbox-wrapper:hover .custom-checkbox-node {
+    border-color: #6152e8;
+  }
+
+  .filter-tab:hover { color: var(--text-primary); }
+
+  .quest-priority-badge:hover { transform: scale(1.04); }
+
+  .btn-delete-quest:hover { background: rgba(239, 68, 68, 0.08); color: #f87171; }
+
+  .task-quest-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: var(--card-shadow-hover);
+  }
+}
+
+/* NEW: touch-only tap feedback, replacing the hover cues removed above.
+   Without this, tapping these elements on a touch device would give no
+   visual response at all until the async DB update resolves — which can
+   feel unresponsive/"dead" on a slower connection. Uses the same scale
+   values already used by this file's framer-motion whileTap props, so
+   the feel is consistent whether the animation comes from JS or CSS. */
+@media (hover: none) and (pointer: coarse) {
+  .kpi-card-glass:active { transform: scale(0.985); }
+  .task-quest-card:active { transform: scale(0.99); }
+  .quest-priority-badge:active { transform: scale(0.94); }
+  .filter-tab:active { opacity: 0.75; }
+  .btn-delete-quest:active { background: rgba(239, 68, 68, 0.1); opacity: 0.85; }
+}
 
 /* Empty state */
 .empty-quest-state {

@@ -123,8 +123,63 @@ function Habits({ userId }) {
   const [loading, setLoading] = useState(true)
   const [menuOpenId, setMenuOpenId] = useState(null)
   const [celebrateId, setCelebrateId] = useState(null)
+  // NEW: hover-capability detection, same pattern already used in Tasks.jsx.
+  // framer-motion's whileHover can trigger (and visually "stick") on touch
+  // devices the same way CSS :hover can, since touch can fire pointer-enter-
+  // like events. Gating whileHover behind this prevents habit cards from
+  // getting stuck lifted/tilted after a tap on Android/Capacitor.
+  const [isHoverable, setIsHoverable] = useState(false)
+
+  // NEW: guards against double-tap / rapid re-tap race conditions on
+  // markDoneToday. Previously the "already done today" check read local
+  // React state, which hadn't updated yet if the user tapped twice quickly
+  // — both calls could pass the guard, inserting two habit_logs rows and
+  // double-incrementing the streak for a single intended tap.
+  const pendingCompletionsRef = useRef(new Set())
+
+  // NEW: tracks the confetti auto-clear timeout so it can be cancelled on
+  // unmount (previously ungoverned setTimeout could fire setState after the
+  // component unmounted, e.g. if the user navigates away right after
+  // marking a habit done).
+  const celebrateTimeoutRef = useRef(null)
 
   useEffect(function () { fetchHabits() }, [])
+
+  // NEW: detect hover capability once, mirroring Tasks.jsx
+  useEffect(function () {
+    setIsHoverable(window.matchMedia('(hover: hover)').matches)
+  }, [])
+
+  // NEW: clear any pending confetti timeout on unmount
+  useEffect(function () {
+    return function () {
+      if (celebrateTimeoutRef.current) clearTimeout(celebrateTimeoutRef.current)
+    }
+  }, [])
+
+  // NEW: close the open habit menu on outside click/tap or Escape.
+  // Previously the dropdown had no dismissal path other than re-clicking
+  // the same toggle button or choosing Delete — a common "menu won't close"
+  // complaint on mobile.
+  useEffect(function () {
+    if (!menuOpenId) return
+
+    function handleOutside(e) {
+      if (!e.target.closest('.habit-menu-btn') && !e.target.closest('.habit-menu')) {
+        setMenuOpenId(null)
+      }
+    }
+    function handleEscape(e) {
+      if (e.key === 'Escape') setMenuOpenId(null)
+    }
+
+    document.addEventListener('pointerdown', handleOutside)
+    document.addEventListener('keydown', handleEscape)
+    return function () {
+      document.removeEventListener('pointerdown', handleOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [menuOpenId])
 
   async function fetchHabits() {
     const { data: habitsData, error } = await supabase
@@ -174,56 +229,72 @@ function Habits({ userId }) {
   // days stay empty, they are never backfilled or implied.
   // ---------------------------------------------------------------------
   async function markDoneToday(habit) {
-    const today = toDateKey(new Date())
+    // NEW: re-entrancy guard. If a request for this habit is already in
+    // flight, ignore this tap instead of racing it against local state
+    // that hasn't caught up yet.
+    if (pendingCompletionsRef.current.has(habit.id)) return
+    pendingCompletionsRef.current.add(habit.id)
 
-    // Case 1: already marked done today. Bail out before touching the DB so
-    // we never double-increment the streak or insert a second log for today.
-    if (habit.last_completed === today) return
-    // Belt-and-suspenders duplicate guard: even if `last_completed` were ever
-    // out of sync with habit_logs, don't insert a second log for the same day.
-    if (logs[habit.id] && logs[habit.id].has(today)) return
+    try {
+      const today = toDateKey(new Date())
 
-    const yesterday = toDateKey(addDays(new Date(), -1))
+      // Case 1: already marked done today. Bail out before touching the DB so
+      // we never double-increment the streak or insert a second log for today.
+      if (habit.last_completed === today) return
+      // Belt-and-suspenders duplicate guard: even if `last_completed` were ever
+      // out of sync with habit_logs, don't insert a second log for the same day.
+      if (logs[habit.id] && logs[habit.id].has(today)) return
 
-    let newStreak
-    if (!habit.last_completed) {
-      // Case 4: first completion ever.
-      newStreak = 1
-    } else if (habit.last_completed === yesterday) {
-      // Case 2: consecutive calendar day -> extend the streak.
-      newStreak = habit.streak + 1
-    } else {
-      // Case 3: one or more days were missed since the last completion.
-      newStreak = 1
-    }
+      const yesterday = toDateKey(addDays(new Date(), -1))
 
-    const { error: updateError } = await supabase.from('habits')
-      .update({ streak: newStreak, last_completed: today })
-      .eq('id', habit.id)
-    if (updateError) return
+      let newStreak
+      if (!habit.last_completed) {
+        // Case 4: first completion ever.
+        newStreak = 1
+      } else if (habit.last_completed === yesterday) {
+        // Case 2: consecutive calendar day -> extend the streak.
+        newStreak = habit.streak + 1
+      } else {
+        // Case 3: one or more days were missed since the last completion.
+        newStreak = 1
+      }
 
-    const { error: logError } = await supabase.from('habit_logs')
-      .insert([{ habit_id: habit.id, user_id: userId, completed_date: today }])
-    if (logError) return
+      const { error: updateError } = await supabase.from('habits')
+        .update({ streak: newStreak, last_completed: today })
+        .eq('id', habit.id)
+      if (updateError) return
 
-    // Update local state directly (instead of re-fetching everything) so the
-    // ring/streak/heatmap/sparkline all reflect the change with zero extra
-    // Supabase requests.
-    setHabits(function (prev) {
-      return prev.map(function (h) {
-        return h.id === habit.id ? { ...h, streak: newStreak, last_completed: today } : h
+      const { error: logError } = await supabase.from('habit_logs')
+        .insert([{ habit_id: habit.id, user_id: userId, completed_date: today }])
+      if (logError) return
+
+      // Update local state directly (instead of re-fetching everything) so the
+      // ring/streak/heatmap/sparkline all reflect the change with zero extra
+      // Supabase requests.
+      setHabits(function (prev) {
+        return prev.map(function (h) {
+          return h.id === habit.id ? { ...h, streak: newStreak, last_completed: today } : h
+        })
       })
-    })
-    setLogs(function (prev) {
-      const next = { ...prev }
-      const set = new Set(next[habit.id] || [])
-      set.add(today)
-      next[habit.id] = set
-      return next
-    })
+      setLogs(function (prev) {
+        const next = { ...prev }
+        const set = new Set(next[habit.id] || [])
+        set.add(today)
+        next[habit.id] = set
+        return next
+      })
 
-    setCelebrateId(habit.id)
-    setTimeout(function () { setCelebrateId(null) }, 1100)
+      setCelebrateId(habit.id)
+      // CHANGED: clear any previous pending clear-timeout before scheduling a
+      // new one, and store the id so it can be cancelled on unmount.
+      if (celebrateTimeoutRef.current) clearTimeout(celebrateTimeoutRef.current)
+      celebrateTimeoutRef.current = setTimeout(function () {
+        setCelebrateId(null)
+        celebrateTimeoutRef.current = null
+      }, 1100)
+    } finally {
+      pendingCompletionsRef.current.delete(habit.id)
+    }
   }
 
   async function deleteHabit(id) {
@@ -294,7 +365,9 @@ function Habits({ userId }) {
                   layout
                   variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
                   exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-                  whileHover={{ y: -6, rotate: -0.4 }}
+                  // CHANGED: gated behind isHoverable so touch devices never
+                  // get "stuck" in the lifted/tilted hover state.
+                  whileHover={isHoverable ? { y: -6, rotate: -0.4 } : undefined}
                   whileTap={{ scale: 0.98 }}
                   transition={{ type: 'spring', stiffness: 260, damping: 22 }}
                   className="habit-card"
@@ -477,15 +550,39 @@ function Habits({ userId }) {
   )
 }
 
+// ---------------------------------------------------------------------------
+// CHANGED: Heatmap now renders the current calendar MONTH (28-31 real day
+// cells, matching the actual number of days in the current month) instead
+// of a fixed 98-day / 14-week strip. Days are aligned to their real weekday
+// column (day 1 lands under whatever weekday it actually falls on, with
+// blank filler cells before it) so it reads like a real month, not an
+// arbitrary contribution graph. Days later in the month that haven't
+// happened yet are rendered at very low opacity instead of looking like
+// "missed" days, since they haven't occurred. Visual style (cell size,
+// gap, colors, rounding) is unchanged — only which days are shown, and how
+// they're aligned, changed.
+// ---------------------------------------------------------------------------
 function Heatmap({ completedDates, accent }) {
-  const totalDays = 98
-  const cells = []
   const today = new Date()
+  const year = today.getFullYear()
+  const month = today.getMonth()
+  const daysInMonth = new Date(year, month + 1, 0).getDate() // 28-31
+  const firstWeekday = new Date(year, month, 1).getDay() // 0 = Sunday
+  const todayKey = toDateKey(today)
 
-  for (let i = totalDays - 1; i >= 0; i--) {
-    const d = addDays(today, -i)
+  const cells = []
+  // Leading blanks so day 1 lands in its correct weekday column
+  for (let i = 0; i < firstWeekday; i++) {
+    cells.push(null)
+  }
+  for (let day = 1; day <= daysInMonth; day++) {
+    const d = new Date(year, month, day)
     const key = toDateKey(d)
-    cells.push({ date: key, done: completedDates.has(key) })
+    cells.push({
+      date: key,
+      done: completedDates.has(key),
+      isFuture: key > todayKey
+    })
   }
 
   const weeks = []
@@ -499,6 +596,10 @@ function Heatmap({ completedDates, accent }) {
         return (
           <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
             {week.map(function (cell, ci) {
+              if (!cell) {
+                // Blank leading filler cell — keeps the grid aligned to real weekdays
+                return <div key={ci} style={{ width: '9px', height: '9px' }} />
+              }
               return (
                 <div
                   key={ci}
@@ -508,7 +609,7 @@ function Heatmap({ completedDates, accent }) {
                     height: '9px',
                     borderRadius: '2px',
                     background: cell.done ? accent : 'var(--border)',
-                    opacity: cell.done ? 1 : 0.5
+                    opacity: cell.isFuture ? 0.15 : (cell.done ? 1 : 0.5)
                   }}
                 />
               )

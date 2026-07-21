@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
 const skeletonCss = `
   .skeleton-shape {
@@ -46,14 +46,58 @@ const skeletonCss = `
   }
 `
 
+// Visually-hidden but screen-reader-accessible text.
+// FIX #2: skeleton rows are aria-hidden (correct — there's nothing
+// meaningful for AT to read in the placeholder shapes themselves), but
+// that left zero announcement that a loading state was happening at all.
+// This gives screen-reader users a "Loading…" announcement while sighted
+// users see no visual change.
+const srOnlyStyle = {
+  position: 'absolute',
+  width: '1px',
+  height: '1px',
+  padding: 0,
+  margin: '-1px',
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0
+}
+
+// FIX #1: previously every <Skeleton> instance rendered its own
+// <style>{skeletonCss}</style> tag. SkeletonKpiRow alone renders 4 cards
+// x 3 shapes = 12 identical <style> tags injected into the DOM at once on
+// mount — 12 redundant parses of the exact same CSS at the exact moment
+// the page is already loading. This module-level flag ensures only the
+// FIRST mounted Skeleton in the tree actually renders the <style> tag;
+// every other instance skips it. If that owner unmounts, the flag resets
+// so the next mount can take over — so styles never disappear.
+let styleOwnerActive = false
+
 function Skeleton({ height, width, radius, style }) {
   const h = height || '16px'
   const w = width || '100%'
   const r = radius || '8px'
 
+  const [isStyleOwner] = useState(() => {
+    if (!styleOwnerActive) {
+      styleOwnerActive = true
+      return true
+    }
+    return false
+  })
+
+  useEffect(() => {
+    return () => {
+      if (isStyleOwner) {
+        styleOwnerActive = false
+      }
+    }
+  }, [isStyleOwner])
+
   return (
     <>
-      <style>{skeletonCss}</style>
+      {isStyleOwner && <style>{skeletonCss}</style>}
       <div
         aria-hidden="true"
         className="skeleton-shape"
@@ -67,64 +111,77 @@ function Skeleton({ height, width, radius, style }) {
   )
 }
 
-export function SkeletonKpiRow() {
+export function SkeletonKpiRow({ label }) {
   const cards = [0, 1, 2, 3]
-  
+
   return (
-    <div 
-      style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-        gap: '16px', 
-        marginBottom: '16px',
-        width: '100%'
-      }}
-      aria-hidden="true"
-    >
-      {cards.map(function (i) {
-        const delay = `${i * 0.12}s`
-        return (
-          <div 
-            key={i} 
-            className="card" 
-            style={{ 
-              padding: '24px', 
-              display: 'flex', 
-              flexDirection: 'column', 
-              justifyContent: 'space-between', 
-              minHeight: '160px',
-              boxSizing: 'border-box'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <Skeleton width="44px" height="44px" radius="12px" style={{ animationDelay: delay }} />
-              <Skeleton width="48px" height="48px" radius="50%" style={{ animationDelay: delay }} />
+    <>
+      {/* FIX #2: accessible loading announcement, visually hidden */}
+      <span role="status" aria-live="polite" style={srOnlyStyle}>
+        {label || 'Loading dashboard overview…'}
+      </span>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '16px',
+          marginBottom: '16px',
+          width: '100%'
+        }}
+        aria-hidden="true"
+      >
+        {cards.map(function (i) {
+          const delay = `${i * 0.12}s`
+          return (
+            <div
+              key={i}
+              className="card"
+              style={{
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                minHeight: '160px',
+                boxSizing: 'border-box'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <Skeleton width="44px" height="44px" radius="12px" style={{ animationDelay: delay }} />
+                <Skeleton width="48px" height="48px" radius="50%" style={{ animationDelay: delay }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+                <Skeleton width="60%" height="12px" radius="4px" style={{ animationDelay: delay }} />
+                <Skeleton width="85%" height="24px" radius="6px" style={{ animationDelay: delay }} />
+                <Skeleton width="40%" height="10px" radius="4px" style={{ animationDelay: delay }} />
+              </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
-              <Skeleton width="60%" height="12px" radius="4px" style={{ animationDelay: delay }} />
-              <Skeleton width="85%" height="24px" radius="6px" style={{ animationDelay: delay }} />
-              <Skeleton width="40%" height="10px" radius="4px" style={{ animationDelay: delay }} />
-            </div>
-          </div>
-        )
-      })}
-    </div>
+          )
+        })}
+      </div>
+    </>
   )
 }
 
-export function SkeletonLines({ count }) {
+export function SkeletonLines({ count, label }) {
   const n = count || 3
-  
+
   return (
-    <div 
-      style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}
-      aria-hidden="true"
-    >
-      {Array.from({ length: n }).map(function (_, i) {
-        const delay = `${i * 0.1}s`
-        return <Skeleton key={i} height="14px" width={i % 2 === 0 ? '90%' : '70%'} style={{ animationDelay: delay }} />
-      })}
-    </div>
+    <>
+      <span role="status" aria-live="polite" style={srOnlyStyle}>
+        {label || 'Loading content…'}
+      </span>
+
+      <div
+        style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}
+        aria-hidden="true"
+      >
+        {Array.from({ length: n }).map(function (_, i) {
+          const delay = `${i * 0.1}s`
+          return <Skeleton key={i} height="14px" width={i % 2 === 0 ? '90%' : '70%'} style={{ animationDelay: delay }} />
+        })}
+      </div>
+    </>
   )
 }
 

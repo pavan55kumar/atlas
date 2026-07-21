@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, memo } from 'react'
+import { useEffect, useState, useMemo, useCallback, memo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CheckCircle2, Plus, Trash2, Sparkles,
@@ -28,6 +28,12 @@ function Tasks({ userId }) {
   const [isHoverable, setIsHoverable] = useState(false)
   const [ripples, setRipples] = useState([])
 
+  // NEW: track pending ripple-removal timeouts so they can be cleared on
+  // unmount. Previously these setTimeout calls had no cleanup, so navigating
+  // away right after tapping "Add Task" could fire setRipples() on an
+  // unmounted component (React warning + wasted work).
+  const rippleTimeoutsRef = useRef(new Set())
+
   const fetchTasks = useCallback(async () => {
     // If we have cache, don't show loading state, just refresh silently
     if (!taskCache[userId]) setLoading(true)
@@ -51,6 +57,14 @@ function Tasks({ userId }) {
     setIsHoverable(window.matchMedia('(hover: hover)').matches)
     fetchTasks()
   }, [fetchTasks])
+
+  // NEW: clear any pending ripple timeouts when the component unmounts
+  useEffect(() => {
+    return () => {
+      rippleTimeoutsRef.current.forEach((id) => clearTimeout(id))
+      rippleTimeoutsRef.current.clear()
+    }
+  }, [])
 
   const addTask = useCallback(async (e) => {
     e.preventDefault()
@@ -158,9 +172,13 @@ function Tasks({ userId }) {
     const y = e.clientY - rect.top - size / 2
     const id = Date.now() + Math.random()
     setRipples(prev => [...prev, { id, x, y, size }])
-    setTimeout(() => {
+
+    // CHANGED: store the timeout id so it can be cancelled on unmount
+    const timeoutId = setTimeout(() => {
       setRipples(prev => prev.filter(r => r.id !== id))
+      rippleTimeoutsRef.current.delete(timeoutId)
     }, 650)
+    rippleTimeoutsRef.current.add(timeoutId)
   }, [])
 
   const filteredTasks = useMemo(() => {
