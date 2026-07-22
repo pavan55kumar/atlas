@@ -92,8 +92,20 @@ body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
   margin: 0 auto;
   position: relative;
   padding: var(--space-lg) var(--space-md);
-  padding-left: max(var(--space-md), env(safe-area-inset-left));
-  padding-right: max(var(--space-md), env(safe-area-inset-right));
+
+  /* CHANGED: these two formulas are now computed ONCE here as variables,
+     instead of being retyped separately in the mobile carousel rule below.
+     Retyping the same clamp()/env() expression in two places is what left
+     the stray gap — even identical-looking formulas can round a fraction
+     of a pixel differently depending on where they're evaluated, and the
+     parent's overflow-x: hidden then locks that sliver in as a visible
+     gap. Referencing the same variable in both places removes any chance
+     of divergence. */
+  --pad-l: max(var(--space-md), env(safe-area-inset-left));
+  --pad-r: max(var(--space-md), env(safe-area-inset-right));
+  padding-left: var(--pad-l);
+  padding-right: var(--pad-r);
+
   padding-bottom: calc(clamp(24px, 6vw, 32px) + env(safe-area-inset-bottom));
   touch-action: pan-y;
   overflow-x: hidden; /* Kept for aurora spheres only */
@@ -690,16 +702,20 @@ body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
      true screen edge the same way a native carousel does, with
      scroll-snap so cards settle cleanly instead of stopping mid-card.
      ================================================================== */
-  .stats-carousel-grid {
+.stats-carousel-grid {
     display: flex;
     overflow-x: auto;
     overflow-y: visible;
     scroll-snap-type: x mandatory;
     gap: 12px;
-    padding: 4px max(var(--space-md), env(safe-area-inset-right)) 4px max(var(--space-md), env(safe-area-inset-left));
-    margin-left: calc(-1 * max(var(--space-md), env(safe-area-inset-left)));
-    margin-right: calc(-1 * max(var(--space-md), env(safe-area-inset-right)));
-    width: calc(100% + max(var(--space-md), env(safe-area-inset-left)) + max(var(--space-md), env(safe-area-inset-right)));
+    /* CHANGED: was two separately-typed max(var(--space-md), env(...))
+       expressions. Now reuses the exact same --pad-l/--pad-r values
+       already resolved once on .calendar-dashboard, so the bleed and the
+       compensating padding are guaranteed to cancel out with zero gap. */
+    padding: 4px var(--pad-r) 4px var(--pad-l);
+    margin-left: calc(-1 * var(--pad-l));
+    margin-right: calc(-1 * var(--pad-r));
+    width: calc(100% + var(--pad-l) + var(--pad-r));
     -webkit-overflow-scrolling: touch;
     box-sizing: border-box;
   }
