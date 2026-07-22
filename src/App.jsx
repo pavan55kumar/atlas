@@ -1,11 +1,12 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import { App as CapacitorApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
-import { Network } from '@capacitor/network' // NEW: Capacitor network plugin, replaces window 'online' event
 import Auth from './Auth'
 import Dashboard from './Dashboard'
 import ForceUpdate from './ForceUpdate'
+// NEW: local notifications setup + bulk reschedule
+import { initNotifications, rescheduleAllReminders } from './notifications'
 
 function App() {
   const [theme, setTheme] = useState('dark')
@@ -17,12 +18,6 @@ function App() {
   const [updateRequired, setUpdateRequired] = useState(false)
   const [updateInfo, setUpdateInfo] = useState(null)
 
-  // NEW: refs used only for network-change de-duplication.
-  // Refs (not state) so they don't trigger re-renders and always
-  // hold the latest value inside the network listener's closure.
-  const isCheckingRef = useRef(false)      // guards against overlapping checkAppVersion() calls
-  const wasOfflineRef = useRef(false)      // tracks previous connection status to detect the offline -> online transition
-
   // Apply theme
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -33,120 +28,108 @@ function App() {
     checkAppVersion()
   }, [])
 
-  // ---------------------------------------------------------
-  // REPLACED: previously used window.addEventListener('online', ...).
-  // Now uses @capacitor/network, which is the reliable, native-backed
-  // way to detect connectivity changes on Android (window 'online'/'offline'
-  // events are unreliable inside Capacitor WebViews).
-  // ---------------------------------------------------------
+  // NEW: one-time notification channel setup (native only, no-op on web/PWA)
   useEffect(() => {
-    let listenerHandle
-
-    // Wrapper that only calls checkAppVersion() on a genuine
-    // offline -> online transition, and never lets two checks run at once.
-    const runGuardedVersionCheck = async () => {
-      if (isCheckingRef.current) {
-        // A check is already in flight — ignore this event.
-        return
-      }
-      isCheckingRef.current = true
-      try {
-        await checkAppVersion()
-      } finally {
-        isCheckingRef.current = false
-      }
-    }
-
-    const handleNetworkChange = (status) => {
-      const isOnline = status.connected
-
-      if (isOnline && wasOfflineRef.current) {
-        // Device just came back online after being offline — re-check version.
-        runGuardedVersionCheck()
-      }
-
-      wasOfflineRef.current = !isOnline
-    }
-
-    // Initialize wasOfflineRef with the current status so the very first
-    // event fired (which some platforms send immediately on listener add)
-    // doesn't cause a false-positive "just came online" trigger.
-    Network.getStatus().then((status) => {
-      wasOfflineRef.current = !status.connected
-    })
-
-    Network.addListener('networkStatusChange', handleNetworkChange).then((handle) => {
-      listenerHandle = handle
-    })
-
-    // Cleanup: remove the network listener on unmount
-    return () => {
-      listenerHandle?.remove()
-    }
+    initNotifications()
   }, [])
 
-  // Existing resume listener — unchanged
+  // NEW: (re)schedule all reminders once we know who the user is.
+  useEffect(() => {
+    if (user?.id) {
+      rescheduleAllReminders(supabase, user.id)
+    }
+  }, [user])
+
+  // NEW: reschedule reminders whenever the app resumes from background —
+  // catches anything changed while the app was closed or edited on another
+  // device. Separate listener from the existing version-check resume
+  // listener below; does not touch that logic.
   useEffect(() => {
     let listener
-
     if (Capacitor.isNativePlatform()) {
-      CapacitorApp.addListener("resume", () => {
-        checkAppVersion()
+      CapacitorApp.addListener('resume', () => {
+        if (user?.id) rescheduleAllReminders(supabase, user.id)
       }).then(handle => {
         listener = handle
       })
     }
-
     return () => {
       listener?.remove()
     }
-  }, [])
+  }, [user])
 
+useEffect(() => {
+  const handleOnline = () => {
+    checkAppVersion()
+  }
+
+  window.addEventListener("online", handleOnline)
+
+  return () => {
+    window.removeEventListener("online", handleOnline)
+  }
+}, [])
+
+useEffect(() => {
+  let listener
+
+  if (Capacitor.isNativePlatform()) {
+    CapacitorApp.addListener("resume", () => {
+      checkAppVersion()
+    }).then(handle => {
+      listener = handle
+    })
+  }
+
+  return () => {
+    listener?.remove()
+  }
+}, [])
   // Listen for native deep link OAuth redirects
-  useEffect(() => {
-    let listenerHandle
+useEffect(() => {
+  let listenerHandle
 
-    if (Capacitor.isNativePlatform()) {
-      CapacitorApp.addListener('appUrlOpen', async (event) => {
-        try {
-          // Only handle the Atlas OAuth callback
-          if (!event.url?.startsWith('atlas://auth/callback')) {
-            return
-          }
-
-          const parsedUrl = new URL(event.url)
-          const code = parsedUrl.searchParams.get('code')
-
-          if (!code) {
-            console.error(
-              'OAuth callback received without authorization code'
-            )
-            return
-          }
-
-          const { error } =
-            await supabase.auth.exchangeCodeForSession(code)
-
-          if (error) {
-            console.error(
-              'OAuth session exchange failed:',
-              error.message
-            )
-          }
-        } catch (error) {
-          console.error('Deep link handling error:', error)
+  if (Capacitor.isNativePlatform()) {
+    CapacitorApp.addListener('appUrlOpen', async (event) => {
+      try {
+        // Only handle the Atlas OAuth callback
+        if (!event.url?.startsWith('atlas://auth/callback')) {
+          return
         }
-      }).then((handle) => {
-        listenerHandle = handle
-      })
-    }
 
-    return () => {
-      if (listenerHandle) {
-        listenerHandle.remove()
+        const parsedUrl = new URL(event.url)
+        const code = parsedUrl.searchParams.get('code')
+
+        if (!code) {
+          console.error(
+            'OAuth callback received without authorization code'
+          )
+          return
+        }
+
+        const { error } =
+          await supabase.auth.exchangeCodeForSession(code)
+
+        if (error) {
+          console.error(
+            'OAuth session exchange failed:',
+            error.message
+          )
+        }
+      } catch (error) {
+        console.error('Deep link handling error:', error)
       }
+    }).then((handle) => {
+      listenerHandle = handle
+    })
+  }
+
+  return () => {
+    if (listenerHandle) {
+      listenerHandle.remove()
     }
-  }, [])
+  }
+}, [])
 
   async function checkAppVersion() {
     try {
@@ -236,13 +219,13 @@ function App() {
   }
 
   // Mandatory update screen
-  if (updateRequired) {
+ if (updateRequired) {
     return (
         <ForceUpdate
             updateInfo={updateInfo}
         />
     )
-  }
+}
 
   // Wait for authentication check
   if (checkingSession) {

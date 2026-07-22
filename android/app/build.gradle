@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
-
+apply plugin: 'com.google.firebase.crashlytics'
+apply plugin: 'com.google.firebase.firebase-perf'
 android {
     namespace = "com.pavan.atlas"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -42,10 +43,13 @@ dependencies {
     implementation project(':capacitor-cordova-android-plugins')
     implementation platform('com.google.firebase:firebase-bom:34.2.0')
 implementation 'com.google.firebase:firebase-analytics'
+implementation 'com.google.firebase:firebase-crashlytics'
+implementation 'com.google.firebase:firebase-perf'
 
 }
 
 apply from: 'capacitor.build.gradle'
+
 
 try {
     def servicesJSON = file('google-services.json')

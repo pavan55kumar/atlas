@@ -2,9 +2,11 @@ import { useEffect, useState, useMemo, useCallback, memo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CheckCircle2, Plus, Trash2, Sparkles,
-  Flame, Target, Zap, ListTodo, Flag, TrendingUp
+  Flame, Target, Zap, ListTodo, Flag, TrendingUp, CalendarDays
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
+// NEW
+import { scheduleTaskReminder, cancelTaskReminder } from './notifications'
 import './Tasks.css'
 
 const ease = [0.22, 1, 0.36, 1]
@@ -22,28 +24,28 @@ function Tasks({ userId }) {
   const [tasks, setTasks] = useState(taskCache[userId] || [])
   const [title, setTitle] = useState('')
   const [priority, setPriority] = useState('medium')
+  // NEW: due date, optional
+  const [dueDate, setDueDate] = useState('')
   const [loading, setLoading] = useState(!taskCache[userId])
   const [initialLoaded, setInitialLoaded] = useState(false)
   const [currentFilter, setCurrentFilter] = useState('all')
   const [isHoverable, setIsHoverable] = useState(false)
   const [ripples, setRipples] = useState([])
 
-  // NEW: track pending ripple-removal timeouts so they can be cleared on
-  // unmount. Previously these setTimeout calls had no cleanup, so navigating
-  // away right after tapping "Add Task" could fire setRipples() on an
-  // unmounted component (React warning + wasted work).
+  // track pending ripple-removal timeouts so they can be cleared on unmount.
   const rippleTimeoutsRef = useRef(new Set())
 
   const fetchTasks = useCallback(async () => {
     // If we have cache, don't show loading state, just refresh silently
     if (!taskCache[userId]) setLoading(true)
-    
+
     const { data, error } = await supabase
       .from('tasks')
-      .select('id, title, user_id, priority, progress, created_at')
+      // CHANGED: added due_date to the selected columns
+      .select('id, title, user_id, priority, progress, created_at, due_date')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      
+
     if (!error && data) {
       taskCache[userId] = data
       setTasks(data)
@@ -58,7 +60,7 @@ function Tasks({ userId }) {
     fetchTasks()
   }, [fetchTasks])
 
-  // NEW: clear any pending ripple timeouts when the component unmounts
+  // clear any pending ripple timeouts when the component unmounts
   useEffect(() => {
     return () => {
       rippleTimeoutsRef.current.forEach((id) => clearTimeout(id))
@@ -69,36 +71,42 @@ function Tasks({ userId }) {
   const addTask = useCallback(async (e) => {
     e.preventDefault()
     if (!title.trim()) return
-    
+
     const tempId = `temp-${Date.now()}`
-    const newTask = { 
-      id: tempId, 
-      title, 
-      user_id: userId, 
-      priority, 
-      progress: 0, 
-      created_at: new Date().toISOString() 
+    const newTask = {
+      id: tempId,
+      title,
+      user_id: userId,
+      priority,
+      progress: 0,
+      created_at: new Date().toISOString(),
+      // NEW
+      due_date: dueDate || null
     }
-    
+
     // Optimistic update
     setTasks(prev => [newTask, ...prev])
     setTitle('')
+    setDueDate('')
 
     const { data, error } = await supabase
       .from('tasks')
-      .insert([{ title, user_id: userId, priority, progress: 0 }])
+      // CHANGED: include due_date on insert
+      .insert([{ title, user_id: userId, priority, progress: 0, due_date: newTask.due_date }])
       .select()
 
     if (!error && data) {
       // Reconcile with actual DB ID
       setTasks(prev => prev.map(t => t.id === tempId ? data[0] : t))
       taskCache[userId] = taskCache[userId] ? [data[0], ...taskCache[userId]] : [data[0]]
+      // NEW: schedule the reminder now that we have the real DB id
+      scheduleTaskReminder(data[0])
     } else {
       // Rollback on failure
       setTasks(prev => prev.filter(t => t.id !== tempId))
       console.error('Failed to add task:', error)
     }
-  }, [title, priority, userId])
+  }, [title, priority, dueDate, userId])
 
   const cyclePriority = useCallback(async (task) => {
     const priorities = ['low', 'medium', 'high']
@@ -125,7 +133,7 @@ function Tasks({ userId }) {
 
   const toggleDone = useCallback(async (task) => {
     const newProgress = task.progress === 100 ? 0 : 100
-    
+
     // Optimistic update
     setTasks(prev => prev.map(t => t.id === task.id ? { ...t, progress: newProgress } : t))
 
@@ -141,12 +149,14 @@ function Tasks({ userId }) {
     } else if (taskCache[userId]) {
       const idx = taskCache[userId].findIndex(t => t.id === task.id)
       if (idx !== -1) taskCache[userId][idx].progress = newProgress
+      // NEW: completed -> cancel reminder; un-completed -> reschedule it
+      scheduleTaskReminder({ ...task, progress: newProgress })
     }
   }, [userId])
 
   const deleteTask = useCallback(async (id) => {
     const oldTask = tasks.find(t => t.id === id)
-    
+
     // Optimistic update
     setTasks(prev => prev.filter(t => t.id !== id))
 
@@ -161,6 +171,8 @@ function Tasks({ userId }) {
       console.error('Failed to delete task:', error)
     } else if (taskCache[userId]) {
       taskCache[userId] = taskCache[userId].filter(t => t.id !== id)
+      // NEW
+      cancelTaskReminder(id)
     }
   }, [tasks, userId])
 
@@ -173,7 +185,7 @@ function Tasks({ userId }) {
     const id = Date.now() + Math.random()
     setRipples(prev => [...prev, { id, x, y, size }])
 
-    // CHANGED: store the timeout id so it can be cancelled on unmount
+    // store the timeout id so it can be cancelled on unmount
     const timeoutId = setTimeout(() => {
       setRipples(prev => prev.filter(r => r.id !== id))
       rippleTimeoutsRef.current.delete(timeoutId)
@@ -316,6 +328,16 @@ function Tasks({ userId }) {
               placeholder="Add a new task..."
               className="task-input"
             />
+            {/* NEW: optional due-date picker. Reuses .task-input's existing
+                style so it doesn't introduce new visual language. */}
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="task-input"
+              style={{ flex: '0 0 150px', cursor: 'pointer' }}
+              aria-label="Due date (optional)"
+            />
             <motion.button
               type="submit"
               className="btn-add"
@@ -451,6 +473,20 @@ function Tasks({ userId }) {
                 </div>
 
                 <div className="card-actions">
+                  {/* NEW: small due-date chip, only rendered when a due date exists. */}
+                  {task.due_date && (
+                    <span
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                        fontSize: '10px', fontWeight: 700, color: 'var(--text-tertiary)',
+                        border: '1px solid var(--glass-border)', padding: '5px 9px',
+                        borderRadius: '100px', whiteSpace: 'nowrap'
+                      }}
+                    >
+                      <CalendarDays size={11} />
+                      {new Date(task.due_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  )}
                   <PriorityBadge priority={task.priority} onClick={() => cyclePriority(task)} />
                   <button onClick={() => deleteTask(task.id)} className="btn-delete-quest" title="Delete Task">
                     <Trash2 size={14} />

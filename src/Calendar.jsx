@@ -5,6 +5,8 @@ import {
   CalendarClock, ChevronLeft, ChevronRight, Plus, Trash2
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
+// NEW
+import { scheduleEventReminder, cancelEventReminder } from './notifications'
 import './Calendar.css'
 
 const ease = [0.22, 1, 0.36, 1]
@@ -36,16 +38,10 @@ function CalendarWidget({ userId }) {
   const [composerRipples, setComposerRipples] = useState([])
   const [fabRipples, setFabRipples] = useState([])
 
-  // NEW: tracks which KPI card is currently in view on the mobile carousel,
-  // so the pager dots genuinely follow the swipe instead of being a static
-  // "first dot always active" placeholder.
   const [activeKpiDot, setActiveKpiDot] = useState(0)
   const kpiScrollRef = useRef(null)
   const kpiScrollRafRef = useRef(null)
 
-  // NEW: tracks pending ripple-removal timeouts so they can be cleared on
-  // unmount (previously ungoverned setTimeout calls could fire setState
-  // after the component unmounted).
   const rippleTimeoutsRef = useRef(new Set())
 
   const prefersReducedMotion = useReducedMotion()
@@ -65,7 +61,6 @@ function CalendarWidget({ userId }) {
     }
   }, [])
 
-  // NEW: clear pending ripple timeouts and any queued rAF on unmount
   useEffect(() => {
     return () => {
       rippleTimeoutsRef.current.forEach((id) => clearTimeout(id))
@@ -87,20 +82,25 @@ function CalendarWidget({ userId }) {
   async function addEvent(e) {
     e.preventDefault()
     if (!title.trim() || !date) return
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('calendar_events')
       .insert([{ title, user_id: userId, event_date: date, event_time: time || null }])
+      .select() // CHANGED: added .select() so we get the inserted row back
     if (!error) {
       setTitle('')
       setDate('')
       setTime('')
       setIsMobileDrawerOpen(false)
       fetchEvents()
+      // NEW: schedule the event reminder now that we have the real DB id
+      if (data && data[0]) scheduleEventReminder(data[0])
     }
   }
 
   async function deleteEvent(id) {
     await supabase.from('calendar_events').delete().eq('id', id)
+    // NEW: cancel the pending reminder for this event
+    cancelEventReminder(id)
     fetchEvents()
   }
 
@@ -113,7 +113,6 @@ function CalendarWidget({ userId }) {
     const id = Date.now() + Math.random()
     setter((prev) => [...prev, { id, x, y, size }])
 
-    // CHANGED: track the timeout id so it can be cancelled on unmount
     const timeoutId = setTimeout(() => {
       setter((prev) => prev.filter((r) => r.id !== id))
       rippleTimeoutsRef.current.delete(timeoutId)
@@ -121,11 +120,6 @@ function CalendarWidget({ userId }) {
     rippleTimeoutsRef.current.add(timeoutId)
   }
 
-  // NEW: figures out which KPI card is closest to the center of the
-  // scrollable row and updates the active dot. Throttled via
-  // requestAnimationFrame (same pattern already used by AmbientBackground's
-  // pointer-move handler elsewhere in this app) so it doesn't run more than
-  // once per frame during a fast swipe.
   function handleKpiScroll() {
     if (kpiScrollRafRef.current) cancelAnimationFrame(kpiScrollRafRef.current)
     kpiScrollRafRef.current = requestAnimationFrame(() => {
@@ -236,12 +230,10 @@ function CalendarWidget({ userId }) {
       <div className="aurora-blur-sphere sphere-tertiary" />
       <div className="calendar-noise-overlay" aria-hidden="true" />
 
-      {/* --- Double Pane Dashboard Panel Layout --- */}
       <div className="calendar-dashboard-layout">
 
         <div className="left-pane">
 
-          {/* --- KPI Summary Grid / Mobile Carousel --- */}
           <div
             className="stats-carousel-grid"
             ref={kpiScrollRef}
@@ -281,8 +273,6 @@ function CalendarWidget({ userId }) {
             />
           </div>
 
-          {/* NEW: pager dots for the mobile KPI carousel — CSS-hidden on
-              desktop/tablet since .stats-carousel-grid doesn't scroll there. */}
           <div className="cal-pager-dots" aria-hidden="true">
             {[0, 1, 2, 3].map((i) => (
               <span
@@ -292,7 +282,6 @@ function CalendarWidget({ userId }) {
             ))}
           </div>
 
-          {/* Calendar weekly ribbon navigation */}
           <div className="calendar-nav-card">
             <div className="calendar-nav-header">
               <AnimatePresence mode="wait">
@@ -377,7 +366,6 @@ function CalendarWidget({ userId }) {
             </AnimatePresence>
           </div>
 
-          {/* Interactive selected day / today's timeline */}
           <div className="timeline-container">
             <h3 style={{ fontSize: 'clamp(14px, 3.2vw, 15px)', fontWeight: 700, margin: '0 0 var(--space-sm) 0' }}>
               {selectedDay ? (
@@ -396,7 +384,6 @@ function CalendarWidget({ userId }) {
 
         </div>
 
-        {/* Right Pane: Event composer & AI Suggestions */}
         <div className="right-pane">
 
           {!isMobile && (
@@ -445,7 +432,6 @@ function CalendarWidget({ userId }) {
             </div>
           )}
 
-          {/* AI Insights & suggestions */}
           <div className="ai-assistant-card">
             <h3 style={{ fontSize: 'clamp(14px, 3.2vw, 15px)', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span className="ai-sparkle-icon"><Sparkles size={16} color="var(--accent-amber)" /></span>
@@ -467,7 +453,6 @@ function CalendarWidget({ userId }) {
             </motion.div>
           </div>
 
-          {/* Radial progress card */}
           <div className="month-radial-card">
             <div className="month-radial-text">
               <h3>Month Completion</h3>
@@ -504,7 +489,6 @@ function CalendarWidget({ userId }) {
 
       </div>
 
-      {/* Mobile Floating Action Drawer */}
       {isMobile && (
         <>
           <motion.button

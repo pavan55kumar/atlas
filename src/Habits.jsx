@@ -8,6 +8,8 @@ import {
 import { supabase } from './lib/supabase'
 import ProgressRing from './ProgressRing'
 import Sparkline from './Sparkline'
+// NEW
+import { scheduleHabitReminder, cancelHabitReminder } from './notifications'
 
 const ICONS = [Flame, Target, Brain, Zap, Award, Sparkles, TrendingUp, CircleCheck, CalendarDays, Rocket, Star, Heart, Apple, Coffee, BookOpen, Moon, Sun, Timer, Medal]
 const PALETTE = ['#7C5CFF', '#F0876C', '#6CC7F0', '#8CF06C', '#FDBA74', '#F87171', '#34D399', '#60A5FA']
@@ -31,18 +33,7 @@ function badgeFor(streak) {
 
 // ---------------------------------------------------------------------------
 // Local calendar date helpers
-//
-// Everything in this file that decides "which day did this happen on" needs
-// to use the user's LOCAL calendar day, not UTC. `Date.prototype.toISOString()`
-// always returns UTC, and `new Date("YYYY-MM-DD")` is parsed as UTC midnight
-// by the JS spec — both of these silently shift a date by one day for anyone
-// west of UTC, which is exactly how a completion made right around midnight
-// (or any date comparison) ends up filed under the wrong day. The helpers
-// below only ever use local-time getters/setters (getFullYear, getMonth,
-// getDate, setDate) so streaks, heatmaps, and sparklines all agree on "today".
 // ---------------------------------------------------------------------------
-
-// Date -> "YYYY-MM-DD" using local time.
 function toDateKey(date) {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -50,13 +41,11 @@ function toDateKey(date) {
   return `${year}-${month}-${day}`
 }
 
-// "YYYY-MM-DD" -> Date at local midnight (avoids the UTC-parsing footgun).
 function parseDateKey(dateStr) {
   const [year, month, day] = dateStr.split('-').map(Number)
   return new Date(year, month - 1, day)
 }
 
-// Date -> new Date offset by `delta` local calendar days.
 function addDays(date, delta) {
   const d = new Date(date)
   d.setDate(d.getDate() + delta)
@@ -123,44 +112,23 @@ function Habits({ userId }) {
   const [loading, setLoading] = useState(true)
   const [menuOpenId, setMenuOpenId] = useState(null)
   const [celebrateId, setCelebrateId] = useState(null)
-  // NEW: hover-capability detection, same pattern already used in Tasks.jsx.
-  // framer-motion's whileHover can trigger (and visually "stick") on touch
-  // devices the same way CSS :hover can, since touch can fire pointer-enter-
-  // like events. Gating whileHover behind this prevents habit cards from
-  // getting stuck lifted/tilted after a tap on Android/Capacitor.
   const [isHoverable, setIsHoverable] = useState(false)
 
-  // NEW: guards against double-tap / rapid re-tap race conditions on
-  // markDoneToday. Previously the "already done today" check read local
-  // React state, which hadn't updated yet if the user tapped twice quickly
-  // — both calls could pass the guard, inserting two habit_logs rows and
-  // double-incrementing the streak for a single intended tap.
   const pendingCompletionsRef = useRef(new Set())
-
-  // NEW: tracks the confetti auto-clear timeout so it can be cancelled on
-  // unmount (previously ungoverned setTimeout could fire setState after the
-  // component unmounted, e.g. if the user navigates away right after
-  // marking a habit done).
   const celebrateTimeoutRef = useRef(null)
 
   useEffect(function () { fetchHabits() }, [])
 
-  // NEW: detect hover capability once, mirroring Tasks.jsx
   useEffect(function () {
     setIsHoverable(window.matchMedia('(hover: hover)').matches)
   }, [])
 
-  // NEW: clear any pending confetti timeout on unmount
   useEffect(function () {
     return function () {
       if (celebrateTimeoutRef.current) clearTimeout(celebrateTimeoutRef.current)
     }
   }, [])
 
-  // NEW: close the open habit menu on outside click/tap or Escape.
-  // Previously the dropdown had no dismissal path other than re-clicking
-  // the same toggle button or choosing Delete — a common "menu won't close"
-  // complaint on mobile.
   useEffect(function () {
     if (!menuOpenId) return
 
@@ -204,8 +172,6 @@ function Habits({ userId }) {
   async function addHabit(e) {
     e.preventDefault()
     if (!name.trim()) return
-    // .select() hands back the inserted row so we can drop it straight into
-    // state instead of re-fetching the whole habits list from Supabase.
     const { data, error } = await supabase
       .from('habits')
       .insert([{ name, user_id: userId, streak: 0 }])
@@ -213,49 +179,29 @@ function Habits({ userId }) {
     if (!error && data && data[0]) {
       setHabits(function (prev) { return [data[0], ...prev] })
       setName('')
+      // NEW: schedule the daily habit reminder now that we have the real DB id
+      scheduleHabitReminder(data[0])
     }
   }
 
-  // ---------------------------------------------------------------------
-  // Streak logic — real calendar continuity, not a blind +1.
-  //
-  //   Case 1 (already done today)      -> no-op: no duplicate log, no streak bump
-  //   Case 2 (last_completed = yesterday) -> streak continues, +1
-  //   Case 3 (a day or more was missed)   -> streak resets to 1
-  //   Case 4 (never completed before)     -> streak starts at 1
-  //
-  // Every completion still creates exactly one habit_logs row for that
-  // calendar day, so the heatmap only ever shows real completions — missed
-  // days stay empty, they are never backfilled or implied.
-  // ---------------------------------------------------------------------
   async function markDoneToday(habit) {
-    // NEW: re-entrancy guard. If a request for this habit is already in
-    // flight, ignore this tap instead of racing it against local state
-    // that hasn't caught up yet.
     if (pendingCompletionsRef.current.has(habit.id)) return
     pendingCompletionsRef.current.add(habit.id)
 
     try {
       const today = toDateKey(new Date())
 
-      // Case 1: already marked done today. Bail out before touching the DB so
-      // we never double-increment the streak or insert a second log for today.
       if (habit.last_completed === today) return
-      // Belt-and-suspenders duplicate guard: even if `last_completed` were ever
-      // out of sync with habit_logs, don't insert a second log for the same day.
       if (logs[habit.id] && logs[habit.id].has(today)) return
 
       const yesterday = toDateKey(addDays(new Date(), -1))
 
       let newStreak
       if (!habit.last_completed) {
-        // Case 4: first completion ever.
         newStreak = 1
       } else if (habit.last_completed === yesterday) {
-        // Case 2: consecutive calendar day -> extend the streak.
         newStreak = habit.streak + 1
       } else {
-        // Case 3: one or more days were missed since the last completion.
         newStreak = 1
       }
 
@@ -268,9 +214,6 @@ function Habits({ userId }) {
         .insert([{ habit_id: habit.id, user_id: userId, completed_date: today }])
       if (logError) return
 
-      // Update local state directly (instead of re-fetching everything) so the
-      // ring/streak/heatmap/sparkline all reflect the change with zero extra
-      // Supabase requests.
       setHabits(function (prev) {
         return prev.map(function (h) {
           return h.id === habit.id ? { ...h, streak: newStreak, last_completed: today } : h
@@ -285,8 +228,6 @@ function Habits({ userId }) {
       })
 
       setCelebrateId(habit.id)
-      // CHANGED: clear any previous pending clear-timeout before scheduling a
-      // new one, and store the id so it can be cancelled on unmount.
       if (celebrateTimeoutRef.current) clearTimeout(celebrateTimeoutRef.current)
       celebrateTimeoutRef.current = setTimeout(function () {
         setCelebrateId(null)
@@ -301,7 +242,8 @@ function Habits({ userId }) {
     setMenuOpenId(null)
     await supabase.from('habits').delete().eq('id', id)
     await supabase.from('habit_logs').delete().eq('habit_id', id)
-    // Same idea as above: prune local state instead of re-fetching.
+    // NEW: cancel the pending reminder for this habit
+    cancelHabitReminder(id)
     setHabits(function (prev) { return prev.filter(function (h) { return h.id !== id } ) })
     setLogs(function (prev) {
       const next = { ...prev }
@@ -343,8 +285,6 @@ function Habits({ userId }) {
               const Icon = ICONS[iconIndex]
               const accent = PALETTE[iconIndex % PALETTE.length]
 
-              // Progress ring: % of the last 30 real calendar days completed.
-              // Sparkline: last 7 real calendar days, missed days as 0.
               let completedLast30 = 0
               const sparklineData = []
               for (let i = 29; i >= 0; i--) {
@@ -365,23 +305,15 @@ function Habits({ userId }) {
                   layout
                   variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
                   exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-                  // CHANGED: gated behind isHoverable so touch devices never
-                  // get "stuck" in the lifted/tilted hover state.
                   whileHover={isHoverable ? { y: -6, rotate: -0.4 } : undefined}
                   whileTap={{ scale: 0.98 }}
                   transition={{ type: 'spring', stiffness: 260, damping: 22 }}
                   className="habit-card"
                   style={{
                     boxShadow: '0 4px 20px rgba(0,0,0,0.12), 0 0 0 1px var(--border)',
-                    // Lift the card whose menu is open above its neighbors so the
-                    // dropdown never renders underneath an adjacent card.
                     zIndex: menuOpenId === habit.id ? 5 : 0
                   }}
                 >
-                  {/* Glow is clipped by its own rounded wrapper now, not by the
-                      card itself — see .habit-card-glow-clip. This keeps the
-                      glow looking identical while letting the delete menu
-                      below escape the card's edge instead of being cut off. */}
                   <div className="habit-card-glow-clip">
                     <div className="habit-card-glow" style={{ background: accent }} />
                   </div>
@@ -550,28 +482,15 @@ function Habits({ userId }) {
   )
 }
 
-// ---------------------------------------------------------------------------
-// CHANGED: Heatmap now renders the current calendar MONTH (28-31 real day
-// cells, matching the actual number of days in the current month) instead
-// of a fixed 98-day / 14-week strip. Days are aligned to their real weekday
-// column (day 1 lands under whatever weekday it actually falls on, with
-// blank filler cells before it) so it reads like a real month, not an
-// arbitrary contribution graph. Days later in the month that haven't
-// happened yet are rendered at very low opacity instead of looking like
-// "missed" days, since they haven't occurred. Visual style (cell size,
-// gap, colors, rounding) is unchanged — only which days are shown, and how
-// they're aligned, changed.
-// ---------------------------------------------------------------------------
 function Heatmap({ completedDates, accent }) {
   const today = new Date()
   const year = today.getFullYear()
   const month = today.getMonth()
-  const daysInMonth = new Date(year, month + 1, 0).getDate() // 28-31
-  const firstWeekday = new Date(year, month, 1).getDay() // 0 = Sunday
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const firstWeekday = new Date(year, month, 1).getDay()
   const todayKey = toDateKey(today)
 
   const cells = []
-  // Leading blanks so day 1 lands in its correct weekday column
   for (let i = 0; i < firstWeekday; i++) {
     cells.push(null)
   }
@@ -597,7 +516,6 @@ function Heatmap({ completedDates, accent }) {
           <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
             {week.map(function (cell, ci) {
               if (!cell) {
-                // Blank leading filler cell — keeps the grid aligned to real weekdays
                 return <div key={ci} style={{ width: '9px', height: '9px' }} />
               }
               return (
