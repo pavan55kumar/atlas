@@ -314,48 +314,51 @@ function Tasks({ userId }) {
       </div>
 
       {/* 3. Add Task Section */}
-      <motion.div
-        className="task-form-card"
-        initial={initialLoaded ? false : { opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 80 }}
+<motion.div
+  className="task-form-card"
+  initial={initialLoaded ? false : { opacity: 0, y: 12 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ type: 'spring', stiffness: 80 }}
+>
+  <form onSubmit={addTask}>
+    <div className="input-group">
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Add a new task..."
+        className="task-input"
+      />
+      
+      {/* Refined Due Date Input */}
+      <div className="date-input-wrapper">
+        <input
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+          className={`task-input date-input ${dueDate ? 'has-value' : ''}`}
+          aria-label="Due date (optional)"
+        />
+        {!dueDate && <span className="date-placeholder">Due Date</span>}
+      </div>
+
+      <motion.button
+        type="submit"
+        className="btn-add"
+        whileTap={{ scale: 0.97 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 24 }}
+        onPointerDown={spawnRipple}
       >
-        <form onSubmit={addTask}>
-          <div className="input-group">
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Add a new task..."
-              className="task-input"
-            />
-            {/* NEW: optional due-date picker. Reuses .task-input's existing
-                style so it doesn't introduce new visual language. */}
-            <input
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="task-input"
-              style={{ flex: '0 0 150px', cursor: 'pointer' }}
-              aria-label="Due date (optional)"
-            />
-            <motion.button
-              type="submit"
-              className="btn-add"
-              whileTap={{ scale: 0.97 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 24 }}
-              onPointerDown={spawnRipple}
-            >
-              <span className="btn-add-content">
-                <Plus size={16} strokeWidth={2.5} />
-                <span>Add Task</span>
-              </span>
-              <span className="btn-ripple-layer">
-                {ripples.map((r) => (
-                  <span key={r.id} className="btn-ripple" style={{ left: r.x, top: r.y, width: r.size, height: r.size }} />
-                ))}
-              </span>
-            </motion.button>
-          </div>
+        <span className="btn-add-content">
+          <Plus size={16} strokeWidth={2.5} />
+          <span>Add Task</span>
+        </span>
+        <span className="btn-ripple-layer">
+          {ripples.map((r) => (
+            <span key={r.id} className="btn-ripple" style={{ left: r.x, top: r.y, width: r.size, height: r.size }} />
+          ))}
+        </span>
+      </motion.button>
+    </div>
 
           <div className="priority-options">
             <span className="priority-label">Priority</span>
