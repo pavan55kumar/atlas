@@ -5,9 +5,14 @@ import { inputStyle, primaryButton } from './styles'
 function CGPAPlanner({ userId }) {
   const [subjects, setSubjects] = useState([])
   const [currentCGPA, setCurrentCGPA] = useState('')
-  const [completedCredits, setCompletedCredits] = useState('')
+  // CHANGED: was `completedCredits` — this college's CGPA is a simple average
+  // of each semester's SGPA (not credit-weighted), so the input this formula
+  // actually needs is a semester COUNT, not a credit total. Same Field
+  // component/style, just repurposed.
+  const [completedSemesters, setCompletedSemesters] = useState('')
   const [remainingSemesters, setRemainingSemesters] = useState('')
-  const [creditsPerSem, setCreditsPerSem] = useState('')
+  // REMOVED: creditsPerSem — not a variable in the simple-average formula,
+  // there was nothing correct to compute from it.
   const [targetCGPA, setTargetCGPA] = useState('')
   const [result, setResult] = useState(null)
 
@@ -24,45 +29,49 @@ function CGPAPlanner({ userId }) {
   function calculate(e) {
     e.preventDefault()
     const cur = parseFloat(currentCGPA)
-    const done = parseFloat(completedCredits)
-    const sems = parseInt(remainingSemesters)
-    const perSem = parseFloat(creditsPerSem)
+    const completedSems = parseInt(completedSemesters)
+    const remSems = parseInt(remainingSemesters)
     const target = parseFloat(targetCGPA)
 
-    if (!cur || !done || !sems || !perSem || !target) {
+    // CHANGED: use Number.isFinite instead of a plain falsy check, so a
+    // legitimately-entered 0 doesn't get silently treated the same as an
+    // empty field (falsy check would previously reject e.g. a valid "0"
+    // completed semesters edge case the same way as a blank input).
+    if (
+      !Number.isFinite(cur) ||
+      !Number.isFinite(completedSems) || completedSems <= 0 ||
+      !Number.isFinite(remSems) || remSems <= 0 ||
+      !Number.isFinite(target)
+    ) {
       setResult({ error: 'Please fill in all fields with valid numbers.' })
       return
     }
 
-    const remainingCredits = sems * perSem
-    const totalCredits = done + remainingCredits
-
-    // Required average SGPA across remaining semesters (equal each sem)
-    const requiredTotalPoints = target * totalCredits
-    const currentPoints = cur * done
+    // ---------------------------------------------------------------
+    // Simple-average CGPA model (matches this college's actual system):
+    //   CGPA = average of each completed semester's SGPA (unweighted)
+    // So to hit a target CGPA across ALL semesters (completed + remaining),
+    // solve for the average SGPA still needed across the remaining ones:
+    //
+    //   totalSemesters       = completedSemesters + remainingSemesters
+    //   requiredTotalPoints  = targetCGPA * totalSemesters
+    //   currentPoints        = currentCGPA * completedSemesters
+    //   neededPoints         = requiredTotalPoints - currentPoints
+    //   requiredAvgSGPA      = neededPoints / remainingSemesters
+    // ---------------------------------------------------------------
+    const totalSemesters = completedSems + remSems
+    const requiredTotalPoints = target * totalSemesters
+    const currentPoints = cur * completedSems
     const neededPoints = requiredTotalPoints - currentPoints
-    const requiredAvgSGPA = neededPoints / remainingCredits
+    const requiredAvgSGPA = neededPoints / remSems
 
     const achievable = requiredAvgSGPA <= 10 && requiredAvgSGPA > 0
-
-    // Scenario B: equal effort — same as above
-    // Scenario C: stronger later — first half at current pace, second half compensates
-    const halfSems = Math.ceil(sems / 2)
-    const firstHalfCredits = halfSems * perSem
-    const secondHalfCredits = remainingCredits - firstHalfCredits
-    const firstHalfSGPA = cur // assume maintaining current level for first half
-    const pointsAfterFirstHalf = currentPoints + firstHalfSGPA * firstHalfCredits
-    const neededSecondHalfPoints = requiredTotalPoints - pointsAfterFirstHalf
-    const secondHalfSGPA = secondHalfCredits > 0 ? neededSecondHalfPoints / secondHalfCredits : null
 
     setResult({
       requiredAvgSGPA: requiredAvgSGPA.toFixed(2),
       achievable,
-      totalCredits,
-      remainingCredits,
-      firstHalfSGPA: firstHalfSGPA.toFixed(2),
-      secondHalfSGPA: secondHalfSGPA !== null ? secondHalfSGPA.toFixed(2) : null,
-      secondHalfAchievable: secondHalfSGPA !== null && secondHalfSGPA <= 10 && secondHalfSGPA > 0
+      totalSemesters,
+      remainingSemesters: remSems
     })
   }
 
@@ -76,10 +85,9 @@ function CGPAPlanner({ userId }) {
 
       <form onSubmit={calculate} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px', marginBottom: '20px' }}>
         <Field label="Current CGPA" value={currentCGPA} onChange={setCurrentCGPA} placeholder="6.67" />
-        <Field label="Completed Credits" value={completedCredits} onChange={setCompletedCredits} placeholder="90" />
-        <Field label="Remaining Semesters" value={remainingSemesters} onChange={setRemainingSemesters} placeholder="3" />
-        <Field label="Credits / Semester" value={creditsPerSem} onChange={setCreditsPerSem} placeholder="20" />
-        <Field label="Target CGPA" value={targetCGPA} onChange={setTargetCGPA} placeholder="8.00" />
+        <Field label="Completed Semesters" value={completedSemesters} onChange={setCompletedSemesters} placeholder="4" />
+        <Field label="Remaining Semesters" value={remainingSemesters} onChange={setRemainingSemesters} placeholder="4" />
+        <Field label="Target CGPA" value={targetCGPA} onChange={setTargetCGPA} placeholder="9.00" />
         <div style={{ display: 'flex', alignItems: 'flex-end' }}>
           <button type="submit" style={{ ...primaryButton, width: '100%' }}>Calculate</button>
         </div>
@@ -94,9 +102,9 @@ function CGPAPlanner({ userId }) {
               background: 'var(--surface-2)', borderRadius: '12px', padding: '18px',
               borderLeft: `3px solid ${result.achievable ? '#6EE7B7' : '#FCA5A5'}`
             }}>
-              <p style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>Equal Effort Scenario</p>
+              <p style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>Required Average SGPA</p>
               <p style={{ fontSize: '20px', fontWeight: 700, marginBottom: '6px' }}>
-                {result.requiredAvgSGPA} <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 400 }}>required SGPA / semester</span>
+                {result.requiredAvgSGPA} <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 400 }}>required SGPA / remaining semester</span>
               </p>
               <p style={{ fontSize: '12.5px', color: result.achievable ? '#6EE7B7' : '#FCA5A5' }}>
                 {result.achievable
@@ -104,19 +112,6 @@ function CGPAPlanner({ userId }) {
                   : 'This target requires SGPA above 10 or below 0 — not achievable with these numbers. Consider more semesters or a lower target.'}
               </p>
             </div>
-
-            {result.secondHalfSGPA !== null && (
-              <div style={{
-                background: 'var(--surface-2)', borderRadius: '12px', padding: '18px',
-                borderLeft: `3px solid ${result.secondHalfAchievable ? '#93C5FD' : '#FCA5A5'}`
-              }}>
-                <p style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>Stronger-Later Scenario</p>
-                <p style={{ fontSize: '12.5px', lineHeight: '1.6' }}>
-                  Maintain ~{result.firstHalfSGPA} SGPA in the first half of remaining semesters, then you'll need
-                  ~<strong>{result.secondHalfSGPA}</strong> SGPA in the second half to hit your target.
-                </p>
-              </div>
-            )}
 
             <div>
               <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>PROGRESS TOWARD TARGET</p>

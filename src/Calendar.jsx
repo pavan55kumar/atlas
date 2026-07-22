@@ -1,4 +1,4 @@
-import { useEffect, useState, memo } from 'react'
+import { useEffect, useState, useRef, memo } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
   Clock3, Sparkles, Brain, CircleCheck,
@@ -36,6 +36,18 @@ function CalendarWidget({ userId }) {
   const [composerRipples, setComposerRipples] = useState([])
   const [fabRipples, setFabRipples] = useState([])
 
+  // NEW: tracks which KPI card is currently in view on the mobile carousel,
+  // so the pager dots genuinely follow the swipe instead of being a static
+  // "first dot always active" placeholder.
+  const [activeKpiDot, setActiveKpiDot] = useState(0)
+  const kpiScrollRef = useRef(null)
+  const kpiScrollRafRef = useRef(null)
+
+  // NEW: tracks pending ripple-removal timeouts so they can be cleared on
+  // unmount (previously ungoverned setTimeout calls could fire setState
+  // after the component unmounted).
+  const rippleTimeoutsRef = useRef(new Set())
+
   const prefersReducedMotion = useReducedMotion()
 
   useEffect(() => {
@@ -50,6 +62,15 @@ function CalendarWidget({ userId }) {
     return () => {
       window.removeEventListener('resize', handleResize)
       window.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
+
+  // NEW: clear pending ripple timeouts and any queued rAF on unmount
+  useEffect(() => {
+    return () => {
+      rippleTimeoutsRef.current.forEach((id) => clearTimeout(id))
+      rippleTimeoutsRef.current.clear()
+      if (kpiScrollRafRef.current) cancelAnimationFrame(kpiScrollRafRef.current)
     }
   }, [])
 
@@ -91,9 +112,44 @@ function CalendarWidget({ userId }) {
     const y = e.clientY - rect.top - size / 2
     const id = Date.now() + Math.random()
     setter((prev) => [...prev, { id, x, y, size }])
-    setTimeout(() => {
+
+    // CHANGED: track the timeout id so it can be cancelled on unmount
+    const timeoutId = setTimeout(() => {
       setter((prev) => prev.filter((r) => r.id !== id))
+      rippleTimeoutsRef.current.delete(timeoutId)
     }, 650)
+    rippleTimeoutsRef.current.add(timeoutId)
+  }
+
+  // NEW: figures out which KPI card is closest to the center of the
+  // scrollable row and updates the active dot. Throttled via
+  // requestAnimationFrame (same pattern already used by AmbientBackground's
+  // pointer-move handler elsewhere in this app) so it doesn't run more than
+  // once per frame during a fast swipe.
+  function handleKpiScroll() {
+    if (kpiScrollRafRef.current) cancelAnimationFrame(kpiScrollRafRef.current)
+    kpiScrollRafRef.current = requestAnimationFrame(() => {
+      const el = kpiScrollRef.current
+      if (!el) return
+      const children = Array.from(el.children)
+      if (!children.length) return
+
+      const scrollerRect = el.getBoundingClientRect()
+      const scrollerCenter = scrollerRect.left + scrollerRect.width / 2
+
+      let closestIndex = 0
+      let closestDistance = Infinity
+      children.forEach((child, i) => {
+        const rect = child.getBoundingClientRect()
+        const childCenter = rect.left + rect.width / 2
+        const distance = Math.abs(childCenter - scrollerCenter)
+        if (distance < closestDistance) {
+          closestDistance = distance
+          closestIndex = i
+        }
+      })
+      setActiveKpiDot(closestIndex)
+    })
   }
 
   const today = new Date().toISOString().split('T')[0]
@@ -185,8 +241,12 @@ function CalendarWidget({ userId }) {
 
         <div className="left-pane">
 
-          {/* --- KPI Summary Grid --- */}
-          <div className="stats-carousel-grid">
+          {/* --- KPI Summary Grid / Mobile Carousel --- */}
+          <div
+            className="stats-carousel-grid"
+            ref={kpiScrollRef}
+            onScroll={handleKpiScroll}
+          >
             <SummaryCard
               label="Today's Events"
               value={todayEventsCount}
@@ -219,6 +279,17 @@ function CalendarWidget({ userId }) {
               sparklinePath="M0,4 C10,12 20,2 30,8 C40,14 50,2 60,15"
               accent="#10b981"
             />
+          </div>
+
+          {/* NEW: pager dots for the mobile KPI carousel — CSS-hidden on
+              desktop/tablet since .stats-carousel-grid doesn't scroll there. */}
+          <div className="cal-pager-dots" aria-hidden="true">
+            {[0, 1, 2, 3].map((i) => (
+              <span
+                key={i}
+                className={`cal-pager-dot ${activeKpiDot === i ? 'active' : ''}`}
+              />
+            ))}
           </div>
 
           {/* Calendar weekly ribbon navigation */}

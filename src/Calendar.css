@@ -155,7 +155,10 @@ body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
 }
 
 /* ====================================================================
-   KPI SECTION — STRICT GRID LAYOUT
+   KPI SECTION — STRICT GRID LAYOUT (desktop/tablet)
+   On mobile this becomes a real horizontally-scrolling carousel — see
+   the mobile media query near the bottom of this file. This block is
+   now the >=768px behavior only.
    ==================================================================== */
 .stats-carousel-grid {
   display: grid;
@@ -182,6 +185,24 @@ body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
   }
 }
 
+/* NEW: scroll-tracked pager dots for the mobile KPI carousel.
+   Hidden by default (desktop/tablet, where the grid above is static and
+   doesn't scroll); shown only inside the mobile media query below. */
+.cal-pager-dots {
+  display: none;
+}
+.cal-pager-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: width 0.25s ease, background 0.25s ease;
+  flex-shrink: 0;
+}
+.cal-pager-dot.active {
+  width: 16px;
+  border-radius: 100px;
+  background: var(--accent-purple);
+}
+
 .kpi-card-glass {
   border-radius: var(--radius-tile);
   padding: var(--space-sm) var(--space-md);
@@ -197,9 +218,22 @@ body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
   box-sizing: border-box;
   transition: border-color 0.25s ease, box-shadow 0.3s ease;
 }
-.kpi-card-glass:hover, .kpi-card-glass:focus-visible {
+
+/* CHANGED: was a bare `.kpi-card-glass:hover, .kpi-card-glass:focus-visible`.
+   Keeping :focus-visible unguarded is correct (keyboard focus should always
+   show), but the hover half is now gated behind (hover: hover) and
+   (pointer: fine) — same reasoning as the rest of the app: on a touch/
+   Capacitor WebView, :hover can trigger on tap and stay "stuck" until the
+   user taps elsewhere. */
+.kpi-card-glass:focus-visible {
   border-color: rgba(139, 92, 246, 0.22);
   box-shadow: var(--card-shadow-hover);
+}
+@media (hover: hover) and (pointer: fine) {
+  .kpi-card-glass:hover {
+    border-color: rgba(139, 92, 246, 0.22);
+    box-shadow: var(--card-shadow-hover);
+  }
 }
 
 .kpi-header-row {
@@ -313,7 +347,9 @@ body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
   background: linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0));
   z-index: 1; pointer-events: none;
 }
-.btn-composer-add:hover { box-shadow: 0 10px 26px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.22); }
+@media (hover: hover) and (pointer: fine) {
+  .btn-composer-add:hover { box-shadow: 0 10px 26px var(--btn-primary-glow), inset 0 1px 0 rgba(255,255,255,0.22); }
+}
 .btn-composer-content { position: relative; z-index: 3; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .btn-ripple-layer { position: absolute; inset: 0; z-index: 2; overflow: hidden; border-radius: inherit; pointer-events: none; }
 .btn-ripple { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.32); transform: scale(0); animation: btn-ripple-expand 0.6s ease-out forwards; }
@@ -338,7 +374,9 @@ body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
   transition: background 0.2s ease, border-color 0.2s ease;
   flex-shrink: 0;
 }
-.btn-nav-arrow:hover { background: var(--glass-border); border-color: rgba(139, 92, 246, 0.25); }
+@media (hover: hover) and (pointer: fine) {
+  .btn-nav-arrow:hover { background: var(--glass-border); border-color: rgba(139, 92, 246, 0.25); }
+}
 
 .week-days-ribbon { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: clamp(3px, 1.6vw, 12px); width: 100%; min-width: 0; }
 
@@ -359,7 +397,9 @@ body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
   min-width: 0;
   overflow: hidden;
 }
-.day-ribbon-card:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.12); }
+@media (hover: hover) and (pointer: fine) {
+  .day-ribbon-card:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.12); }
+}
 
 .day-ribbon-card.is-today::after {
   content: '';
@@ -481,11 +521,16 @@ body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
   overflow: hidden;
   transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, box-shadow 0.3s ease, background 0.25s ease;
 }
-.event-card-tactile:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: var(--card-shadow-hover);
-  background: rgba(255, 255, 255, 0.045);
+@media (hover: hover) and (pointer: fine) {
+  .event-card-tactile:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: var(--card-shadow-hover);
+    background: rgba(255, 255, 255, 0.045);
+  }
+}
+@media (hover: none) and (pointer: coarse) {
+  .event-card-tactile:active { transform: scale(0.99); }
 }
 
 .event-card-text { min-width: 0; overflow: hidden; }
@@ -504,7 +549,9 @@ body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
   transition: background 0.2s ease, color 0.2s ease;
   min-width: 40px; min-height: 40px;
 }
-.btn-delete-event:hover { background: rgba(239, 68, 68, 0.09); color: var(--accent-red); }
+@media (hover: hover) and (pointer: fine) {
+  .btn-delete-event:hover { background: rgba(239, 68, 68, 0.09); color: var(--accent-red); }
+}
 
 .ai-assistant-card {
   background-image: linear-gradient(150deg, rgba(139, 92, 246, 0.08) 0%, rgba(96, 165, 250, 0.04) 60%, transparent 100%);
@@ -587,7 +634,9 @@ body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
   min-height: 36px;
   transition: border-color 0.2s ease, background 0.2s ease;
 }
-.btn-empty-add:hover { border-color: rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.08); }
+@media (hover: hover) and (pointer: fine) {
+  .btn-empty-add:hover { border-color: rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.08); }
+}
 
 .mobile-floating-add-btn {
   position: fixed;
@@ -629,6 +678,47 @@ body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
   .composer-form { flex-direction: column; align-items: stretch; }
   .composer-input { width: 100%; max-width: none !important; }
   .btn-composer-add { width: 100%; justify-content: center; }
+
+  /* ==================================================================
+     NEW: real horizontally-scrolling KPI carousel on mobile.
+     Previously .stats-carousel-grid was a static 2-col grid here, so the
+     row sat squeezed inside the page's normal padding while the cards
+     below it (July 2026 nav card, Today's Timeline) render full width —
+     that mismatch was the "gap on the right" you were seeing. This bleeds
+     the row past the container's own padding (negative margin matching
+     the padding exactly, including safe-area-inset) so it reaches the
+     true screen edge the same way a native carousel does, with
+     scroll-snap so cards settle cleanly instead of stopping mid-card.
+     ================================================================== */
+  .stats-carousel-grid {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-snap-type: x mandatory;
+    gap: 12px;
+    padding: 4px max(var(--space-md), env(safe-area-inset-right)) 4px max(var(--space-md), env(safe-area-inset-left));
+    margin-left: calc(-1 * max(var(--space-md), env(safe-area-inset-left)));
+    margin-right: calc(-1 * max(var(--space-md), env(safe-area-inset-right)));
+    width: calc(100% + max(var(--space-md), env(safe-area-inset-left)) + max(var(--space-md), env(safe-area-inset-right)));
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+  }
+  .stats-carousel-grid::-webkit-scrollbar { display: none; }
+
+  .kpi-card-glass {
+    flex: 0 0 calc(86% - 12px);
+    scroll-snap-align: start;
+    min-height: auto;
+  }
+
+  /* NEW: pager dots visible only in this mobile carousel mode */
+  .cal-pager-dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: -4px;
+  }
 }
 
 @media (min-width: 768px) {
@@ -637,6 +727,7 @@ body.light-theme, body.light, .light-theme, .light, [data-theme="light"] {
 
 @media (max-width: 359px) {
   .week-days-ribbon { gap: 3px; }
+  .kpi-card-glass { flex-basis: calc(90% - 12px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
