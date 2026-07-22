@@ -281,7 +281,9 @@ export default function AboutAtlas({ onNavigate }) {
   const handlePortfolioClick = () => window.open("https://projectportfolio-blond.vercel.app/", "_blank");
   const handleGithubClick = () => window.open("https://github.com/pavan55kumar", "_blank");
   const handleLinkedinClick = () => window.open("https://www.linkedin.com/in/pavan-kumar-6864b2320/", "_blank");
-  const handleEmailClick = () => window.open("https://mail.google.com/mail/?view=cm&fs=1&to=pavanshettigar.dev@gmail.com", "_blank");
+ const handleEmailClick = () => {
+  window.location.href = "mailto:pavanshettigar.dev@gmail.com"
+}
   const handleRateAtlas = () => alert("Atlas will be available for rating after its Play Store release.");
   
   const handleShareAtlas = async () => {
@@ -292,17 +294,43 @@ export default function AboutAtlas({ onNavigate }) {
     } catch (err) { console.error("Share failed:", err); }
   };
 
-  const handleReportBug = () => {
-    const subject = encodeURIComponent("Atlas Bug Report");
-    const body = encodeURIComponent(`Describe the issue:\nSteps to reproduce:\nExpected behavior:\nActual behavior:\nDevice:\nAndroid Version:\nAtlas Version:\n`);
-    window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=pavanshettigar.dev@gmail.com&su=${subject}&body=${body}`, "_blank");
-  };
+ const handleReportBug = () => {
+  const subject = encodeURIComponent("Atlas Bug Report")
+  const body = encodeURIComponent(
+`Describe the issue:
 
-  const handleRequestFeature = () => {
-    const subject = encodeURIComponent("Atlas Feature Request");
-    const body = encodeURIComponent(`Feature Name:\nDescription:\nWhy should Atlas include this?\nAdditional Notes:\n`);
-    window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=pavanshettigar.dev@gmail.com&su=${subject}&body=${body}`, "_blank");
-  };
+Steps to reproduce:
+
+Expected behavior:
+
+Actual behavior:
+
+Device:
+
+Android Version:
+
+Atlas Version:
+`)
+
+  window.location.href =
+    `mailto:pavanshettigar.dev@gmail.com?subject=${subject}&body=${body}`
+}
+
+const handleRequestFeature = () => {
+  const subject = encodeURIComponent("Atlas Feature Request")
+  const body = encodeURIComponent(
+`Feature Name:
+
+Description:
+
+Why should Atlas include this?
+
+Additional Notes:
+`)
+
+  window.location.href =
+    `mailto:pavanshettigar.dev@gmail.com?subject=${subject}&body=${body}`
+}
 
   const handlePrivacyRedirect = () => onNavigate("privacy");
   const handleTermsRedirect = () => onNavigate("terms");
