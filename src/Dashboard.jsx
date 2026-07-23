@@ -421,7 +421,7 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
                 </Routes>
               </motion.div>
             </AnimatePresence>
-          </div>
+          </div>  
 
           {searchOpen && (
             <SearchModal userId={user.id} onNavigate={handleNavigate} onClose={closeSearch} />

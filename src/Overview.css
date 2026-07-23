@@ -3,7 +3,7 @@
 /* ---------- Ambient background ---------- */
 .ov-ambient-bg {
   position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
-  animation: ov-bg-fade-in 0.6s ease both; /* NEW: soft fade instead of hard pop-in when the shell first mounts */
+  animation: ov-bg-fade-in 0.6s ease both;
 }
 @keyframes ov-bg-fade-in {
   from { opacity: 0; }
@@ -13,6 +13,9 @@
   position: absolute; border-radius: 50%; filter: blur(70px);
   background: radial-gradient(circle, rgba(124,92,255,0.16), rgba(124,92,255,0) 70%);
   animation: ov-drift 22s ease-in-out infinite;
+  /* UX FIX: Promote to GPU layer to prevent filter:blur from repainting the whole screen on theme switch */
+  transform: translateZ(0); 
+  will-change: transform;
 }
 .ov-particle-1 { width: 420px; height: 420px; top: -10%; left: -8%; animation-duration: 26s; }
 .ov-particle-2 { width: 360px; height: 360px; bottom: -12%; right: -6%; background: radial-gradient(circle, rgba(108,199,240,0.12), rgba(108,199,240,0) 70%); animation-duration: 30s; animation-delay: -6s; }
@@ -35,10 +38,9 @@
   50% { transform: translateY(-22px) translateX(8px); opacity: 0.9; }
 }
 
-/* Mobile blur reduction */
 @media (max-width: 768px) {
   .ov-particle {
-    filter: blur(42px); /* 40% reduction from 70px */
+    filter: blur(42px);
   }
 }
 
@@ -59,15 +61,26 @@
     0 1px 0 0 rgba(255,255,255,0.05) inset,
     0 22px 44px -20px rgba(38,14,74,0.55),
     0 6px 18px -10px rgba(38,14,74,0.45);
-  transition: box-shadow 0.35s ease, border-color 0.35s ease;
+  /* UX FIX: Promote to independent GPU layer. This prevents the mix-blend-mode 
+     and box-shadow from being recalculated on the CPU during theme switches, 
+     eliminating the Command Center flicker on Android. */
+  transform: translateZ(0);
+  will-change: transform;
 }
-.card.ov-glass:hover {
-  border-color: color-mix(in srgb, var(--border) 45%, #7C5CFF 25%);
-  box-shadow:
-    0 1px 0 0 rgba(255,255,255,0.07) inset,
-    0 28px 54px -18px rgba(48,18,92,0.6),
-    0 8px 22px -8px rgba(48,18,92,0.5);
+
+@media (hover: hover) and (pointer: fine) {
+  .card.ov-glass {
+    transition: box-shadow 0.35s ease, border-color 0.35s ease;
+  }
+  .card.ov-glass:hover {
+    border-color: color-mix(in srgb, var(--border) 45%, #7C5CFF 25%);
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.07) inset,
+      0 28px 54px -18px rgba(48,18,92,0.6),
+      0 8px 22px -8px rgba(48,18,92,0.5);
+  }
 }
+
 .card.ov-glass::before {
   content: ''; position: absolute; top: 0; left: 6%; right: 6%; height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
@@ -76,6 +89,8 @@
 .card.ov-glass::after {
   content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0.05; mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* UX FIX: Isolate blend mode compositing to its own GPU layer */
+  transform: translateZ(0);
 }
 
 .ov-hero {
@@ -85,6 +100,7 @@
   position: absolute; top: -60%; left: -10%; width: 60%; height: 220%;
   background: radial-gradient(circle, rgba(124,92,255,0.22), transparent 65%);
   pointer-events: none;
+  transform: translateZ(0); /* UX FIX: GPU acceleration */
 }
 .ov-hero-glow-2 {
   top: auto; bottom: -70%; left: auto; right: -15%; width: 50%; height: 200%;
@@ -109,12 +125,23 @@
   width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
   background: linear-gradient(135deg, #8C6CFF, #6C3CEF);
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 0 18px rgba(124,92,255,0.55), inset 0 1px 1px rgba(255,255,255,0.4);
-  animation: ov-pulse 2.4s ease-in-out infinite;
+  box-shadow: 0 0 14px rgba(124,92,255,0.45), inset 0 1px 1px rgba(255,255,255,0.35);
+  position: relative;
 }
-@keyframes ov-pulse {
-  0%, 100% { box-shadow: 0 0 14px rgba(124,92,255,0.45), inset 0 1px 1px rgba(255,255,255,0.35); }
-  50% { box-shadow: 0 0 26px rgba(124,92,255,0.8), inset 0 1px 1px rgba(255,255,255,0.45); }
+.ov-ai-orb::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  box-shadow: 0 0 26px rgba(124,92,255,0.8), inset 0 1px 1px rgba(255,255,255,0.45);
+  opacity: 0;
+  animation: ov-pulse-opacity 2.4s ease-in-out infinite;
+  pointer-events: none;
+  transform: translateZ(0); /* UX FIX: Isolate pulse animation */
+}
+@keyframes ov-pulse-opacity {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 .ov-ai-title { font-size: 13px; font-weight: 800; letter-spacing: -0.01em; }
 .ov-ai-caption { font-size: 11px; color: var(--text-muted); opacity: 0.8; }
@@ -151,14 +178,7 @@
 .ov-quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 /* =========================================================
-   NEW: Light theme corrections.
-   The rules above were tuned assuming a dark canvas — the glass
-   gradient mixes toward #0a0a10/#050507 and the shadows use dark
-   purple/black rgba values. On a light background those same values
-   make the "glass" cards look muddy/dingy instead of clean, since a
-   near-black surface tint and a black-based shadow both read as dirt
-   on white. These overrides only correct that theme-blind coloring —
-   layout, structure, spacing, and dark-theme appearance are untouched.
+   Light theme corrections (unchanged from before)
 ========================================================= */
 
 [data-theme="light"] .card.ov-glass {
@@ -173,17 +193,17 @@
     0 6px 14px -10px rgba(124,92,255,0.10);
 }
 
-[data-theme="light"] .card.ov-glass:hover {
-  border-color: color-mix(in srgb, var(--border) 55%, #7C5CFF 20%);
-  box-shadow:
-    0 1px 0 0 rgba(255,255,255,0.8) inset,
-    0 22px 44px -18px rgba(124,92,255,0.22),
-    0 8px 18px -8px rgba(124,92,255,0.14);
+@media (hover: hover) and (pointer: fine) {
+  [data-theme="light"] .card.ov-glass:hover {
+    border-color: color-mix(in srgb, var(--border) 55%, #7C5CFF 20%);
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.8) inset,
+      0 22px 44px -18px rgba(124,92,255,0.22),
+      0 8px 18px -8px rgba(124,92,255,0.14);
+  }
 }
 
 [data-theme="light"] .card.ov-glass::before {
-  /* the dark-theme version uses a white highlight line; on light
-     backgrounds a faint dark line reads correctly as a top edge instead */
   background: linear-gradient(90deg, transparent, rgba(20,10,45,0.10), transparent);
 }
 
@@ -214,4 +234,8 @@
 
 [data-theme="light"] .ov-speck {
   opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ov-ai-orb::after { animation: none; opacity: 0; }
 }

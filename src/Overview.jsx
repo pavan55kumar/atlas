@@ -29,12 +29,10 @@ const fadeUp = function (delay) {
   }
 }
 
-
-
-const RingKpi = memo(function RingKpi({ icon, accent, label, value, sub, delay, ringValue, ringColor }) {
+const RingKpi = memo(function RingKpi({ icon, accent, label, value, sub, delay, ringValue, ringColor, isHoverable }) {
   return (
     <motion.div
-      whileHover={{ y: -4 }}
+      whileHover={isHoverable ? { y: -4 } : undefined}
       whileTap={{ scale: 0.985 }}
       transition={springTap}
       className="card ov-glass ov-kpi-card"
@@ -70,10 +68,10 @@ const RingKpi = memo(function RingKpi({ icon, accent, label, value, sub, delay, 
   )
 })
 
-const TrendKpi = memo(function TrendKpi({ icon, accent, label, value, sub, delay, trend, trendColor }) {
+const TrendKpi = memo(function TrendKpi({ icon, accent, label, value, sub, delay, trend, trendColor, isHoverable }) {
   return (
     <motion.div
-      whileHover={{ y: -4 }}
+      whileHover={isHoverable ? { y: -4 } : undefined}
       whileTap={{ scale: 0.985 }}
       transition={springTap}
       className="card ov-glass ov-kpi-card"
@@ -98,11 +96,11 @@ const TrendKpi = memo(function TrendKpi({ icon, accent, label, value, sub, delay
   )
 })
 
-const QuickAction = memo(function QuickAction({ icon, label, color, onClick }) {
+const QuickAction = memo(function QuickAction({ icon, label, color, onClick, isHoverable }) {
   return (
     <motion.button
       onClick={onClick}
-      whileHover={{ y: -4, scale: 1.02, boxShadow: '0 12px 28px -8px ' + color + '45' }}
+      whileHover={isHoverable ? { y: -4, scale: 1.02, boxShadow: '0 12px 28px -8px ' + color + '45' } : undefined}
       whileTap={{ scale: 0.96 }}
       transition={springTap}
       style={{
@@ -125,22 +123,21 @@ const QuickAction = memo(function QuickAction({ icon, label, color, onClick }) {
   )
 })
 
-// Shared ambient background markup, extracted only so the loading state
-// and the loaded state render the exact same background shell instead of
-// mounting/unmounting it — this is what removes the load-in "jump".
-
-
 function Overview({ userId, onNavigate }) {
   const [stats, setStats] = useState(null)
   const [recentTasks, setRecentTasks] = useState([])
   const [taskTrend, setTaskTrend] = useState([])
+  const [isHoverable, setIsHoverable] = useState(false)
 
   useEffect(function () { fetchStats() }, [])
+
+  useEffect(function () {
+    setIsHoverable(window.matchMedia('(hover: hover)').matches)
+  }, [])
 
   async function fetchStats() {
     const today = new Date().toISOString().split('T')[0]
     const results = await Promise.all([
-      // Optimized: Specific columns instead of select('*')
       supabase.from('tasks').select('id, title, progress, priority, created_at').order('created_at', { ascending: false }),
       supabase.from('habits').select('streak, last_completed'),
       supabase.from('goals').select('progress'),
@@ -175,19 +172,9 @@ function Overview({ userId, onNavigate }) {
     })
   }
 
-  // CHANGED: previously this returned ONLY <SkeletonKpiRow />, with no
-  // .ov-page wrapper and no ambient background. That meant the loading
-  // screen and the loaded screen were two visually different shells,
-  // so the ambient background would suddenly "pop in" the instant data
-  // arrived, causing the jump/flash you were seeing. Wrapping the skeleton
-  // in the same .ov-page + AmbientBackground shell fixes that — same
-  // SkeletonKpiRow component, same loading logic, just consistent chrome
-  // around it so the transition to real content is a smooth crossfade
-  // instead of a layout jump.
   if (!stats) {
     return (
       <div className="ov-page">
-        
         <SkeletonKpiRow />
       </div>
     )
@@ -208,10 +195,14 @@ function Overview({ userId, onNavigate }) {
 
   return (
     <div className="ov-page">
-      
 
       {/* 1. Entrance Animation: Hero */}
-      <motion.div {...fadeUp(0)} whileHover={{ y: -2 }} transition={springTap} className="card ov-hero ov-glass">
+      <motion.div
+        {...fadeUp(0)}
+        whileHover={isHoverable ? { y: -2 } : undefined}
+        transition={springTap}
+        className="card ov-hero ov-glass"
+      >
         <div className="ov-hero-glow" />
         <div className="ov-hero-glow ov-hero-glow-2" />
         <div className="ov-hero-inner">
@@ -238,10 +229,10 @@ function Overview({ userId, onNavigate }) {
 
       {/* 2. Entrance Animation: KPI Grid */}
       <motion.div {...fadeUp(0.1)} className="ov-kpi-grid">
-        <MemoTiltCard><TrendKpi icon={<CheckCircle2 size={17} color="#fff" />} accent="#6C6CF0" label="Tasks" value={stats.pending} sub={stats.completed + ' completed'} trend={taskTrend} trendColor="#6C6CF0" /></MemoTiltCard>
-        <MemoTiltCard><RingKpi icon={<Flame size={17} color="#fff" />} accent="#F0876C" label="Habit streak" value={stats.longestStreak} sub={stats.doneToday + '/' + stats.habitCount + ' done today'} ringValue={habitPct} ringColor="#F0876C" /></MemoTiltCard>
-        <MemoTiltCard><RingKpi icon={<Target size={17} color="#fff" />} accent="#6CC7F0" label="Goals" value={stats.goalAvg + '%'} sub={stats.goalCount + ' active'} ringValue={stats.goalAvg} ringColor="#6CC7F0" /></MemoTiltCard>
-        <MemoTiltCard><TrendKpi icon={<CalIcon size={17} color="#fff" />} accent="#8CF06C" label="Today" value={stats.events.length} sub="events scheduled" trend={[1, 2, 1, 3, 2, 4, stats.events.length || 1]} trendColor="#8CF06C" /></MemoTiltCard>
+        <MemoTiltCard><TrendKpi icon={<CheckCircle2 size={17} color="#fff" />} accent="#6C6CF0" label="Tasks" value={stats.pending} sub={stats.completed + ' completed'} trend={taskTrend} trendColor="#6C6CF0" isHoverable={isHoverable} /></MemoTiltCard>
+        <MemoTiltCard><RingKpi icon={<Flame size={17} color="#fff" />} accent="#F0876C" label="Habit streak" value={stats.longestStreak} sub={stats.doneToday + '/' + stats.habitCount + ' done today'} ringValue={habitPct} ringColor="#F0876C" isHoverable={isHoverable} /></MemoTiltCard>
+        <MemoTiltCard><RingKpi icon={<Target size={17} color="#fff" />} accent="#6CC7F0" label="Goals" value={stats.goalAvg + '%'} sub={stats.goalCount + ' active'} ringValue={stats.goalAvg} ringColor="#6CC7F0" isHoverable={isHoverable} /></MemoTiltCard>
+        <MemoTiltCard><TrendKpi icon={<CalIcon size={17} color="#fff" />} accent="#8CF06C" label="Today" value={stats.events.length} sub="events scheduled" trend={[1, 2, 1, 3, 2, 4, stats.events.length || 1]} trendColor="#8CF06C" isHoverable={isHoverable} /></MemoTiltCard>
       </motion.div>
 
       {/* 3. Entrance Animation: Two Column Row 1 */}
@@ -256,11 +247,10 @@ function Overview({ userId, onNavigate }) {
               <p className="ov-ai-caption">Your daily summary</p>
             </div>
           </div>
-          {/* Lazy loaded AIBrief */}
           <Suspense fallback={<div style={{ height: '80px', opacity: 0.5 }}>Loading AI insights...</div>}>
             <AIBrief userId={userId} />
           </Suspense>
-          <motion.button whileHover={{ x: 2 }} whileTap={{ scale: 0.96 }} transition={springTap} className="ov-ai-cta" onClick={function () { onNavigate('ai') }}>
+          <motion.button whileHover={isHoverable ? { x: 2 } : undefined} whileTap={{ scale: 0.96 }} transition={springTap} className="ov-ai-cta" onClick={function () { onNavigate('ai') }}>
             Chat with Atlas AI <ArrowRight size={13} />
           </motion.button>
         </div>
@@ -328,10 +318,10 @@ function Overview({ userId, onNavigate }) {
         <div className="card ov-glass">
           <p className="ov-section-title">Quick Actions</p>
           <div className="ov-quick-grid">
-            <QuickAction icon={<PlusCircle size={16} />} label="Task" color="#6C6CF0" onClick={function () { onNavigate('tasks') }} />
-            <QuickAction icon={<Flame size={16} />} label="Habit" color="#F0876C" onClick={function () { onNavigate('habits') }} />
-            <QuickAction icon={<Target size={16} />} label="Goal" color="#6CC7F0" onClick={function () { onNavigate('goals') }} />
-            <QuickAction icon={<CalIcon size={16} />} label="Event" color="#8CF06C" onClick={function () { onNavigate('calendar') }} />
+            <QuickAction icon={<PlusCircle size={16} />} label="Task" color="#6C6CF0" onClick={function () { onNavigate('tasks') }} isHoverable={isHoverable} />
+            <QuickAction icon={<Flame size={16} />} label="Habit" color="#F0876C" onClick={function () { onNavigate('habits') }} isHoverable={isHoverable} />
+            <QuickAction icon={<Target size={16} />} label="Goal" color="#6CC7F0" onClick={function () { onNavigate('goals') }} isHoverable={isHoverable} />
+            <QuickAction icon={<CalIcon size={16} />} label="Event" color="#8CF06C" onClick={function () { onNavigate('calendar') }} isHoverable={isHoverable} />
           </div>
         </div>
       </motion.div>

@@ -86,16 +86,17 @@ main:has(> .tasks-wrapper) {
 .tasks-wrapper * { -webkit-tap-highlight-color: transparent; }
 .tasks-wrapper *:focus:not(:focus-visible) { outline: none; box-shadow: none; }
 
+/* UX FIX: Replaced expensive filter:blur with radial-gradient for massive performance gains on Android */
 .aurora-blur-sphere {
   position: absolute;
   border-radius: 50%;
-  filter: blur(110px);
   pointer-events: none;
   z-index: 0;
   transition: background 0.5s ease;
+  transform: translateZ(0); /* GPU Acceleration */
 }
-.sphere-primary { top: 5%; left: -10%; width: 450px; height: 450px; background: var(--aurora-primary); }
-.sphere-secondary { bottom: 10%; right: -10%; width: 400px; height: 400px; background: var(--aurora-secondary); }
+.sphere-primary { top: 5%; left: -10%; width: 450px; height: 450px; background: radial-gradient(circle, var(--aurora-primary) 0%, transparent 70%); }
+.sphere-secondary { bottom: 10%; right: -10%; width: 400px; height: 400px; background: radial-gradient(circle, var(--aurora-secondary) 0%, transparent 70%); }
 
 .tasks-noise-overlay {
   position: absolute;
@@ -106,6 +107,7 @@ main:has(> .tasks-wrapper) {
   mix-blend-mode: overlay;
   border-radius: inherit;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  transform: translateZ(0); /* GPU Acceleration */
 }
 
 .subjects-hero-header,
@@ -119,6 +121,8 @@ main:has(> .tasks-wrapper) {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   position: relative;
+  transform: translateZ(0); /* UX FIX: Promotes to GPU layer to prevent repainting lag */
+  will-change: transform;
 }
 
 .task-quest-card {
@@ -127,6 +131,8 @@ main:has(> .tasks-wrapper) {
   border: 1px solid var(--glass-border);
   box-shadow: var(--card-shadow);
   position: relative;
+  transform: translateZ(0); /* UX FIX: Promotes to GPU layer to prevent repainting lag */
+  will-change: transform;
 }
 
 .subjects-hero-header::before,
@@ -403,6 +409,7 @@ body.light-theme .pager-dot.active, body.light .pager-dot.active, .light-theme .
   flex: 0 0 auto; /* Prevents button from being squashed on desktop */
   white-space: nowrap;
   height: 48px;
+  will-change: transform; /* UX FIX: Smoothen tap ripples */
 }
 .btn-add::after {
   content: '';
@@ -505,6 +512,7 @@ body.light-theme .priority-btn.active.medium, body.light .priority-btn.active.me
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   border-radius: 7px;
   z-index: -1;
+  will-change: transform; /* UX FIX: Smooth out layoutId shift */
 }
 body.light-theme .active-tab-indicator, body.light .active-tab-indicator, .light-theme .active-tab-indicator, .light .active-tab-indicator, [data-theme="light"] .active-tab-indicator {
   background: rgba(15, 23, 42, 0.07);
@@ -594,7 +602,7 @@ body.light-theme .quest-priority-badge.badge-medium, body.light .quest-priority-
 
 @media (hover: hover) and (pointer: fine) {
   .kpi-card-glass:hover {
-    transform: translateY(-4px);
+    transform: translateY(-4px) translateZ(0);
     border-color: rgba(139, 92, 246, 0.22);
     box-shadow: var(--card-shadow-hover);
   }
@@ -621,7 +629,7 @@ body.light-theme .quest-priority-badge.badge-medium, body.light .quest-priority-
   .btn-delete-quest:hover { background: rgba(239, 68, 68, 0.08); color: #f87171; }
 
   .task-quest-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-2px) translateZ(0);
     border-color: rgba(255, 255, 255, 0.1);
     box-shadow: var(--card-shadow-hover);
   }
