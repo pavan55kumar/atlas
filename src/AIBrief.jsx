@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { ghostButton } from './styles'
 import { supabase } from './lib/supabase'
 
@@ -6,9 +6,23 @@ function AIBrief({ userId }) {
   const [brief, setBrief] = useState('')
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => { generateBrief() }, [])
+  // PERF/CORRECTNESS: guards against setting state after this component
+  // has unmounted — e.g. the user navigates off Overview (Overview is
+  // re-fetched/unmounted on route change) while the Groq request is still
+  // in flight. Without this, the in-flight fetch finishes, calls setState
+  // on an unmounted component (wasted work + a React warning), and does
+  // nothing useful since nothing is listening anymore.
+  const isMountedRef = useRef(true)
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => { isMountedRef.current = false }
+  }, [])
 
-  async function generateBrief() {
+  // PERF: wrapped in useCallback so the "Regenerate" button doesn't get a
+  // brand new onClick handler identity on every render (loading/brief
+  // state changes cause this component to re-render while the request is
+  // in flight).
+  const generateBrief = useCallback(async () => {
     setLoading(true)
     const today = new Date().toISOString().split('T')[0]
 
@@ -42,6 +56,8 @@ Today's events: ${events?.map(e => e.title).join(', ') || 'none scheduled'}
       })
       const data = await res.json()
 
+      if (!isMountedRef.current) return
+
       if (data.error) {
         console.error('Groq error:', data.error)
         setBrief("Your daily brief isn't available right now. Check your AI key in Settings.")
@@ -50,10 +66,16 @@ Today's events: ${events?.map(e => e.title).join(', ') || 'none scheduled'}
       }
     } catch (err) {
       console.error('AI Brief fetch failed:', err)
-      setBrief("Your daily brief isn't available right now — try again shortly.")
+      if (isMountedRef.current) {
+        setBrief("Your daily brief isn't available right now — try again shortly.")
+      }
     }
-    setLoading(false)
-  }
+    if (isMountedRef.current) {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { generateBrief() }, [generateBrief])
 
   return (
     <div>

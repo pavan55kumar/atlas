@@ -74,6 +74,28 @@ const srOnlyStyle = {
 // so the next mount can take over — so styles never disappear.
 let styleOwnerActive = false
 
+// PERF: hoisted — these are static (no prop/state dependency) and were
+// previously recreated on every render of SkeletonKpiRow.
+const KPI_ROW_CARDS = [0, 1, 2, 3]
+const KPI_GRID_STYLE = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+  gap: '16px',
+  marginBottom: '16px',
+  width: '100%'
+}
+const KPI_CARD_STYLE = {
+  padding: '24px',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
+  minHeight: '160px',
+  boxSizing: 'border-box'
+}
+const KPI_CARD_TOP_ROW_STYLE = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }
+const KPI_CARD_BOTTOM_COL_STYLE = { display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }
+const LINES_CONTAINER_STYLE = { display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }
+
 function Skeleton({ height, width, radius, style }) {
   const h = height || '16px'
   const w = width || '100%'
@@ -112,8 +134,6 @@ function Skeleton({ height, width, radius, style }) {
 }
 
 export function SkeletonKpiRow({ label }) {
-  const cards = [0, 1, 2, 3]
-
   return (
     <>
       {/* FIX #2: accessible loading announcement, visually hidden */}
@@ -122,35 +142,22 @@ export function SkeletonKpiRow({ label }) {
       </span>
 
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '16px',
-          marginBottom: '16px',
-          width: '100%'
-        }}
+        style={KPI_GRID_STYLE}
         aria-hidden="true"
       >
-        {cards.map(function (i) {
+        {KPI_ROW_CARDS.map(function (i) {
           const delay = `${i * 0.12}s`
           return (
             <div
               key={i}
               className="card"
-              style={{
-                padding: '24px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                minHeight: '160px',
-                boxSizing: 'border-box'
-              }}
+              style={KPI_CARD_STYLE}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={KPI_CARD_TOP_ROW_STYLE}>
                 <Skeleton width="44px" height="44px" radius="12px" style={{ animationDelay: delay }} />
                 <Skeleton width="48px" height="48px" radius="50%" style={{ animationDelay: delay }} />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+              <div style={KPI_CARD_BOTTOM_COL_STYLE}>
                 <Skeleton width="60%" height="12px" radius="4px" style={{ animationDelay: delay }} />
                 <Skeleton width="85%" height="24px" radius="6px" style={{ animationDelay: delay }} />
                 <Skeleton width="40%" height="10px" radius="4px" style={{ animationDelay: delay }} />
@@ -173,7 +180,7 @@ export function SkeletonLines({ count, label }) {
       </span>
 
       <div
-        style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}
+        style={LINES_CONTAINER_STYLE}
         aria-hidden="true"
       >
         {Array.from({ length: n }).map(function (_, i) {

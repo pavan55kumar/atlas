@@ -1,15 +1,24 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Capacitor } from '@capacitor/core'
 import {
-  Send, Sparkles, Mic, MicOff, Volume2, VolumeX, Sparkle, Brain, Target, Flame,
-  Layers, CalendarDays, Terminal, HelpCircle, FileText, ChevronRight, Activity, Cpu
+  Send, Mic, MicOff, Volume2, Brain, Sparkle, Cpu
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
-// NEW: cross-platform read-aloud wrapper (see tts.js for why this is needed)
 import { speakText, stopSpeaking } from './tts'
-// CHANGED: styles moved out of an inline <style> string into their own file
 import './AIChat.css'
+
+// PERF: Static style objects hoisted to module scope
+const CONTEXT_BADGE_TASKS_STYLE = { background: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }
+const CONTEXT_BADGE_CALENDAR_STYLE = { background: 'rgba(124, 92, 255, 0.08)', borderColor: 'rgba(124, 92, 255, 0.2)', color: 'var(--accent)' }
+const CONTEXT_BADGE_HABITS_STYLE = { background: 'rgba(236, 72, 153, 0.08)', borderColor: 'rgba(236, 72, 153, 0.2)', color: '#ec4899' }
+const AUTO_READ_ROW_STYLE = { display: 'flex', justifyContent: 'flex-end' }
+const SPEAKING_BARS_WRAP_STYLE = { display: 'flex', alignItems: 'flex-end', gap: '2px', height: '12px' }
+const EMPTY_STATE_TITLE_STYLE = { fontSize: '20px', fontWeight: 700, margin: '0 0 8px 0', color: 'var(--text)' }
+const EMPTY_STATE_DESC_STYLE = { fontSize: '14px', color: 'var(--text-muted)', maxWidth: '320px', margin: 0, lineHeight: 1.5 }
+const SYSTEM_NOTE_STYLE = { fontSize: '13px', lineHeight: 1.6, color: 'var(--text-muted)' }
+const VOICE_UNSUPPORTED_NOTE_STYLE = { fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }
+const BUBBLE_CONTENT_STYLE = { whiteSpace: 'pre-wrap' }
 
 function AIChat({ userId }) {
   const [messages, setMessages] = useState([
@@ -23,7 +32,6 @@ function AIChat({ userId }) {
   const [speakReplies, setSpeakReplies] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [speechSupported, setSpeechSupported] = useState(true)
-
   const [isInputFocused, setIsInputFocused] = useState(false)
 
   const [localStats, setLocalStats] = useState({
@@ -38,12 +46,17 @@ function AIChat({ userId }) {
   const messagesRef = useRef(messages)
   const inputDockRef = useRef(null)
 
+  const isMountedRef = useRef(true)
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => { isMountedRef.current = false }
+  }, [])
+
   useEffect(() => {
     messagesRef.current = messages
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
-  // Mobile layout adjustment
   useEffect(() => {
     const handleResize = () => {
       if (isInputFocused && inputDockRef.current) {
@@ -55,6 +68,33 @@ function AIChat({ userId }) {
       return () => window.visualViewport.removeEventListener('resize', handleResize)
     }
   }, [isInputFocused])
+
+  const fetchSystemStats = useCallback(async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      const [tasksRes, habitsRes, goalsRes, eventsRes] = await Promise.all([
+        supabase.from('tasks').select('id', { count: 'exact' }).eq('progress', 0),
+        supabase.from('habits').select('id', { count: 'exact' }),
+        supabase.from('goals').select('progress'),
+        supabase.from('calendar_events').select('id', { count: 'exact' }).gte('event_date', today)
+      ])
+
+      const avgGoalProgress = goalsRes.data?.length
+        ? Math.round(goalsRes.data.reduce((acc, g) => acc + (g.progress || 0), 0) / goalsRes.data.length)
+        : 0
+
+      if (!isMountedRef.current) return
+
+      setLocalStats({
+        pendingTasks: tasksRes.count || 0,
+        activeHabits: habitsRes.count || 0,
+        goalsProgress: avgGoalProgress,
+        eventsCount: eventsRes.count || 0
+      })
+    } catch (e) {
+      // Silent fallback
+    }
+  }, [])
 
   useEffect(() => {
     fetchSystemStats()
@@ -77,47 +117,15 @@ function AIChat({ userId }) {
       recognitionRef.current = recognition
     }
 
-    // CHANGED: speech support is now true if EITHER the browser has
-    // window.speechSynthesis OR we're running inside Capacitor (native TTS
-    // is handled separately by tts.js and doesn't depend on this browser API
-    // at all). Previously this only checked 'speechSynthesis' in window,
-    // which is exactly why the toggle silently failed on Android.
     setSpeechSupported(('speechSynthesis' in window) || Capacitor.isNativePlatform())
 
     return () => {
       recognitionRef.current?.stop?.()
-      // CHANGED: cleanup now goes through the cross-platform wrapper instead
-      // of calling window.speechSynthesis.cancel() directly.
       stopSpeaking()
     }
-  }, [])
+  }, [fetchSystemStats])
 
-  async function fetchSystemStats() {
-    try {
-      const today = new Date().toISOString().split('T')[0]
-      const [tasksRes, habitsRes, goalsRes, eventsRes] = await Promise.all([
-        supabase.from('tasks').select('id', { count: 'exact' }).eq('progress', 0),
-        supabase.from('habits').select('id', { count: 'exact' }),
-        supabase.from('goals').select('progress'),
-        supabase.from('calendar_events').select('id', { count: 'exact' }).gte('event_date', today)
-      ])
-
-      const avgGoalProgress = goalsRes.data?.length 
-        ? Math.round(goalsRes.data.reduce((acc, g) => acc + (g.progress || 0), 0) / goalsRes.data.length) 
-        : 0
-
-      setLocalStats({
-        pendingTasks: tasksRes.count || 0,
-        activeHabits: habitsRes.count || 0,
-        goalsProgress: avgGoalProgress,
-        eventsCount: eventsRes.count || 0
-      })
-    } catch (e) {
-      // Fallback
-    }
-  }
-
-  function toggleListening() {
+  const toggleListening = useCallback(() => {
     if (!voiceSupported || !recognitionRef.current) return
     if (listening) {
       recognitionRef.current.stop()
@@ -126,18 +134,13 @@ function AIChat({ userId }) {
       recognitionRef.current.start()
       setListening(true)
     }
-  }
+  }, [voiceSupported, listening])
 
-  // CHANGED: stopReading now delegates to the cross-platform tts.js wrapper
-  // instead of calling window.speechSynthesis.cancel() directly.
   const stopReading = useCallback(() => {
     stopSpeaking()
     setIsSpeaking(false)
   }, [])
 
-  // CHANGED: readAloud (renamed usage to speakText internally) now goes
-  // through tts.js, which picks the native OS TTS engine on Capacitor and
-  // the browser API on web — same feature, now actually works on Android.
   const readAloud = useCallback((text) => {
     if (!speechSupported || !text) return
     speakText(text, {
@@ -166,7 +169,7 @@ function AIChat({ userId }) {
     })
   }, [isSpeaking, stopReading])
 
-  async function fetchContext() {
+  const fetchContext = useCallback(async () => {
     const today = new Date().toISOString().split('T')[0]
     const [{ data: tasks }, { data: habits }, { data: goals }, { data: notes }, { data: events }] = await Promise.all([
       supabase.from('tasks').select('*'),
@@ -183,14 +186,14 @@ Goals: ${goals?.map(g => `${g.title} — ${g.target || ''} (${g.progress}%)`).jo
 Notes: ${notes?.map(n => `${n.title}${n.tag ? ` [${n.tag}]` : ''}`).join(', ') || 'none'}
 Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time ? ' at ' + e.event_time.slice(0,5) : ''}`).join(', ') || 'none'}
     `.trim()
-  }
+  }, [])
 
-  async function sendMessage(e) {
+  const sendMessage = useCallback(async (e) => {
     if (e) e.preventDefault()
     const text = input.trim()
     if (!text || loading) return
 
-    const newMessages = [...messages, { role: 'user', content: text }]
+    const newMessages = [...messagesRef.current, { role: 'user', content: text }]
     setMessages(newMessages)
     setInput('')
     setLoading(true)
@@ -205,7 +208,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
           'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`
         },
         body: JSON.stringify({
-          model: 'openai/gpt-oss-20b',
+          model: 'openai/gpt-oss-20b', // Using the specified model
           messages: [
             {
               role: 'system',
@@ -218,6 +221,9 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
       })
 
       const data = await res.json()
+
+      if (!isMountedRef.current) return
+
       if (data.error) {
         const errMsg = "I'm having trouble responding right now. Please try again shortly."
         setMessages([...newMessages, { role: 'assistant', content: errMsg }])
@@ -227,10 +233,14 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
         if (speakReplies) readAloud(reply)
       }
     } catch (err) {
-      setMessages([...newMessages, { role: 'assistant', content: "Something went wrong reaching the AI. Please try again." }])
+      if (isMountedRef.current) {
+        setMessages([...newMessages, { role: 'assistant', content: "Something went wrong reaching the AI. Please try again." }])
+      }
     }
-    setLoading(false)
-  }
+    if (isMountedRef.current) {
+      setLoading(false)
+    }
+  }, [input, loading, fetchContext, speakReplies, readAloud])
 
   const actionSuggestions = useMemo(() => [
     { label: "📅 Plan my day", query: "Can you help me plan my tasks and events for today?" },
@@ -245,7 +255,6 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
       <div className="aurora-blur-sphere sphere-primary" />
       <div className="aurora-blur-sphere sphere-secondary" />
 
-      {/* --- Page Hero Header --- */}
       <motion.div 
         className="ai-hero-header"
         initial={{ opacity: 0, y: -20 }}
@@ -268,7 +277,6 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
         </div>
       </motion.div>
 
-      {/* --- Scrollable Suggestion Carousel --- */}
       <div className="suggestions-carousel">
         {actionSuggestions.map((suggestion, idx) => (
           <motion.button
@@ -285,25 +293,22 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
         ))}
       </div>
 
-      {/* --- Split Workspace Pane Layout --- */}
       <div className="ai-split-workspace">
         
-        {/* Left Pane: Custom Conversation Module */}
         <div className="chat-workspace-pane">
           
           <div ref={scrollRef} className="chat-messages-container">
             {messages.length === 1 ? (
               
-              /* Elegant empty chat layout with breathing AI Pulse Orb in center */
               <div className="empty-chat-orb-state">
                 <div className="pulse-orb-outer">
                   <div className="pulse-orb-orbit" />
                   <div className="pulse-orb-center" style={{ animationPlayState: loading ? 'paused' : 'running' }} />
                 </div>
-                <h3 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 4px 0' }}>
+                <h3 style={EMPTY_STATE_TITLE_STYLE}>
                   What would you like to accomplish today?
                 </h3>
-                <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '280px', margin: 0, lineHeight: 1.5 }}>
+                <p style={EMPTY_STATE_DESC_STYLE}>
                   Ask me to evaluate your schedule, map study sessions, or check habit streaks.
                 </p>
               </div>
@@ -311,7 +316,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
             ) : (
               messages.map((m, i) => (
                 <div key={i} className={`message-bubble-row ${m.role === 'user' ? 'is-user' : 'is-assistant'}`}>
-                  <div className="msg-bubble">
+                  <div className="msg-bubble" style={BUBBLE_CONTENT_STYLE}>
                     {m.content}
                   </div>
                 </div>
@@ -331,18 +336,15 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
             )}
           </div>
 
-          {/* Action Dock & Floating capsule inputs */}
           <div className="input-dock-layer" ref={inputDockRef}>
             
-            {/* Quick context chip display */}
             <div className="linked-context-chips-row">
               <div className="linked-context-chips">
-                <span className="context-mini-badge" style={{ background: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }}>● Linked Tasks</span>
-                <span className="context-mini-badge" style={{ background: 'rgba(124, 92, 255, 0.08)', borderColor: 'rgba(124, 92, 255, 0.2)', color: 'var(--accent)' }}>● Calendar</span>
-                <span className="context-mini-badge" style={{ background: 'rgba(236, 72, 153, 0.08)', borderColor: 'rgba(236, 72, 153, 0.2)', color: '#ec4899' }}>● Habits</span>
+                <span className="context-mini-badge" style={CONTEXT_BADGE_TASKS_STYLE}>● Tasks</span>
+                <span className="context-mini-badge" style={CONTEXT_BADGE_CALENDAR_STYLE}>● Calendar</span>
+                <span className="context-mini-badge" style={CONTEXT_BADGE_HABITS_STYLE}>● Habits</span>
               </div>
 
-              {/* Read Aloud controls */}
               <div className="voice-switch-container">
                 <motion.button
                   type="button"
@@ -363,7 +365,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
                 >
                   {isSpeaking ? (
                     <>
-                      <span aria-hidden="true" style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: '12px' }}>
+                      <span aria-hidden="true" style={SPEAKING_BARS_WRAP_STYLE}>
                         <span className="speaking-bar" />
                         <span className="speaking-bar" />
                         <span className="speaking-bar" />
@@ -380,28 +382,15 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
               </div>
             </div>
 
-            {/* Auto-read future replies preference */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  color: 'var(--text-muted)',
-                  cursor: speechSupported ? 'pointer' : 'default',
-                  opacity: speechSupported ? 1 : 0.5,
-                  userSelect: 'none'
-                }}
-              >
+            <div style={AUTO_READ_ROW_STYLE}>
+              <label className="auto-read-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={speakReplies}
                   onChange={handleAutoReadToggle}
                   disabled={!speechSupported}
                   aria-label="Automatically read new assistant replies aloud"
-                  style={{ accentColor: 'var(--accent)', width: '13px', height: '13px' }}
+                  className="auto-read-checkbox"
                 />
                 Auto-read new replies
               </label>
@@ -450,7 +439,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
             </form>
 
             {(!voiceSupported || !speechSupported) && (
-              <p style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
+              <p style={VOICE_UNSUPPORTED_NOTE_STYLE}>
                 {!voiceSupported && !speechSupported
                   ? 'Voice input and read aloud are supported natively in Chrome, Edge, and Safari.'
                   : !voiceSupported
@@ -462,7 +451,6 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
 
         </div>
 
-        {/* Right Pane: Live System summary stats panel (Desktop Only) */}
         <div className="system-summary-pane">
           
           <div className="summary-pane-card">
@@ -495,7 +483,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
               <Sparkle size={14} color="#e1b12c" />
               <span>AI Core Status</span>
             </h4>
-            <div style={{ fontSize: '12px', lineHeight: 1.6, color: 'var(--text-muted)' }}>
+            <div style={SYSTEM_NOTE_STYLE}>
               Atlas Copilot is fully linked to local database tables, enabling direct contextual prompt evaluations.
             </div>
           </div>

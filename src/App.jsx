@@ -7,6 +7,8 @@ import Dashboard from './Dashboard'
 import ForceUpdate from './ForceUpdate'
 // NEW: local notifications setup + bulk reschedule
 import { initNotifications, rescheduleAllReminders } from './notifications'
+import { initializePushNotifications } from './pushNotifications'
+
 
 function App() {
   const [theme, setTheme] = useState('dark')
@@ -39,6 +41,10 @@ function App() {
       rescheduleAllReminders(supabase, user.id)
     }
   }, [user])
+
+  useEffect(() => {
+  initializePushNotifications()
+}, [])
 
   // NEW: reschedule reminders whenever the app resumes from background —
   // catches anything changed while the app was closed or edited on another

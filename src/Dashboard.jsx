@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, memo } from 'react'
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { App } from '@capacitor/app'
@@ -80,6 +80,83 @@ const getBackTarget = (path) => {
   return '/'                                                 // any normal page -> Overview
 }
 
+// ---------------------------------------------------------------
+// PERF: All of the styles/markup below are 100% static (no props/state
+// dependency), so they are hoisted to module scope. Previously they were
+// object/string literals re-created on every single render of Dashboard
+// (which re-renders on every navigation), causing unnecessary allocations
+// and, in the case of the <style> string, unnecessary DOM text updates.
+// Values and visual output are unchanged.
+// ---------------------------------------------------------------
+
+const headerWrap = {
+  backgroundImage: 'radial-gradient(circle at 15% 0%, rgba(108,108,240,0.06), transparent 55%)'
+}
+
+const iconButton = {
+  width: '38px',
+  height: '38px',
+  borderRadius: '10px',
+  border: '1px solid var(--border)',
+  background: 'var(--surface)',
+  color: 'var(--text)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
+}
+
+const mobileMenuButtonStyle = {
+  width: '34px',
+  height: '34px',
+  borderRadius: '9px',
+  border: '1px solid var(--border)',
+  background: 'var(--surface)',
+  color: 'var(--text)',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  marginTop: '2px'
+}
+
+const rootFlexStyle = { display: 'flex', minHeight: '100vh', position: 'relative', zIndex: 1 }
+const headerRowStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }
+const headerLeftStyle = { display: 'flex', alignItems: 'flex-start', gap: '10px', minWidth: 0 }
+const headerTitleWrapStyle = { minWidth: 0 }
+const headerActionsStyle = { display: 'flex', gap: '8px', flexShrink: 0 }
+const badgeStyle = {
+  display: 'inline-flex', alignItems: 'center', gap: '6px',
+  padding: '5px 12px', borderRadius: '999px',
+  border: '1px solid var(--border)', background: 'var(--surface-2)',
+  marginBottom: '12px'
+}
+const badgeDotStyle = { width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }
+const badgeTextStyle = { fontSize: '11px', fontWeight: 600, letterSpacing: '0.04em', color: 'var(--text-muted)' }
+const titleStyle = { fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.05 }
+
+const dashboardStyles = `
+  .mobile-menu-btn { display: none; }
+  .dash-header-pad { padding: 44px 48px 32px; }
+  .dash-content-pad { padding: 0 48px 48px; }
+  .dash-header-title { font-size: 34px; font-family: 'Space Grotesk', 'Inter', sans-serif; }
+  @media (max-width: 768px) {
+    .mobile-menu-btn {
+      display: flex !important;
+    }
+    .dash-header-pad {
+      padding-top: calc(20px + env(safe-area-inset-top, 0px));
+      padding-left: 16px;
+      padding-right: 16px;
+      padding-bottom: 16px;
+    }
+    .dash-content-pad {
+      padding: 0 16px 32px;
+    }
+    .dash-header-title {
+      font-size: 24px;
+    }
+  }
+`
+
 function Dashboard({ user, onLogout, theme, onToggleTheme }) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -108,7 +185,11 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
   //   the Capacitor listener using getBackTarget().
   // - Web/PWA: same level rules, PLUS the modal-history dance so opening a
   //   modal then navigating doesn't corrupt browser history.
-  const handleNavigate = (path) => {
+  //
+  // PERF: wrapped in useCallback so Sidebar/Overview/SearchModal/etc. receive
+  // a stable function reference across renders that don't actually change
+  // searchOpen/mobileNavOpen/location.pathname (e.g. a theme toggle re-render).
+  const handleNavigate = useCallback((path) => {
     let target = path.startsWith('/') ? path : `/${path}`
 
     // /overview is just an alias for the root.
@@ -150,9 +231,9 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
 
     setMobileNavOpen(false)
     setSearchOpen(false)
-  }
+  }, [searchOpen, mobileNavOpen, location.pathname, navigate])
 
-  const closeSearch = () => {
+  const closeSearch = useCallback(() => {
     if (!searchOpen) return
     if (Capacitor.isNativePlatform()) {
       setSearchOpen(false)
@@ -164,9 +245,9 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
     } else {
       setSearchOpen(false)
     }
-  }
+  }, [searchOpen])
 
-  const closeMobileNav = () => {
+  const closeMobileNav = useCallback(() => {
     if (!mobileNavOpen) return
     if (Capacitor.isNativePlatform()) {
       setMobileNavOpen(false)
@@ -178,7 +259,7 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
     } else {
       setMobileNavOpen(false)
     }
-  }
+  }, [mobileNavOpen])
 
   // Cmd/Ctrl + K shortcut
   useEffect(() => {
@@ -315,7 +396,7 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
     <>
       <AmbientBackground />
 
-      <div style={{ display: 'flex', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
+      <div style={rootFlexStyle}>
        <Sidebar
   page={
     location.pathname === '/' || location.pathname === '/overview'
@@ -329,8 +410,8 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
 
         <div style={{ flex: 1, maxWidth: '1040px', minWidth: 0 }}>
           <div style={headerWrap}>
-            <div className="dash-header-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', minWidth: 0 }}>
+            <div className="dash-header-pad" style={headerRowStyle}>
+              <div style={headerLeftStyle}>
                 <button
                   className="mobile-menu-btn"
                   onClick={() => setMobileNavOpen(true)}
@@ -338,20 +419,15 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
                 >
                   <Menu size={16} />
                 </button>
-                <div style={{ minWidth: 0 }}>
+                <div style={headerTitleWrapStyle}>
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4 }}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '6px',
-                      padding: '5px 12px', borderRadius: '999px',
-                      border: '1px solid var(--border)', background: 'var(--surface-2)',
-                      marginBottom: '12px'
-                    }}
+                    style={badgeStyle}
                   >
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
-                    <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.04em', color: 'var(--text-muted)' }}>
+                    <span style={badgeDotStyle} />
+                    <span style={badgeTextStyle}>
                       {dateStr}
                     </span>
                   </motion.div>
@@ -360,14 +436,14 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.08 }}
                     className="dash-header-title"
-                    style={{ fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.05 }}
+                    style={titleStyle}
                   >
                     {currentTitle}
                   </motion.h1>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+              <div style={headerActionsStyle}>
                 <button onClick={() => setSearchOpen(true)} style={iconButton}>
                   <Search size={16} />
                 </button>
@@ -428,65 +504,16 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
           )}
         </div>
 
-        <style>{`
-          .mobile-menu-btn { display: none; }
-          .dash-header-pad { padding: 44px 48px 32px; }
-          .dash-content-pad { padding: 0 48px 48px; }
-          .dash-header-title { font-size: 34px; font-family: 'Space Grotesk', 'Inter', sans-serif; }
-          @media (max-width: 768px) {
-            .mobile-menu-btn {
-              display: flex !important;
-            }
-            .dash-header-pad {
-              padding-top: calc(20px + env(safe-area-inset-top, 0px));
-              padding-left: 16px;
-              padding-right: 16px;
-              padding-bottom: 16px;
-            }
-            .dash-content-pad {
-              padding: 0 16px 32px;
-            }
-            .dash-header-title {
-              font-size: 24px;
-            }
-          }
-        `}</style>
+        <style>{dashboardStyles}</style>
       </div>
     </>
   )
 }
 
-function PageCard({ children }) {
+// PERF: memoized — pure wrapper around children with a static style object,
+// no need to re-render/re-create markup beyond what its children require.
+const PageCard = memo(function PageCard({ children }) {
   return <div className="card" style={{ padding: '32px', borderRadius: '24px' }}>{children}</div>
-}
-
-const headerWrap = {
-  backgroundImage: 'radial-gradient(circle at 15% 0%, rgba(108,108,240,0.06), transparent 55%)'
-}
-
-const iconButton = {
-  width: '38px',
-  height: '38px',
-  borderRadius: '10px',
-  border: '1px solid var(--border)',
-  background: 'var(--surface)',
-  color: 'var(--text)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center'
-}
-
-const mobileMenuButtonStyle = {
-  width: '34px',
-  height: '34px',
-  borderRadius: '9px',
-  border: '1px solid var(--border)',
-  background: 'var(--surface)',
-  color: 'var(--text)',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexShrink: 0,
-  marginTop: '2px'
-}
+})
 
 export default Dashboard

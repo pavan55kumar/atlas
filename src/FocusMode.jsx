@@ -16,47 +16,167 @@ const QUOTES = [
   'Progress, not perfection.'
 ]
 
+// ---------------------------------------------------------------------------
+// Module-level store — lives outside the component, so it survives
+// FocusMode unmounting/remounting (which happens on every page navigation,
+// since this app's router only keeps the active route's component mounted).
+// It resets only if the JS process itself restarts (app fully killed/
+// cleared from recents), which matches exactly what was asked: timers
+// should survive switching presets and navigating around the app, but it's
+// fine if a full app kill clears them.
+//
+// Each mode keeps its OWN remaining time independently. Only one mode can
+// be "running" at a time (there's a single Play/Pause control in the UI),
+// but switching which mode is displayed never resets or stops anything —
+// it only changes what's shown.
+// ---------------------------------------------------------------------------
+const focusStore = {
+  remainingByMode: {
+    Focus: PRESETS[0].minutes * 60,
+    'Short Break': PRESETS[1].minutes * 60,
+    'Long Break': PRESETS[2].minutes * 60
+  },
+  activeModeLabel: PRESETS[0].label, // which preset is currently displayed
+  runningModeLabel: null,            // which preset's timer is actually counting down, or null
+  targetEndTime: null,               // Date.now() + remaining*1000 — wall-clock source of truth while running
+  sessionsToday: 0
+}
+
+// If the running mode's countdown has actually elapsed (checked via real
+// wall-clock time, not tick count), finalize it: zero it out, bump
+// sessionsToday if it was a Focus session, and stop the "running" state.
+// This is what makes completion correct even if it happened while the
+// component was unmounted (e.g. the user was on a different page) — the
+// elapsed time is computed from timestamps, not from ticks that would have
+// simply stopped existing while unmounted.
+function finalizeIfExpired() {
+  const { runningModeLabel, targetEndTime } = focusStore
+  if (!runningModeLabel || targetEndTime === null) return null
+  if (Date.now() >= targetEndTime) {
+    focusStore.remainingByMode[runningModeLabel] = 0
+    const completedFocus = runningModeLabel === 'Focus'
+    focusStore.runningModeLabel = null
+    focusStore.targetEndTime = null
+    if (completedFocus) focusStore.sessionsToday += 1
+    return { completedFocus }
+  }
+  return null
+}
+
+// The seconds to display for a given mode: if it's the one actively
+// running, compute live from the wall-clock target end time; otherwise
+// return its last stored (paused) value.
+function getDisplaySeconds(modeLabel) {
+  if (focusStore.runningModeLabel === modeLabel && focusStore.targetEndTime !== null) {
+    return Math.max(0, Math.round((focusStore.targetEndTime - Date.now()) / 1000))
+  }
+  return focusStore.remainingByMode[modeLabel]
+}
+
 function FocusMode() {
-  const [mode, setMode] = useState(PRESETS[0])
-  const [secondsLeft, setSecondsLeft] = useState(PRESETS[0].minutes * 60)
-  const [running, setRunning] = useState(false)
-  const [sessionsToday, setSessionsToday] = useState(0)
+  const [displayedModeLabel, setDisplayedModeLabelState] = useState(focusStore.activeModeLabel)
+  const [runningModeLabel, setRunningModeLabelState] = useState(focusStore.runningModeLabel)
+  const [sessionsToday, setSessionsTodayState] = useState(focusStore.sessionsToday)
   const [justCompleted, setJustCompleted] = useState(false)
+  // Forces a re-render every second while a timer is running, so the
+  // wall-clock-derived display value stays live. The actual countdown math
+  // never depends on this counter — it's purely a "please re-render" nudge.
+  const [, setTick] = useState(0)
+
   const intervalRef = useRef(null)
+  const celebrateTimeoutRef = useRef(null)
   const quoteRef = useRef(QUOTES[Math.floor(Math.random() * QUOTES.length)])
 
+  const mode = PRESETS.find(function (p) { return p.label === displayedModeLabel }) || PRESETS[0]
+  const running = runningModeLabel === displayedModeLabel
+  const secondsLeft = getDisplaySeconds(displayedModeLabel)
+
+  // On mount: silently catch up if the running timer actually finished
+  // while this component was unmounted (e.g. the user was on the Tasks or
+  // Calendar page). No celebration bubble here — that moment already
+  // passed while they were away; celebration only fires for completions
+  // witnessed live via the ticking interval below.
   useEffect(function () {
-    if (running) {
-      intervalRef.current = setInterval(function () {
-        setSecondsLeft(function (prev) {
-          if (prev <= 1) {
-            clearInterval(intervalRef.current)
-            setRunning(false)
-            if (mode.label === 'Focus') {
-              setSessionsToday(function (s) { return s + 1 })
-              setJustCompleted(true)
-              setTimeout(function () { setJustCompleted(false) }, 1800)
-            }
-            return 0
-          }
-          return prev - 1
-        })
-      }, 1000)
-    } else {
-      clearInterval(intervalRef.current)
+    const result = finalizeIfExpired()
+    if (result) {
+      setRunningModeLabelState(null)
+      setSessionsTodayState(focusStore.sessionsToday)
     }
+  }, [])
+
+  useEffect(function () {
+    return function () {
+      if (celebrateTimeoutRef.current) clearTimeout(celebrateTimeoutRef.current)
+    }
+  }, [])
+
+  // Ticking effect — runs whenever ANY mode is actively running, regardless
+  // of which mode is currently displayed. This is what makes a Long Break
+  // timer keep counting down for real while you're looking at Short Break,
+  // or have navigated to a completely different page in the app: the
+  // interval just re-renders every second, and the actual remaining value
+  // is always recomputed from the stored wall-clock target, so it's
+  // self-correcting even after being throttled while backgrounded.
+  useEffect(function () {
+    if (!runningModeLabel) return
+
+    intervalRef.current = setInterval(function () {
+      const result = finalizeIfExpired()
+      if (result) {
+        setRunningModeLabelState(null)
+        if (result.completedFocus) {
+          setSessionsTodayState(focusStore.sessionsToday)
+          setJustCompleted(true)
+          celebrateTimeoutRef.current = setTimeout(function () { setJustCompleted(false) }, 1800)
+        }
+      }
+      setTick(function (t) { return t + 1 })
+    }, 1000)
+
     return function () { clearInterval(intervalRef.current) }
-  }, [running, mode])
+  }, [runningModeLabel])
 
   function selectMode(preset) {
-    setMode(preset)
-    setSecondsLeft(preset.minutes * 60)
-    setRunning(false)
+    // CHANGED: switching the displayed preset no longer resets its stored
+    // remaining time, and no longer stops whichever mode is actually
+    // running — it only changes which mode's countdown/controls are shown.
+    focusStore.activeModeLabel = preset.label
+    setDisplayedModeLabelState(preset.label)
+  }
+
+  function toggleRunning() {
+    if (running) {
+      // Pause: freeze the currently displayed (and running) mode's
+      // remaining time, computed from real elapsed wall-clock time.
+      const remaining = getDisplaySeconds(displayedModeLabel)
+      focusStore.remainingByMode[displayedModeLabel] = remaining
+      focusStore.runningModeLabel = null
+      focusStore.targetEndTime = null
+      setRunningModeLabelState(null)
+    } else {
+      // Starting a different mode freezes whatever else was running at its
+      // current wall-clock-computed remaining first — only one countdown
+      // can be "active" at a time, matching the single Play/Pause control.
+      if (focusStore.runningModeLabel && focusStore.runningModeLabel !== displayedModeLabel) {
+        const prevRemaining = getDisplaySeconds(focusStore.runningModeLabel)
+        focusStore.remainingByMode[focusStore.runningModeLabel] = prevRemaining
+      }
+      const startFrom = focusStore.remainingByMode[displayedModeLabel]
+      focusStore.runningModeLabel = displayedModeLabel
+      focusStore.targetEndTime = Date.now() + startFrom * 1000
+      setRunningModeLabelState(displayedModeLabel)
+    }
   }
 
   function reset() {
-    setSecondsLeft(mode.minutes * 60)
-    setRunning(false)
+    // Reset only affects the currently displayed mode.
+    focusStore.remainingByMode[displayedModeLabel] = mode.minutes * 60
+    if (focusStore.runningModeLabel === displayedModeLabel) {
+      focusStore.runningModeLabel = null
+      focusStore.targetEndTime = null
+      setRunningModeLabelState(null)
+    }
+    setTick(function (t) { return t + 1 })
   }
 
   const mins = String(Math.floor(secondsLeft / 60)).padStart(2, '0')
@@ -166,7 +286,7 @@ function FocusMode() {
 
         <div className="focus-controls">
           <motion.button
-            onClick={function () { setRunning(function (r) { return !r }) }}
+            onClick={toggleRunning}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.95 }}
             className="focus-primary-btn"

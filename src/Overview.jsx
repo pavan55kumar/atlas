@@ -1,4 +1,4 @@
-import { lazy, Suspense, memo, useEffect, useState } from 'react'
+import { lazy, Suspense, memo, useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
   CheckCircle2, Flame, Target, Calendar as CalIcon, PlusCircle,
@@ -172,6 +172,16 @@ function Overview({ userId, onNavigate }) {
     })
   }
 
+  // PERF: stabilized with useCallback. These are passed to QuickAction and
+  // the AI panel's CTA button, both of which are memoized — without a
+  // stable function reference, a fresh `onClick` on every Overview render
+  // would defeat that memoization.
+  const goToAI = useCallback(function () { onNavigate('ai') }, [onNavigate])
+  const goToTasks = useCallback(function () { onNavigate('tasks') }, [onNavigate])
+  const goToHabits = useCallback(function () { onNavigate('habits') }, [onNavigate])
+  const goToGoals = useCallback(function () { onNavigate('goals') }, [onNavigate])
+  const goToCalendar = useCallback(function () { onNavigate('calendar') }, [onNavigate])
+
   if (!stats) {
     return (
       <div className="ov-page">
@@ -250,7 +260,7 @@ function Overview({ userId, onNavigate }) {
           <Suspense fallback={<div style={{ height: '80px', opacity: 0.5 }}>Loading AI insights...</div>}>
             <AIBrief userId={userId} />
           </Suspense>
-          <motion.button whileHover={isHoverable ? { x: 2 } : undefined} whileTap={{ scale: 0.96 }} transition={springTap} className="ov-ai-cta" onClick={function () { onNavigate('ai') }}>
+          <motion.button whileHover={isHoverable ? { x: 2 } : undefined} whileTap={{ scale: 0.96 }} transition={springTap} className="ov-ai-cta" onClick={goToAI}>
             Chat with Atlas AI <ArrowRight size={13} />
           </motion.button>
         </div>
@@ -318,10 +328,10 @@ function Overview({ userId, onNavigate }) {
         <div className="card ov-glass">
           <p className="ov-section-title">Quick Actions</p>
           <div className="ov-quick-grid">
-            <QuickAction icon={<PlusCircle size={16} />} label="Task" color="#6C6CF0" onClick={function () { onNavigate('tasks') }} isHoverable={isHoverable} />
-            <QuickAction icon={<Flame size={16} />} label="Habit" color="#F0876C" onClick={function () { onNavigate('habits') }} isHoverable={isHoverable} />
-            <QuickAction icon={<Target size={16} />} label="Goal" color="#6CC7F0" onClick={function () { onNavigate('goals') }} isHoverable={isHoverable} />
-            <QuickAction icon={<CalIcon size={16} />} label="Event" color="#8CF06C" onClick={function () { onNavigate('calendar') }} isHoverable={isHoverable} />
+            <QuickAction icon={<PlusCircle size={16} />} label="Task" color="#6C6CF0" onClick={goToTasks} isHoverable={isHoverable} />
+            <QuickAction icon={<Flame size={16} />} label="Habit" color="#F0876C" onClick={goToHabits} isHoverable={isHoverable} />
+            <QuickAction icon={<Target size={16} />} label="Goal" color="#6CC7F0" onClick={goToGoals} isHoverable={isHoverable} />
+            <QuickAction icon={<CalIcon size={16} />} label="Event" color="#8CF06C" onClick={goToCalendar} isHoverable={isHoverable} />
           </div>
         </div>
       </motion.div>
