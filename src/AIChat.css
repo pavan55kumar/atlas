@@ -1,7 +1,5 @@
 /* ============================================================================
-   AIChat.css — Premium "Liquid Glass" Design Language
-   Same class names, same CSS variables (color palette / light+dark theme
-   untouched), same breakpoints. Only the depth/finish is upgraded.
+   AIChat.css — Premium "Licenses" Design Language
    ============================================================================ */
 
 .ai-workspace-container {
@@ -84,23 +82,18 @@
   flex-wrap: wrap; 
 }
 
-/* Glass pill — small + static, cheap to blur, big visual payoff */
 .status-pill { 
   font-size: 11px; 
   font-weight: 600; 
   color: var(--accent, #8b5cf6); 
-  background-color: color-mix(in srgb, var(--accent-soft, rgba(139, 92, 246, 0.1)) 80%, transparent);
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  background-color: var(--accent-soft, rgba(139, 92, 246, 0.1)); 
   border: 1px solid var(--accent-border, rgba(139, 92, 246, 0.25)); 
   padding: 6px 10px; 
-  border-radius: 9px; 
+  border-radius: 8px; 
   display: inline-flex; 
   align-items: center; 
   gap: 6px; 
   white-space: nowrap; 
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 14%, transparent);
-  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .status-pulse-bullet { 
@@ -125,9 +118,7 @@
   scrollbar-width: none; 
   padding-bottom: 4px; 
   position: relative; 
-  z-index: 1;
-  overscroll-behavior-x: contain;
-  -webkit-overflow-scrolling: touch;
+  z-index: 1; 
 }
 
 .suggestions-carousel::-webkit-scrollbar { 
@@ -135,11 +126,9 @@
 }
 
 .suggestion-pill-card { 
-  background-color: color-mix(in srgb, var(--surface-2, #161618) 78%, transparent);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  background-color: var(--surface-2, #161618); 
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
-  border-radius: 14px; 
+  border-radius: 10px; 
   padding: 10px 16px; 
   font-size: 13px; 
   font-weight: 600; 
@@ -147,22 +136,13 @@
   cursor: pointer; 
   white-space: nowrap; 
   flex-shrink: 0; 
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
 }
 
 .suggestion-pill-card:hover { 
   border-color: var(--accent, #8b5cf6); 
-  background-color: color-mix(in srgb, var(--surface, #131316) 82%, transparent);
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 16%, transparent);
-  transform: translateY(-2px);
-}
-
-.suggestion-pill-card:active {
-  transform: translateY(0) scale(0.97);
+  background-color: var(--surface, #131316); 
+  transform: translateY(-1px);
 }
 
 /* --- Layout --- */
@@ -180,16 +160,11 @@
   } 
 }
 
-/* --- Chat Card ---
-   The main glass surface. This panel itself is static (it doesn't move or
-   resize during scroll — only its *contents* scroll), so blurring it is a
-   one-time compositing cost, not a per-frame one. */
+/* --- Chat Card --- */
 .chat-workspace-pane { 
-  background-color: color-mix(in srgb, var(--surface-2, #161618) 74%, transparent);
-  backdrop-filter: blur(28px) saturate(160%);
-  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  background-color: var(--surface-2, #161618); 
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
-  border-radius: 24px; 
+  border-radius: 20px; 
   padding: 0; 
   display: flex; 
   flex-direction: column; 
@@ -197,8 +172,7 @@
   min-height: 450px; 
   max-height: 750px; 
   overflow: hidden; 
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 16px 48px rgba(0, 0, 0, 0.14);
-  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1); 
 }
 
 .chat-messages-container { 
@@ -209,7 +183,6 @@
   flex-direction: column; 
   gap: 16px; 
   -webkit-overflow-scrolling: touch; 
-  overscroll-behavior-y: contain;
 }
 
 .message-bubble-row { 
@@ -231,10 +204,6 @@
   justify-content: flex-start; 
 }
 
-/* PERF NOTE: bubbles are intentionally solid/translucent-only — no
-   backdrop-filter here. This list can grow long and scrolls constantly;
-   blurring each bubble would mean re-blurring on every scroll frame.
-   Depth instead comes from a cheap, static box-shadow. */
 .msg-bubble { 
   max-width: 80%; 
   min-width: 50px;
@@ -244,7 +213,6 @@
   line-height: 1.6; 
   word-wrap: break-word; 
   overflow-wrap: break-word; 
-  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
 
 .is-user .msg-bubble { 
@@ -252,15 +220,13 @@
   color: #ffffff; 
   border-bottom-right-radius: 6px; 
   font-weight: 500;
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .is-assistant .msg-bubble { 
-  background-color: color-mix(in srgb, var(--surface, #131316) 92%, transparent);
+  background-color: var(--surface, #131316); 
   border: 1px solid var(--border, rgba(255, 255, 255, 0.06)); 
   color: var(--text, #f5f5f7); 
   border-bottom-left-radius: 6px; 
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
 /* --- Empty State --- */
@@ -291,8 +257,7 @@
   height: 100%; 
   border: 1.5px dashed var(--border, rgba(255, 255, 255, 0.1)); 
   border-radius: 50%; 
-  animation: rotateOrb 16s infinite linear;
-  will-change: transform;
+  animation: rotateOrb 16s infinite linear; 
 }
 
 .pulse-orb-center { 
@@ -301,8 +266,7 @@
   background: var(--accent, #8b5cf6); 
   border-radius: 50%; 
   animation: breatheCore 3s infinite alternate ease-in-out; 
-  box-shadow: 0 0 28px color-mix(in srgb, var(--accent) 45%, transparent);
-  will-change: transform;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
 }
 
 @keyframes rotateOrb { 
@@ -338,9 +302,7 @@
   40% { transform: scale(1); } 
 }
 
-/* --- Input Dock ---
-   Static bottom bar — a great, cheap place for the glass effect since it
-   never scrolls with the content behind it. */
+/* --- Input Dock --- */
 .input-dock-layer { 
   border-top: 1px solid var(--border, rgba(255, 255, 255, 0.06)); 
   padding: 16px 20px 20px 20px; 
@@ -348,10 +310,7 @@
   flex-direction: column; 
   gap: 12px; 
   flex-shrink: 0; 
-  background-color: color-mix(in srgb, var(--surface-2, #161618) 82%, transparent);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  transition: background-color 0.25s ease, border-color 0.25s ease;
+  background-color: var(--surface-2, #161618);
 }
 
 .linked-context-chips-row { 
@@ -373,13 +332,10 @@
   font-weight: 600; 
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
   padding: 4px 10px; 
-  border-radius: 7px; 
+  border-radius: 6px; 
   flex-shrink: 0; 
   display: inline-flex; 
-  align-items: center;
-  backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
-  transition: background-color 0.25s ease, border-color 0.25s ease;
+  align-items: center; 
 }
 
 .voice-switch-container { 
@@ -391,37 +347,28 @@
   display: inline-flex; 
   align-items: center; 
   gap: 6px; 
-  background-color: color-mix(in srgb, var(--surface, #131316) 85%, transparent);
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  background-color: var(--surface, #131316); 
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
   padding: 6px 12px; 
-  border-radius: 10px; 
+  border-radius: 8px; 
   font-size: 12px; 
   font-weight: 600; 
   color: var(--text-muted, #71717a); 
   cursor: pointer; 
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease,
-              box-shadow 0.2s ease, transform 0.15s ease; 
+  transition: all 0.15s ease; 
   flex-shrink: 0; 
-}
-
-.voice-toggle-pill:active {
-  transform: scale(0.96);
 }
 
 .voice-toggle-pill.active { 
   color: var(--accent, #8b5cf6); 
   border-color: var(--accent, #8b5cf6); 
-  background-color: color-mix(in srgb, var(--accent-soft, rgba(139, 92, 246, 0.1)) 85%, transparent);
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 20%, transparent);
+  background-color: var(--accent-soft, rgba(139, 92, 246, 0.1)); 
 }
 
 .voice-toggle-pill.speaking { 
   color: #ec4899; 
   border-color: #ec4899; 
   background-color: rgba(236, 72, 153, 0.1); 
-  box-shadow: 0 4px 16px rgba(236, 72, 153, 0.2);
 }
 
 .voice-toggle-pill .speaking-bar { 
@@ -441,47 +388,20 @@
   50% { transform: scaleY(1); } 
 }
 
-/* Auto-read row — supports either the inline-style version or a className
-   version of this label/checkbox; harmless if unused. */
-.auto-read-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted, #71717a);
-  cursor: pointer;
-  user-select: none;
-}
-
-.auto-read-label:has(.auto-read-checkbox:disabled) {
-  cursor: default;
-  opacity: 0.5;
-}
-
-.auto-read-checkbox {
-  accent-color: var(--accent, #8b5cf6);
-  width: 13px;
-  height: 13px;
-}
-
 .capsule-input-bar { 
   display: flex; 
   align-items: center; 
-  background-color: color-mix(in srgb, var(--surface, #131316) 88%, transparent);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  background-color: var(--surface, #131316); 
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
-  border-radius: 16px; 
+  border-radius: 12px; 
   padding: 6px 6px 6px 18px; 
   gap: 8px; 
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease; 
+  transition: all 0.2s ease; 
 }
 
 .capsule-input-bar.focused-glow { 
   border-color: var(--accent, #8b5cf6); 
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-soft, rgba(139, 92, 246, 0.1)) 70%, transparent),
-              0 8px 24px color-mix(in srgb, var(--accent) 16%, transparent);
+  box-shadow: 0 0 0 4px var(--accent-soft, rgba(139, 92, 246, 0.1)); 
 }
 
 .capsule-field { 
@@ -510,7 +430,7 @@
   cursor: pointer; 
   width: 38px; 
   height: 38px; 
-  border-radius: 11px; 
+  border-radius: 10px; 
   display: flex; 
   align-items: center; 
   justify-content: center; 
@@ -522,31 +442,24 @@
   background-color: var(--border, rgba(255, 255, 255, 0.08)); 
 }
 
-.btn-dock-mic:active {
-  transform: scale(0.92);
-}
-
 .btn-dock-mic.active-listening { 
   color: #ef4444; 
-  background-color: rgba(239, 68, 68, 0.1);
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+  background-color: rgba(239, 68, 68, 0.1); 
 }
 
 .btn-dock-send { 
   background-color: var(--accent, #8b5cf6); 
   color: #ffffff; 
-  border-radius: 11px;
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 10px; 
 }
 
 .btn-dock-send:hover { 
-  opacity: 0.94; 
-  transform: scale(1.03);
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 45%, transparent);
+  opacity: 0.9; 
+  transform: scale(1.02);
 }
 
 .btn-dock-send:active { 
-  transform: scale(0.96); 
+  transform: scale(0.98); 
 }
 
 /* --- Right Pane --- */
@@ -557,14 +470,10 @@
 }
 
 .summary-pane-card { 
-  background-color: color-mix(in srgb, var(--surface-2, #161618) 76%, transparent);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  background-color: var(--surface-2, #161618); 
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
-  border-radius: 22px; 
-  padding: 24px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 30px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  border-radius: 20px; 
+  padding: 24px; 
 }
 
 .summary-pane-card h4 { 
@@ -616,11 +525,7 @@
   .chat-workspace-pane { 
     height: calc(100dvh - 220px); 
     min-height: 350px; 
-    border-radius: 20px; 
-    /* Slightly lighter blur on mobile: still glassy, a touch cheaper to
-       composite on typically less powerful GPUs. */
-    backdrop-filter: blur(20px) saturate(150%);
-    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border-radius: 16px; 
   }
   
   .chat-messages-container { 
@@ -629,8 +534,6 @@
   
   .input-dock-layer {
     padding: 12px 16px 16px 16px;
-    backdrop-filter: blur(18px) saturate(150%);
-    -webkit-backdrop-filter: blur(18px) saturate(150%);
   }
   
   .msg-bubble { 
@@ -641,8 +544,5 @@
 @media (prefers-reduced-motion: reduce) {
   .pulse-orb-orbit, .pulse-orb-center, .status-pulse-bullet, .voice-toggle-pill .speaking-bar, .typing-dot, .message-bubble-row { 
     animation: none !important; 
-  }
-  .suggestion-pill-card, .btn-dock-send, .btn-dock-mic, .voice-toggle-pill {
-    transition: none !important;
   }
 }
