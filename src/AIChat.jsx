@@ -18,7 +18,7 @@ const EMPTY_STATE_TITLE_STYLE = { fontSize: '20px', fontWeight: 700, margin: '0 
 const EMPTY_STATE_DESC_STYLE = { fontSize: '14px', color: 'var(--text-muted)', maxWidth: '320px', margin: 0, lineHeight: 1.5 }
 const SYSTEM_NOTE_STYLE = { fontSize: '13px', lineHeight: 1.6, color: 'var(--text-muted)' }
 const VOICE_UNSUPPORTED_NOTE_STYLE = { fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }
-const BUBBLE_CONTENT_STYLE = { whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowWrap: 'anywhere' }
+const BUBBLE_CONTENT_STYLE = { whiteSpace: 'pre-wrap' }
 
 function AIChat({ userId }) {
   const [messages, setMessages] = useState([
@@ -208,7 +208,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
           'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`
         },
         body: JSON.stringify({
-          model: 'openai/gpt-oss-20b',
+          model: 'openai/gpt-oss-20b', // Using the specified model
           messages: [
             {
               role: 'system',
@@ -252,10 +252,8 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
 
   return (
     <div className="ai-workspace-container">
-      {/* 3D Ambient Background Elements */}
       <div className="aurora-blur-sphere sphere-primary" />
       <div className="aurora-blur-sphere sphere-secondary" />
-      <div className="grid-overlay-3d" />
 
       <motion.div 
         className="ai-hero-header"
@@ -264,17 +262,15 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
         transition={{ type: 'spring', stiffness: 100, damping: 15 }}
       >
         <div className="hero-info">
-          <div className="hero-badge-row">
-            <span className="status-pill">
-              <div className="status-pulse-bullet" />
-              Atlas Core Ready
-            </span>
-          </div>
           <h1>AI Assistant</h1>
           <p>Your intelligent, responsive productivity co-pilot.</p>
         </div>
         <div className="hero-status-pills">
-          <span className="status-pill glass-3d-chip">
+          <span className="status-pill">
+            <div className="status-pulse-bullet" />
+            Atlas Core Ready
+          </span>
+          <span className="status-pill">
             <Cpu size={12} />
             Copilot active
           </span>
@@ -287,8 +283,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
             key={idx}
             type="button"
             className="suggestion-pill-card"
-            whileTap={{ scale: 0.96, y: 2 }}
-            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.97 }}
             transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
             onClick={() => setInput(suggestion.query)}
             aria-label={`Use suggestion: ${suggestion.label}`}
@@ -300,7 +295,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
 
       <div className="ai-split-workspace">
         
-        <div className="chat-workspace-pane glass-panel-3d">
+        <div className="chat-workspace-pane">
           
           <div ref={scrollRef} className="chat-messages-container">
             {messages.length === 1 ? (
@@ -308,7 +303,6 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
               <div className="empty-chat-orb-state">
                 <div className="pulse-orb-outer">
                   <div className="pulse-orb-orbit" />
-                  <div className="pulse-orb-glow" />
                   <div className="pulse-orb-center" style={{ animationPlayState: loading ? 'paused' : 'running' }} />
                 </div>
                 <h3 style={EMPTY_STATE_TITLE_STYLE}>
@@ -321,17 +315,11 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
 
             ) : (
               messages.map((m, i) => (
-                <motion.div 
-                  key={i} 
-                  className={`message-bubble-row ${m.role === 'user' ? 'is-user' : 'is-assistant'}`}
-                  initial={{ opacity: 0, y: 12, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                >
+                <div key={i} className={`message-bubble-row ${m.role === 'user' ? 'is-user' : 'is-assistant'}`}>
                   <div className="msg-bubble" style={BUBBLE_CONTENT_STYLE}>
                     {m.content}
                   </div>
-                </motion.div>
+                </div>
               ))
             )}
 
@@ -360,7 +348,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
               <div className="voice-switch-container">
                 <motion.button
                   type="button"
-                  whileTap={speechSupported ? { scale: 0.95 } : undefined}
+                  whileTap={speechSupported ? { scale: 0.96 } : undefined}
                   transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
                   className={`voice-toggle-pill ${speakReplies ? 'active' : ''} ${isSpeaking ? 'speaking' : ''}`}
                   onClick={toggleReadAloud}
@@ -395,7 +383,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
             </div>
 
             <div style={AUTO_READ_ROW_STYLE}>
-              <label className="auto-read-label">
+              <label className="auto-read-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={speakReplies}
@@ -424,7 +412,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
                 {voiceSupported && (
                   <motion.button
                     type="button"
-                    whileTap={{ scale: 0.9 }}
+                    whileTap={{ scale: 0.92 }}
                     transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
                     onClick={toggleListening}
                     className={`btn-dock-mic ${listening ? 'active-listening' : ''}`}
@@ -438,8 +426,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
 
                 <motion.button
                   type="submit"
-                  whileTap={{ scale: 0.88 }}
-                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.9 }}
                   transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
                   className="btn-dock-send"
                   disabled={loading}
@@ -466,7 +453,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
 
         <div className="system-summary-pane">
           
-          <div className="summary-pane-card glass-panel-3d">
+          <div className="summary-pane-card">
             <h4>
               <Brain size={14} color="var(--accent)" />
               <span>Workspace Indexes</span>
@@ -491,7 +478,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
             </div>
           </div>
 
-          <div className="summary-pane-card glass-panel-3d">
+          <div className="summary-pane-card">
             <h4>
               <Sparkle size={14} color="#e1b12c" />
               <span>AI Core Status</span>
