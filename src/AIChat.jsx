@@ -255,7 +255,6 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
       {/* 3D Ambient Background Elements */}
       <div className="aurora-blur-sphere sphere-primary" />
       <div className="aurora-blur-sphere sphere-secondary" />
-      <div className="grid-overlay-3d" />
 
       <motion.div 
         className="ai-hero-header"
@@ -302,6 +301,9 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
         
         <div className="chat-workspace-pane glass-panel-3d">
           
+          {/* Background pattern specific to the chat card to prevent clipping */}
+          <div className="grid-overlay-3d" />
+
           <div ref={scrollRef} className="chat-messages-container">
             {messages.length === 1 ? (
               
