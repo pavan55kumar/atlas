@@ -18,7 +18,7 @@ const EMPTY_STATE_TITLE_STYLE = { fontSize: '20px', fontWeight: 700, margin: '0 
 const EMPTY_STATE_DESC_STYLE = { fontSize: '14px', color: 'var(--text-muted)', maxWidth: '320px', margin: 0, lineHeight: 1.5 }
 const SYSTEM_NOTE_STYLE = { fontSize: '13px', lineHeight: 1.6, color: 'var(--text-muted)' }
 const VOICE_UNSUPPORTED_NOTE_STYLE = { fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }
-const BUBBLE_CONTENT_STYLE = { whiteSpace: 'pre-wrap' }
+const BUBBLE_CONTENT_STYLE = { whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowWrap: 'anywhere' }
 
 function AIChat({ userId }) {
   const [messages, setMessages] = useState([
@@ -255,6 +255,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
       {/* 3D Ambient Background Elements */}
       <div className="aurora-blur-sphere sphere-primary" />
       <div className="aurora-blur-sphere sphere-secondary" />
+      <div className="grid-overlay-3d" />
 
       <motion.div 
         className="ai-hero-header"
@@ -301,9 +302,6 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
         
         <div className="chat-workspace-pane glass-panel-3d">
           
-          {/* Background pattern specific to the chat card to prevent clipping */}
-          <div className="grid-overlay-3d" />
-
           <div ref={scrollRef} className="chat-messages-container">
             {messages.length === 1 ? (
               
@@ -397,7 +395,7 @@ Upcoming events: ${events?.map(e => `${e.title} on ${e.event_date}${e.event_time
             </div>
 
             <div style={AUTO_READ_ROW_STYLE}>
-              <label className="auto-read-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)', cursor: 'pointer' }}>
+              <label className="auto-read-label">
                 <input
                   type="checkbox"
                   checked={speakReplies}

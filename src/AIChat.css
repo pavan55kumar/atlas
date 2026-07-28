@@ -1,37 +1,40 @@
 /* ============================================================================
    AIChat.css — Premium "Liquid Glass 3D" Design Language
-   Highly optimized for Capacitor/Android/iOS using hardware-accelerated transforms.
+   Optimized for iOS, Android, PWAs, Dynamic Viewports, & Responsive Devices.
    ============================================================================ */
 
-/* Prevent body scrolling and layout jumps when the mobile keyboard opens */
-html, body {
-  height: 100%;
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
+/* Root & Container Lock to Prevent Outer Page Jump */
+:root {
+  --chat-bg-glow-primary: rgba(139, 92, 246, 0.35);
+  --chat-bg-glow-secondary: rgba(236, 72, 153, 0.25);
 }
 
 .ai-workspace-container {
-  max-width: 1000px;
+  width: 100%;
+  max-width: 1100px;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
   margin: 0 auto;
   color: var(--text, #f5f5f7);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, sans-serif;
   box-sizing: border-box;
-  /* 100dvh adjusts dynamically to the visual viewport (keyboard included) */
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  /* Safe area insets for Dynamic Island, Notches, and Android navigation bars */
-  padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  overscroll-behavior: none;
 }
 
-/* 3D Ambient Background Elements */
+/* --- 3D Ambient Background Elements --- */
 .aurora-blur-sphere {
   position: absolute;
-  width: 400px;
-  height: 400px;
+  width: 450px;
+  height: 450px;
   border-radius: 50%;
   filter: blur(100px);
   z-index: 0;
@@ -40,24 +43,40 @@ html, body {
 }
 
 .sphere-primary {
-  top: -100px;
-  left: -100px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.4), transparent 70%);
+  top: -120px;
+  left: -120px;
+  background: radial-gradient(circle, var(--chat-bg-glow-primary), transparent 70%);
   animation: floatSphere 20s infinite alternate ease-in-out;
 }
 
 .sphere-secondary {
   bottom: -150px;
   right: -150px;
-  background: radial-gradient(circle, rgba(236, 72, 153, 0.3), transparent 70%);
+  background: radial-gradient(circle, var(--chat-bg-glow-secondary), transparent 70%);
   animation: floatSphere 25s infinite alternate-reverse ease-in-out;
+}
+
+/* Seamless Background Grid across workspace */
+.grid-overlay-3d {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 36px 36px;
+  background-position: center center;
+  mask-image: radial-gradient(circle at center, black 60%, transparent 100%);
+  -webkit-mask-image: radial-gradient(circle at center, black 60%, transparent 100%);
+  z-index: 0;
+  pointer-events: none;
 }
 
 @keyframes floatSphere {
   0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(50px, 50px) scale(1.2); }
+  100% { transform: translate(40px, 40px) scale(1.15); }
 }
 
+/* Touch & Interaction Basics */
 .ai-workspace-container button,
 .ai-workspace-container [role="button"],
 .ai-workspace-container .suggestion-pill-card,
@@ -86,43 +105,42 @@ html, body {
 .ai-hero-header {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 20px;
-  flex-shrink: 0; /* Prevent header from shrinking */
+  margin-bottom: 14px;
   position: relative;
   z-index: 2;
+  flex-shrink: 0;
 }
 
 .hero-info { 
   flex: 1 1 300px; 
-  min-width: 240px; 
+  min-width: 200px; 
 }
 
 .hero-badge-row {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .hero-info h1 { 
-  font-size: clamp(28px, 6vw, 36px); 
+  font-size: clamp(24px, 5vw, 32px); 
   font-weight: 800; 
   letter-spacing: -0.04em; 
-  margin: 0 0 8px 0; 
+  margin: 0 0 4px 0; 
   color: var(--text, #f5f5f7); 
   line-height: 1.1;
-  background: linear-gradient(180deg, #fff, #b3b3b3);
+  background: linear-gradient(180deg, #ffffff, #b3b3b3);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .hero-info p { 
-  font-size: 15px; 
+  font-size: 13px; 
   color: var(--text-muted, #71717a); 
   margin: 0; 
-  line-height: 1.5; 
+  line-height: 1.4; 
   font-weight: 500;
 }
 
@@ -133,7 +151,7 @@ html, body {
   flex-wrap: wrap; 
 }
 
-/* Glass pill 3D */
+/* Glass Pills */
 .status-pill, .glass-3d-chip { 
   font-size: 11px; 
   font-weight: 600; 
@@ -142,7 +160,7 @@ html, body {
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid var(--border, rgba(255, 255, 255, 0.1)); 
-  padding: 8px 14px; 
+  padding: 6px 12px; 
   border-radius: 100px; 
   display: inline-flex; 
   align-items: center; 
@@ -151,8 +169,8 @@ html, body {
   box-shadow: 
     inset 0 1px 0 rgba(255, 255, 255, 0.15),
     inset 0 -1px 0 rgba(0, 0, 0, 0.3),
-    0 10px 20px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    0 8px 16px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
 }
 
 .status-pulse-bullet { 
@@ -169,19 +187,19 @@ html, body {
   100% { opacity: 1; transform: scale(1.2); } 
 }
 
-/* --- Suggestions --- */
+/* --- Action Suggestions Horizontal Carousel --- */
 .suggestions-carousel { 
   display: flex; 
-  gap: 12px; 
+  gap: 10px; 
   overflow-x: auto; 
-  margin-bottom: 16px; 
+  margin-bottom: 14px; 
   scrollbar-width: none; 
-  padding-bottom: 8px; 
-  flex-shrink: 0; /* Prevents carousel from vertical squish */
+  padding-bottom: 4px; 
   position: relative; 
   z-index: 2;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
+  flex-shrink: 0;
 }
 
 .suggestions-carousel::-webkit-scrollbar { 
@@ -189,13 +207,13 @@ html, body {
 }
 
 .suggestion-pill-card { 
-  background-color: color-mix(in srgb, var(--surface, #131316) 50%, transparent);
+  background-color: color-mix(in srgb, var(--surface, #131316) 55%, transparent);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
-  border-radius: 14px; 
-  padding: 12px 18px; 
-  font-size: 13px; 
+  border-radius: 12px; 
+  padding: 8px 14px; 
+  font-size: 12px; 
   font-weight: 600; 
   color: var(--text, #f5f5f7); 
   cursor: pointer; 
@@ -203,100 +221,99 @@ html, body {
   flex-shrink: 0; 
   box-shadow: 
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 8px 16px rgba(0, 0, 0, 0.1);
+    0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); 
 }
 
 .suggestion-pill-card:hover { 
   border-color: var(--accent, #8b5cf6); 
-  background-color: color-mix(in srgb, var(--accent-soft, rgba(139, 92, 246, 0.1)) 80%, transparent);
+  background-color: color-mix(in srgb, var(--accent-soft, rgba(139, 92, 246, 0.12)) 80%, transparent);
   box-shadow: 
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 12px 24px color-mix(in srgb, var(--accent) 24%, transparent);
+    0 8px 20px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
-/* --- Layout --- */
+/* --- Layout Grid --- */
 .ai-split-workspace { 
   display: grid; 
   grid-template-columns: 1fr; 
-  gap: 20px; 
+  gap: 16px; 
   position: relative; 
-  z-index: 2;
-  flex: 1; /* Fills remaining vertical space */
-  min-height: 0; /* CRITICAL: Allows flex child to scroll properly */
-  overflow: hidden;
+  z-index: 2; 
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
 }
 
-@media (min-width: 768px) { 
+@media (min-width: 900px) { 
   .ai-split-workspace { 
-    grid-template-columns: 1fr 320px; 
+    grid-template-columns: 1fr 300px; 
   } 
 }
 
 /* --- 3D Glass Panels --- */
 .glass-panel-3d {
-  background-color: color-mix(in srgb, var(--surface, #131316) 40%, transparent);
+  background-color: color-mix(in srgb, var(--surface, #131316) 45%, transparent);
   backdrop-filter: blur(40px) saturate(180%);
   -webkit-backdrop-filter: blur(40px) saturate(180%);
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
   box-shadow: 
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     inset 0 -1px 0 rgba(0, 0, 0, 0.3),
-    0 30px 60px -15px rgba(0, 0, 0, 0.5);
+    0 24px 48px -12px rgba(0, 0, 0, 0.5);
 }
 
 /* --- Chat Card --- */
 .chat-workspace-pane { 
-  border-radius: 28px; 
+  border-radius: 24px; 
   padding: 0; 
   display: flex; 
   flex-direction: column; 
   height: 100%;
-  min-height: 0; /* CRITICAL: Ensures container shrinks to allow internal scroll */
-  overflow: hidden; 
+  min-height: 0;
   position: relative;
-  transition: box-shadow 0.3s ease; 
+  overflow: hidden; 
 }
 
-/* Background grid strictly constrained to the chat card boundaries */
-.grid-overlay-3d {
+/* Seamless Inner Card Background Grid (Top-to-Bottom Coverage) */
+.chat-workspace-pane::before {
+  content: '';
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0;
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  transform: perspective(500px) rotateX(60deg) translateY(-20px) scale(2);
-  transform-origin: top center;
-  mask-image: linear-gradient(to bottom, black, transparent 90%);
-  -webkit-mask-image: linear-gradient(to bottom, black, transparent 90%);
-  z-index: 0;
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: center top;
+  border-radius: inherit;
   pointer-events: none;
-  border-radius: inherit; /* Inherits the 28px radius to prevent overflow */
+  z-index: 0;
 }
 
+/* --- Chat Scroll Area --- */
 .chat-messages-container { 
-  flex: 1; 
-  min-height: 0; /* CRITICAL: Enables independent scrolling */
+  flex: 1 1 auto; 
+  min-height: 0;
   overflow-y: auto; 
-  padding: 28px; 
+  overflow-x: hidden;
+  padding: 20px 22px; 
   display: flex; 
   flex-direction: column; 
-  gap: 18px; 
-  -webkit-overflow-scrolling: touch; /* Smooth iOS scrolling */
-  overscroll-behavior-y: contain; /* Prevents scroll chaining to body */
+  gap: 14px; 
+  -webkit-overflow-scrolling: touch; 
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.1) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
   position: relative;
-  z-index: 1; /* Sits above grid-overlay-3d */
-  transform: translateZ(0); /* Hardware acceleration for smooth scrolling */
+  z-index: 1;
 }
 
 .chat-messages-container::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 .chat-messages-container::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 10px;
 }
 
@@ -314,43 +331,39 @@ html, body {
   justify-content: flex-start; 
 }
 
-/* PERF: Bubbles use solid translucent backgrounds with layered shadows to 
-   fake 3D glass depth without expensive backdrop-filters on scrolling lists. */
 .msg-bubble { 
-  max-width: 80%; 
-  min-width: 50px;
-  padding: 16px 20px; 
-  border-radius: 22px; 
-  font-size: 15px; 
-  line-height: 1.6; 
+  max-width: 82%; 
+  min-width: 40px;
+  padding: 13px 17px; 
+  border-radius: 20px; 
+  font-size: 14.5px; 
+  line-height: 1.55; 
   word-wrap: break-word; 
-  overflow-wrap: break-word; 
-  word-break: break-word; /* Prevents long strings from causing horizontal scroll */
+  overflow-wrap: anywhere; 
   position: relative;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
 }
 
 .is-user .msg-bubble { 
-  background: linear-gradient(135deg, var(--accent, #8b5cf6), color-mix(in srgb, var(--accent) 70%, #000)); 
+  background: linear-gradient(135deg, var(--accent, #8b5cf6), color-mix(in srgb, var(--accent) 70%, #000000)); 
   color: #ffffff; 
-  border-bottom-right-radius: 6px; 
+  border-bottom-right-radius: 4px; 
   font-weight: 500;
   box-shadow: 
     inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 10px 30px color-mix(in srgb, var(--accent) 40%, transparent);
+    0 8px 24px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .is-assistant .msg-bubble { 
-  background-color: color-mix(in srgb, var(--surface-2, #161618) 90%, transparent);
+  background-color: color-mix(in srgb, var(--surface-2, #161618) 92%, transparent);
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
   color: var(--text, #f5f5f7); 
-  border-bottom-left-radius: 6px; 
+  border-bottom-left-radius: 4px; 
   box-shadow: 
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 10px 25px rgba(0, 0, 0, 0.15);
+    0 8px 20px rgba(0, 0, 0, 0.18);
 }
 
-/* --- Empty State 3D Orb --- */
+/* --- Empty State --- */
 .empty-chat-orb-state { 
   display: flex; 
   flex-direction: column; 
@@ -361,14 +374,13 @@ html, body {
   color: var(--text-muted, #71717a); 
   padding: 20px;
   transform-style: preserve-3d;
-  perspective: 1000px;
 }
 
 .pulse-orb-outer { 
   position: relative; 
-  width: 120px; 
-  height: 120px; 
-  margin-bottom: 32px; 
+  width: 100px; 
+  height: 100px; 
+  margin-bottom: 24px; 
   display: flex; 
   align-items: center; 
   justify-content: center; 
@@ -378,7 +390,7 @@ html, body {
   position: absolute; 
   width: 100%; 
   height: 100%; 
-  border: 1.5px dashed var(--border, rgba(255, 255, 255, 0.1)); 
+  border: 1.5px dashed var(--border, rgba(255, 255, 255, 0.12)); 
   border-radius: 50%; 
   animation: rotateOrb 16s infinite linear;
   will-change: transform;
@@ -389,26 +401,26 @@ html, body {
   width: 80%;
   height: 80%;
   background: radial-gradient(circle, var(--accent, #8b5cf6), transparent 70%);
-  filter: blur(30px);
+  filter: blur(24px);
   opacity: 0.4;
   animation: pulseGlow 4s infinite alternate ease-in-out;
 }
 
 @keyframes pulseGlow {
-  0% { transform: scale(0.8); opacity: 0.2; }
-  100% { transform: scale(1.2); opacity: 0.6; }
+  0% { transform: scale(0.8); opacity: 0.25; }
+  100% { transform: scale(1.15); opacity: 0.55; }
 }
 
 .pulse-orb-center { 
-  width: 56px; 
-  height: 56px; 
-  background: linear-gradient(135deg, #fff, var(--accent, #8b5cf6));
+  width: 48px; 
+  height: 48px; 
+  background: linear-gradient(135deg, #ffffff, var(--accent, #8b5cf6));
   border-radius: 50%; 
   animation: breatheCore 3s infinite alternate ease-in-out; 
   box-shadow: 
-    inset 0 5px 10px rgba(255, 255, 255, 0.4),
-    inset 0 -5px 10px rgba(0, 0, 0, 0.4),
-    0 0 40px color-mix(in srgb, var(--accent) 60%, transparent);
+    inset 0 4px 8px rgba(255, 255, 255, 0.4),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.4),
+    0 0 32px color-mix(in srgb, var(--accent) 60%, transparent);
   will-change: transform;
   z-index: 2;
 }
@@ -418,7 +430,7 @@ html, body {
 }
 
 @keyframes breatheCore { 
-  0% { transform: scale(0.85); } 
+  0% { transform: scale(0.88); } 
   100% { transform: scale(1.05); } 
 }
 
@@ -431,36 +443,35 @@ html, body {
 }
 
 .typing-dot { 
-  width: 8px; 
-  height: 8px; 
+  width: 7px; 
+  height: 7px; 
   background-color: var(--accent, #8b5cf6); 
   border-radius: 50%; 
   animation: typingBounce 1.4s infinite ease-in-out both; 
-  box-shadow: 0 0 10px var(--accent, #8b5cf6);
+  box-shadow: 0 0 8px var(--accent, #8b5cf6);
 }
 
 .typing-dot:nth-child(1) { animation-delay: -0.32s; }
 .typing-dot:nth-child(2) { animation-delay: -0.16s; }
 
 @keyframes typingBounce { 
-  0%, 80%, 100% { transform: scale(0); opacity: 0.5; } 
+  0%, 80%, 100% { transform: scale(0); opacity: 0.4; } 
   40% { transform: scale(1); opacity: 1; } 
 }
 
-/* --- Input Dock 3D Glass --- */
+/* --- Input Dock Pinned Bottom --- */
 .input-dock-layer { 
   border-top: 1px solid var(--border, rgba(255, 255, 255, 0.06)); 
-  padding: 18px 24px max(18px, env(safe-area-inset-bottom)) 24px; /* Safe area padding */
+  padding: 14px 18px 16px 18px; 
   display: flex; 
   flex-direction: column; 
-  gap: 14px; 
-  flex-shrink: 0; /* Keeps input pinned to bottom, forcing messages to scroll */
-  background-color: color-mix(in srgb, var(--surface, #131316) 50%, transparent);
+  gap: 10px; 
+  flex-shrink: 0; 
+  background-color: color-mix(in srgb, var(--surface, #131316) 65%, transparent);
   backdrop-filter: blur(30px) saturate(180%);
   -webkit-backdrop-filter: blur(30px) saturate(180%);
-  transition: all 0.25s ease;
   position: relative;
-  z-index: 2; /* Above background grid */
+  z-index: 1;
 }
 
 .linked-context-chips-row { 
@@ -473,7 +484,7 @@ html, body {
 
 .linked-context-chips { 
   display: flex; 
-  gap: 8px; 
+  gap: 6px; 
   flex-wrap: wrap; 
 }
 
@@ -481,15 +492,12 @@ html, body {
   font-size: 11px; 
   font-weight: 600; 
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
-  padding: 5px 12px; 
+  padding: 4px 10px; 
   border-radius: 8px; 
   flex-shrink: 0; 
   display: inline-flex; 
   align-items: center;
   background-color: color-mix(in srgb, var(--surface-2, #161618) 60%, transparent);
-  backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
-  transition: all 0.2s ease;
 }
 
 .voice-switch-container { 
@@ -502,41 +510,34 @@ html, body {
   align-items: center; 
   gap: 6px; 
   background-color: color-mix(in srgb, var(--surface-2, #161618) 50%, transparent);
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
-  padding: 6px 14px; 
+  padding: 5px 12px; 
   border-radius: 100px; 
-  font-size: 12px; 
+  font-size: 11px; 
   font-weight: 600; 
   color: var(--text-muted, #71717a); 
   cursor: pointer; 
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); 
+  transition: all 0.2s ease; 
   flex-shrink: 0; 
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-}
-
-.voice-toggle-pill:active {
-  transform: scale(0.96);
 }
 
 .voice-toggle-pill.active { 
   color: var(--accent, #8b5cf6); 
   border-color: color-mix(in srgb, var(--accent) 50%, transparent); 
   background-color: color-mix(in srgb, var(--accent-soft, rgba(139, 92, 246, 0.1)) 80%, transparent);
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .voice-toggle-pill.speaking { 
   color: #ec4899; 
   border-color: rgba(236, 72, 153, 0.5); 
   background-color: rgba(236, 72, 153, 0.15); 
-  box-shadow: 0 4px 16px rgba(236, 72, 153, 0.2);
 }
 
 .voice-toggle-pill .speaking-bar { 
   width: 3px; 
-  height: 10px; 
+  height: 9px; 
   border-radius: 2px; 
   background: currentColor; 
   display: inline-block; 
@@ -562,51 +563,44 @@ html, body {
   user-select: none;
 }
 
-.auto-read-label:has(.auto-read-checkbox:disabled) {
-  cursor: default;
-  opacity: 0.5;
-}
-
 .auto-read-checkbox {
   accent-color: var(--accent, #8b5cf6);
   width: 14px;
   height: 14px;
 }
 
-/* Floating Glass Input Bar */
+/* Floating Input Bar */
 .capsule-input-bar { 
   display: flex; 
   align-items: center; 
-  background-color: color-mix(in srgb, var(--surface-2, #161618) 60%, transparent);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  background-color: color-mix(in srgb, var(--surface-2, #161618) 70%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
-  border-radius: 18px; 
-  padding: 8px 8px 8px 20px; 
-  gap: 10px; 
+  border-radius: 16px; 
+  padding: 6px 6px 6px 16px; 
+  gap: 8px; 
   transition: all 0.2s ease; 
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 .capsule-input-bar.focused-glow { 
   border-color: var(--accent, #8b5cf6); 
   box-shadow: 
-    inset 0 1px 0 rgba(255,255,255,0.1),
-    0 0 0 4px color-mix(in srgb, var(--accent-soft, rgba(139, 92, 246, 0.1)) 70%, transparent),
-    0 12px 30px color-mix(in srgb, var(--accent) 20%, transparent);
+    0 0 0 3px color-mix(in srgb, var(--accent-soft, rgba(139, 92, 246, 0.15)) 80%, transparent),
+    0 8px 24px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .capsule-field { 
   flex: 1; 
-  min-width: 0; /* Crucial: prevents input from pushing buttons off-screen */
+  min-width: 0; 
   background: none; 
   border: none; 
   color: var(--text, #f5f5f7); 
-  font-size: 16px; /* Prevents zoom on iOS mobile */
+  font-size: 16px; /* Prevents mobile browser auto-zoom */
   font-weight: 500; 
   outline: none !important; 
   box-shadow: none !important; 
-  padding: 10px 0; 
+  padding: 8px 0; 
   line-height: 1.4; 
 }
 
@@ -620,85 +614,50 @@ html, body {
   border: none; 
   color: var(--text-muted, #71717a); 
   cursor: pointer; 
-  width: 42px; 
-  height: 42px; 
-  border-radius: 14px; 
+  width: 40px; 
+  height: 40px; 
+  border-radius: 12px; 
   display: flex; 
   align-items: center; 
   justify-content: center; 
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); 
-  flex-shrink: 0; /* Prevents buttons from deforming */
+  transition: all 0.2s ease; 
+  flex-shrink: 0; 
 }
 
 .btn-dock-mic { 
   background-color: rgba(255, 255, 255, 0.05);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-}
-
-.btn-dock-mic:hover { 
-  background-color: rgba(255, 255, 255, 0.1); 
-  transform: translateY(-1px);
-}
-
-.btn-dock-mic:active {
-  transform: scale(0.92);
 }
 
 .btn-dock-mic.active-listening { 
   color: #ef4444; 
   background-color: rgba(239, 68, 68, 0.15);
-  box-shadow: 
-    inset 0 1px 0 rgba(255,255,255,0.1),
-    0 4px 14px rgba(239, 68, 68, 0.3);
 }
 
 .btn-dock-send { 
-  background: linear-gradient(135deg, var(--accent, #8b5cf6), color-mix(in srgb, var(--accent) 80%, #000)); 
+  background: linear-gradient(135deg, var(--accent, #8b5cf6), color-mix(in srgb, var(--accent) 80%, #000000)); 
   color: #ffffff; 
-  border-radius: 14px;
-  box-shadow: 
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 8px 20px color-mix(in srgb, var(--accent) 40%, transparent);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
-.btn-dock-send:hover { 
-  box-shadow: 
-    inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    0 10px 25px color-mix(in srgb, var(--accent) 50%, transparent);
-}
-
-.btn-dock-send:active { 
-  transform: scale(0.92); 
-}
-
-/* --- Right Pane 3D Glass Cards --- */
+/* --- System Summary Pane (Desktop Right Sidebar) --- */
 .system-summary-pane { 
   display: flex; 
   flex-direction: column; 
-  gap: 18px; 
-  height: 100%;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-  padding-right: 4px; /* Scrollbar room */
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.1) transparent;
+  gap: 16px; 
 }
 
 .summary-pane-card { 
-  border-radius: 28px; 
-  padding: 28px;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
+  border-radius: 24px; 
+  padding: 22px;
 }
 
 .summary-pane-card h4 { 
   font-size: 12px; 
   font-weight: 700; 
   text-transform: uppercase; 
-  letter-spacing: 0.1em; 
+  letter-spacing: 0.08em; 
   color: var(--text-muted, #71717a); 
-  margin: 0 0 20px 0; 
+  margin: 0 0 16px 0; 
   display: flex; 
   align-items: center; 
   gap: 8px; 
@@ -707,15 +666,15 @@ html, body {
 .metrics-summary-list { 
   display: flex; 
   flex-direction: column; 
-  gap: 16px; 
+  gap: 12px; 
 }
 
 .summary-metric-item { 
   display: flex; 
   justify-content: space-between; 
   align-items: center; 
-  font-size: 14px; 
-  padding-bottom: 16px;
+  font-size: 13.5px; 
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.05));
 }
 
@@ -732,53 +691,35 @@ html, body {
 .summary-metric-value { 
   font-weight: 700; 
   color: var(--text, #f5f5f7); 
-  font-size: 18px;
-  text-shadow: 0 0 15px currentColor;
-  opacity: 0.9;
+  font-size: 16px;
 }
 
-/* --- Responsive Layout Rules --- */
+/* --- Responsive Layout & Mobile Rules --- */
 @media (max-width: 899px) {
   .ai-workspace-container { 
-    padding: max(16px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
   }
   
   .system-summary-pane { 
     display: none; 
   }
 
-  .ai-split-workspace { 
-    grid-template-columns: 1fr; 
+  .chat-workspace-pane { 
+    border-radius: 20px; 
   }
   
   .chat-messages-container { 
-    padding: 20px; 
+    padding: 16px; 
   }
   
   .input-dock-layer {
-    padding: 14px 16px max(14px, env(safe-area-inset-bottom)) 16px;
+    padding: 12px 14px 14px 14px;
   }
   
   .msg-bubble { 
-    max-width: 85%; 
+    max-width: 88%; 
     font-size: 14px;
-  }
-}
-
-/* Landscape phone optimizations */
-@media (max-height: 500px) and (orientation: landscape) {
-  .ai-hero-header {
-    margin-bottom: 12px;
-  }
-  .hero-info h1 {
-    font-size: 22px;
-    margin-bottom: 4px;
-  }
-  .hero-info p {
-    display: none; /* Save vertical space */
-  }
-  .suggestions-carousel {
-    margin-bottom: 12px;
   }
 }
 
