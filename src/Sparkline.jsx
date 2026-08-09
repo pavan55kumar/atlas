@@ -36,9 +36,6 @@ function Sparkline({ data, width, height, color }) {
   // across instances since SVG ids are global to the document.
   const gradientId = useId()
 
-  // Keep the original coordinate system mapping. 
-  // These values now represent the internal logical drawing space (viewBox),
-  // not the forced rendered pixel size.
   const w = width || 72
   const h = height || 26
   const values = data && data.length > 0 ? data : [0]
@@ -58,13 +55,7 @@ function Sparkline({ data, width, height, color }) {
   const areaPath = `${linePath} L${w},${h} L0,${h} Z`
 
   return (
-    <svg 
-      viewBox={`0 0 ${w} ${h}`} 
-      width="100%" 
-      height="100%" 
-      preserveAspectRatio="none"
-      style={{ display: 'block', overflow: 'visible' }}
-    >
+    <svg width={w} height={h} style={{ flexShrink: 0, overflow: 'visible' }}>
       <defs>
         <linearGradient id={`sparkline-grad-${gradientId}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={c} stopOpacity="0.28" />
@@ -83,9 +74,6 @@ function Sparkline({ data, width, height, color }) {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        // Preserves the exact stroke thickness and glow regardless of 
-        // how much the SVG is stretched/squished by the parent container.
-        vectorEffect="non-scaling-stroke"
         style={{ filter: `drop-shadow(0 0 3px ${glowColor})` }}
       />
     </svg>
