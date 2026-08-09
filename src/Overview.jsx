@@ -30,21 +30,16 @@ const fadeUp = function (delay) {
 }
 
 // PERF: The 4 fade-up configs used in render are always the same 4 delay
-// values (0, 0.1, 0.2, 0.3). Previously `fadeUp(x)` was called inline in
-// JSX on every render, allocating 3 new objects (initial/animate/transition)
-// each time for no reason — the values never change. Hoisting to module
-// scope computes them exactly once for the lifetime of the app.
+// values (0, 0.1, 0.2, 0.3). Hoisted to module scope so they're computed
+// once instead of allocating 3 new objects per render.
 const heroFade = fadeUp(0)
 const kpiGridFade = fadeUp(0.1)
 const twoColFade1 = fadeUp(0.2)
 const twoColFade2 = fadeUp(0.3)
 
-// PERF: Icons passed into memo()'d components (RingKpi/TrendKpi/QuickAction)
-// as props. JSX like `<CheckCircle2 size={17} color="#fff" />` creates a
-// brand-new element object every render. Since these icons never change,
-// a fresh reference each time defeats React.memo's shallow prop comparison
-// on the exact components we memoized specifically to avoid re-rendering.
-// Hoisting them to constants makes the memo checks actually work.
+// PERF: Icons passed into memo()'d components as props. A fresh JSX element
+// every render defeats React.memo's shallow prop comparison, so these are
+// hoisted to constants since they never change.
 const taskIcon = <CheckCircle2 size={17} color="#fff" />
 const habitIcon = <Flame size={17} color="#fff" />
 const goalIcon = <Target size={17} color="#fff" />
@@ -54,7 +49,10 @@ const quickHabitIcon = <Flame size={16} />
 const quickGoalIcon = <Target size={16} />
 const quickEventIcon = <CalIcon size={16} />
 
-const RingKpi = memo(function RingKpi({ icon, accent, label, value, sub, delay, ringValue, ringColor, isHoverable }) {
+// FIX: removed the unused `delay` prop (was destructured but never
+// referenced in either component, causing the "defined but never used"
+// warning).
+const RingKpi = memo(function RingKpi({ icon, accent, label, value, sub, ringValue, ringColor, isHoverable }) {
   return (
     <motion.div
       whileHover={isHoverable ? { y: -4 } : undefined}
@@ -93,7 +91,7 @@ const RingKpi = memo(function RingKpi({ icon, accent, label, value, sub, delay, 
   )
 })
 
-const TrendKpi = memo(function TrendKpi({ icon, accent, label, value, sub, delay, trend, trendColor, isHoverable }) {
+const TrendKpi = memo(function TrendKpi({ icon, accent, label, value, sub, trend, trendColor, isHoverable }) {
   return (
     <motion.div
       whileHover={isHoverable ? { y: -4 } : undefined}
@@ -133,7 +131,7 @@ const QuickAction = memo(function QuickAction({ icon, label, color, onClick, isH
         padding: '18px 8px', borderRadius: '14px', border: '1px solid var(--border)',
         background: 'color-mix(in srgb, var(--surface-2) 92%, ' + color + ' 5%)',
         color: 'var(--text)', fontSize: '12px', fontWeight: 600,
-        touchAction: 'manipulation' // PERF: skips the ~300ms tap-delay check on Android WebView; purely behavioral, no visual change
+        touchAction: 'manipulation'
       }}
     >
       <div style={{
@@ -149,9 +147,6 @@ const QuickAction = memo(function QuickAction({ icon, label, color, onClick, isH
   )
 })
 
-// PERF: Extracted so the (potentially long) task list only re-renders when
-// `tasks` itself changes, isolating its reconciliation cost from sibling
-// KPI/schedule updates. memo() keeps this cheap even as the list grows.
 const RecentTasksList = memo(function RecentTasksList({ tasks }) {
   if (tasks.length === 0) {
     return <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No tasks yet</p>
@@ -180,8 +175,6 @@ const RecentTasksList = memo(function RecentTasksList({ tasks }) {
   )
 })
 
-// PERF: Same rationale as RecentTasksList — isolates the schedule timeline's
-// render cost from the rest of Overview.
 const ScheduleTimeline = memo(function ScheduleTimeline({ events }) {
   if (events.length === 0) {
     return (
@@ -215,15 +208,14 @@ const ScheduleTimeline = memo(function ScheduleTimeline({ events }) {
 
 function Overview({ userId, onNavigate }) {
   const [stats, setStats] = useState(null)
-  const [isHoverable, setIsHoverable] = useState(false)
 
-  useEffect(function () { fetchStats() }, [])
+  // Computed directly at render time (no state/effect needed) — cheap,
+  // single matchMedia read, and safe under SSR via the typeof check.
+  const isHoverable =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(hover: hover)').matches
 
-  useEffect(function () {
-    setIsHoverable(window.matchMedia('(hover: hover)').matches)
-  }, [])
-
-  async function fetchStats() {
+  const fetchStats = useCallback(async function () {
     const today = new Date().toISOString().split('T')[0]
     const results = await Promise.all([
       supabase.from('tasks').select('id, title, progress, priority, created_at').order('created_at', { ascending: false }),
@@ -252,36 +244,30 @@ function Overview({ userId, onNavigate }) {
       days.push(count)
     }
 
-    // PERF: Previously this was 3 separate setState calls (setTaskTrend,
-    // setRecentTasks, setStats), each capable of triggering its own render
-    // pass. All three pieces of data are always produced and consumed
-    // together (nothing in render reads one without the others), so they're
-    // combined into a single setState — one commit instead of up to three.
     setStats({
       pending: pending, completed: completed, habitCount: (habits || []).length, doneToday: doneToday,
       longestStreak: longestStreak, goalCount: (goals || []).length, goalAvg: goalAvg, events: events || [],
       taskTrend: days, recentTasks: (tasks || []).slice(0, 4)
     })
-  }
+    // FIX: was `[UserId]` — capital U doesn't exist anywhere in this file
+    // (the prop is `userId`), so this threw a ReferenceError as soon as
+    // React evaluated the dependency array, before fetchStats could even run.
+  }, [userId])
 
-  // PERF: stabilized with useCallback. These are passed to QuickAction and
-  // the AI panel's CTA button, both of which are memoized — without a
-  // stable function reference, a fresh `onClick` on every Overview render
-  // would defeat that memoization.
+  // FIX: this effect was missing entirely, so fetchStats was defined but
+  // never called — stats stayed null forever and the page never left the
+  // skeleton state. useCallback alone doesn't invoke a function, it only
+  // memoizes the reference; something still has to call it on mount.
+  useEffect(function () {
+    fetchStats()
+  }, [fetchStats])
+
   const goToAI = useCallback(function () { onNavigate('ai') }, [onNavigate])
   const goToTasks = useCallback(function () { onNavigate('tasks') }, [onNavigate])
   const goToHabits = useCallback(function () { onNavigate('habits') }, [onNavigate])
   const goToGoals = useCallback(function () { onNavigate('goals') }, [onNavigate])
   const goToCalendar = useCallback(function () { onNavigate('calendar') }, [onNavigate])
 
-  // PERF: All of these were plain `const` calculations re-run on every
-  // render, including renders triggered by unrelated state (e.g. isHoverable
-  // toggling). useMemo re-runs them only when `stats` actually changes.
-  // This also fixes the KPI-grid trend array: it used to be a brand-new
-  // array literal every render (`[1,2,1,3,2,4, stats.events.length || 1]`),
-  // which silently defeated the TrendKpi memoization below — a new array
-  // reference always looks "changed" to React.memo's shallow comparison,
-  // even when its contents are identical.
   const derived = useMemo(function () {
     if (!stats) return null
     const habitPct = stats.habitCount > 0 ? Math.round((stats.doneToday / stats.habitCount) * 100) : 0
@@ -402,7 +388,4 @@ function Overview({ userId, onNavigate }) {
   )
 }
 
-// PERF: memoize the page component itself. If a parent re-renders with the
-// same userId/onNavigate reference, Overview now skips re-rendering entirely
-// instead of re-running fetchStats' dependents and all the JSX below.
 export default memo(Overview)
