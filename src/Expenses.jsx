@@ -430,13 +430,15 @@ function KpiCard({ icon, color, label, value, trend, delay }) {
   const Icon = icon
   return (
     <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: delay }} className="card exp-kpi-card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
+      <div className="exp-kpi-row">
+        <div className="exp-kpi-main">
           <div className="exp-kpi-icon" style={{ background: color }}><Icon size={16} color="#fff" /></div>
           <p className="exp-kpi-label">{label}</p>
           <p className="exp-kpi-value"><CountUp value={value} prefix="₹" decimals={2} /></p>
         </div>
-        <Sparkline data={trend} width={56} height={30} color={color} />
+        <div className="exp-kpi-spark">
+          <Sparkline data={trend} width={56} height={30} color={color} />
+        </div>
       </div>
     </motion.div>
   )
