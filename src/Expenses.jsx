@@ -8,8 +8,10 @@ import {
 import { supabase } from './lib/supabase'
 import Sparkline from './Sparkline'
 import TiltCard from './TiltCard'
+import './Expenses.css'
 
 const QUICK_CATEGORIES = ['Food', 'Transport', 'Shopping', 'Entertainment', 'Bills', 'Travel', 'Other']
+const QUICK_AMOUNTS = [50, 100, 200, 500, 1000]
 const PALETTE = ['#7C5CFF', '#F0876C', '#6CC7F0', '#8CF06C', '#FDBA74', '#F87171', '#34D399', '#60A5FA']
 
 function hashOf(input) {
@@ -168,6 +170,20 @@ function Expenses({ userId }) {
     insights.push({ icon: TrendingDown, color: '#F87171', text: "You're spending more than you're earning right now." })
   }
 
+  // Last 3 distinct categories used, most recent first (entries already ordered by entry_date desc)
+  const recentCategories = (function () {
+    const seen = new Set()
+    const list = []
+    for (const e of entries) {
+      if (e.category && !seen.has(e.category)) {
+        seen.add(e.category)
+        list.push(e.category)
+      }
+      if (list.length === 3) break
+    }
+    return list
+  })()
+
   const monthLabel = today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   return (
@@ -249,6 +265,44 @@ function Expenses({ userId }) {
             <button type="button" onClick={function () { setType('income') }} className={type === 'income' ? 'exp-type-btn active income' : 'exp-type-btn'}>Income</button>
           </div>
         </div>
+
+        <div className="exp-quick-amounts">
+          {QUICK_AMOUNTS.map(function (v) {
+            const selected = amount === String(v)
+            return (
+              <button
+                key={v}
+                type="button"
+                onClick={function () { setAmount(String(v)) }}
+                className={selected ? 'exp-amount-chip active' : 'exp-amount-chip'}
+              >
+                ₹{v}
+              </button>
+            )
+          })}
+        </div>
+
+        {recentCategories.length > 0 && (
+          <div className="exp-recent-row">
+            <span className="exp-recent-label">Recently Used</span>
+            {recentCategories.map(function (c) {
+              const Icon = categoryIcon(c)
+              const color = categoryColor(c)
+              const selected = category === c
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={function () { setCategory(c) }}
+                  className={selected ? 'exp-chip active' : 'exp-chip'}
+                  style={selected ? { borderColor: color, color: color } : {}}
+                >
+                  <Icon size={12} /> {c}
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         <div className="exp-category-row">
           {QUICK_CATEGORIES.map(function (c) {
@@ -368,88 +422,6 @@ function Expenses({ userId }) {
           </div>
         )}
       </div>
-
-      <style>{`
-        .exp-page { display: flex; flex-direction: column; gap: 20px; }
-        .exp-hero { padding: 4px 2px 8px; }
-        .exp-hero-eyebrow { font-size: 12px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.04em; margin-bottom: 8px; }
-        .exp-hero-balance { font-size: 42px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 6px; }
-        .exp-hero-sub { font-size: 13px; color: var(--text-muted); }
-        .exp-hero-note { font-size: 11px; }
-
-        .exp-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
-        .exp-kpi-card { padding: 18px; }
-        .exp-kpi-icon { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
-        .exp-kpi-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
-        .exp-kpi-value { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
-        .exp-kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
-
-        .exp-insights { display: flex; flex-direction: column; gap: 8px; }
-        .exp-insight-card {
-          display: flex; align-items: center; gap: 10px; padding: 12px 16px;
-          background: var(--surface-2); border-radius: 12px; font-size: 13px;
-        }
-
-        .exp-add-panel { padding: 20px; }
-        .exp-add-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-        .exp-input {
-          padding: 11px 14px; border-radius: 12px; border: 1px solid var(--border);
-          background: var(--surface-2); color: var(--text); font-size: 13px; outline: none;
-        }
-        .exp-amount-wrap { position: relative; width: 120px; }
-        .exp-currency { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; }
-        .exp-amount-input { width: 100%; padding-left: 24px; }
-        .exp-type-toggle { display: flex; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
-        .exp-type-btn { padding: 11px 16px; border: none; background: transparent; color: var(--text-muted); font-size: 12.5px; font-weight: 500; }
-        .exp-type-btn.active { background: var(--accent); color: #fff; }
-        .exp-type-btn.active.income { background: #34D399; }
-
-        .exp-category-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
-        .exp-chip {
-          display: flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 999px;
-          border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); font-size: 11.5px;
-        }
-        .exp-chip.active { background: var(--surface); font-weight: 600; }
-        .exp-category-custom { flex: 1 1 140px; border-radius: 999px; padding: 6px 12px; font-size: 11.5px; }
-
-        .exp-submit-btn {
-          width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
-          padding: 12px; border-radius: 12px; border: none;
-          background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-          color: #fff; font-size: 13px; font-weight: 600;
-        }
-
-        .exp-category-breakdown { padding: 20px; }
-        .exp-section-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
-        .exp-cat-row-label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 6px; }
-        .exp-cat-bar-track { width: 100%; height: 7px; background: var(--bg); border-radius: 5px; overflow: hidden; }
-        .exp-cat-bar-fill { height: 100%; border-radius: 5px; }
-
-        .exp-transactions { padding: 20px; }
-        .exp-tx-card {
-          display: flex; align-items: center; gap: 12px; padding: 12px;
-          border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border);
-        }
-        .exp-tx-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .exp-tx-title { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .exp-tx-meta { display: flex; gap: 8px; align-items: center; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-        .exp-tx-chip { border: 1px solid; padding: 1px 7px; border-radius: 999px; font-size: 10px; }
-        .exp-tx-amount { display: flex; align-items: center; gap: 3px; font-size: 13px; font-weight: 700; color: #F87171; white-space: nowrap; }
-        .exp-tx-amount.income { color: #34D399; }
-        .exp-menu-btn {
-          width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border);
-          background: var(--surface); color: var(--text-muted); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .exp-menu {
-          position: absolute; right: 0; top: 34px; background: var(--surface); border: 1px solid var(--border);
-          border-radius: 10px; padding: 4px; z-index: 20; min-width: 110px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-        }
-        .exp-menu-item {
-          display: flex; align-items: center; gap: 6px; width: 100%; padding: 8px 10px;
-          border-radius: 7px; border: none; background: transparent; color: #F87171; font-size: 12.5px; text-align: left;
-        }
-        .exp-menu-item:hover { background: var(--surface-2); }
-      `}</style>
     </div>
   )
 }
