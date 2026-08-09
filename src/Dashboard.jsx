@@ -82,11 +82,7 @@ const getBackTarget = (path) => {
 
 // ---------------------------------------------------------------
 // PERF: All of the styles/markup below are 100% static (no props/state
-// dependency), so they are hoisted to module scope. Previously they were
-// object/string literals re-created on every single render of Dashboard
-// (which re-renders on every navigation), causing unnecessary allocations
-// and, in the case of the <style> string, unnecessary DOM text updates.
-// Values and visual output are unchanged.
+// dependency), so they are hoisted to module scope.
 // ---------------------------------------------------------------
 
 const headerWrap = {
@@ -160,48 +156,35 @@ const dashboardStyles = `
 function Dashboard({ user, onLogout, theme, onToggleTheme }) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
 
   const location = useLocation()
   const navigate = useNavigate()
 
   // --- Refs that mirror the latest state for the native back listener ---
-  // The Capacitor backButton listener is registered ONCE (see useEffect below),
-  // so it must read the latest values via refs to avoid stale closures.
   const pathnameRef = useRef(location.pathname)
   const searchOpenRef = useRef(searchOpen)
   const mobileNavOpenRef = useRef(mobileNavOpen)
+  const logoutConfirmOpenRef = useRef(logoutConfirmOpen)
 
   useEffect(() => { pathnameRef.current = location.pathname }, [location.pathname])
   useEffect(() => { searchOpenRef.current = searchOpen }, [searchOpen])
   useEffect(() => { mobileNavOpenRef.current = mobileNavOpen }, [mobileNavOpen])
+  useEffect(() => { logoutConfirmOpenRef.current = logoutConfirmOpen }, [logoutConfirmOpen])
 
-  // --- Web/PWA modal-history refs (unchanged behavior) ---
+  // --- Web/PWA modal-history refs ---
   const hasModalHistory = useRef(false)
   const pendingNavigation = useRef(null)
 
-  // Unified navigation handler used by Sidebar, Overview, About, Search, etc.
-  // - Native Android: deterministic. We still pick push vs replace to keep the
-  //   WebView history tidy, but the hardware back button is fully resolved by
-  //   the Capacitor listener using getBackTarget().
-  // - Web/PWA: same level rules, PLUS the modal-history dance so opening a
-  //   modal then navigating doesn't corrupt browser history.
-  //
-  // PERF: wrapped in useCallback so Sidebar/Overview/SearchModal/etc. receive
-  // a stable function reference across renders that don't actually change
-  // searchOpen/mobileNavOpen/location.pathname (e.g. a theme toggle re-render).
   const handleNavigate = useCallback((path) => {
     let target = path.startsWith('/') ? path : `/${path}`
 
-    // /overview is just an alias for the root.
     if (target === '/overview' || target === 'overview') {
       target = '/'
     }
 
     const isNative = Capacitor.isNativePlatform()
 
-    // Web/PWA only: if a modal is currently open and has a dummy history entry,
-    // pop that entry first, then perform the real navigation in the popstate
-    // handler. This prevents history corruption on browser back.
     if (!isNative && (searchOpen || mobileNavOpen) && hasModalHistory.current) {
       if (!pendingNavigation.current) {
         pendingNavigation.current = target
@@ -218,14 +201,10 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
     const isTargetOverview = target === '/'
 
     if (isTargetOverview) {
-      // Always replace when going to root so Overview is the single root entry.
       navigate(target, { replace: true })
     } else if (targetLevel > currentLevel) {
-      // Stepping DOWN the hierarchy (Overview -> About, About -> Privacy, etc.)
       navigate(target)
     } else {
-      // Same level or moving up/sideways: replace to preserve flatten-to-root
-      // semantics so back from any normal page always lands on Overview.
       navigate(target, { replace: true })
     }
 
@@ -261,20 +240,23 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
     }
   }, [mobileNavOpen])
 
-  // Cmd/Ctrl + K shortcut
+  // Cmd/Ctrl + K shortcut + Escape for Web modals
   useEffect(() => {
     function handleKey(e) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
         setSearchOpen(true)
       }
+      // Close logout modal on Escape
+      if (e.key === 'Escape' && logoutConfirmOpenRef.current) {
+        setLogoutConfirmOpen(false)
+      }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [])
 
-  // Web/PWA: push a dummy history state when a modal opens so browser back
-  // closes the modal instead of leaving the page.
+  // Web/PWA: push a dummy history state when a modal opens
   useEffect(() => {
     if (Capacitor.isNativePlatform()) return
 
@@ -284,7 +266,7 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
     }
   }, [searchOpen, mobileNavOpen])
 
-  // Web/PWA: popstate listener to close modals or finish pending navigation.
+  // Web/PWA: popstate listener
   useEffect(() => {
     if (Capacitor.isNativePlatform()) return
 
@@ -323,9 +305,6 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
 
   // ---------------------------------------------------------------
   // Capacitor Native Android Back Button Handler
-  // Registered EXACTLY ONCE on mount. Reads latest state from refs.
-  // Never re-registered on route/state changes -> no accumulation,
-  // no stale closures, no double events.
   // ---------------------------------------------------------------
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
@@ -336,34 +315,35 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
     const handleBack = () => {
       if (!active) return
 
-      // Always read the LATEST values from refs.
       const currentPath = pathnameRef.current
       const search = searchOpenRef.current
       const mobileNav = mobileNavOpenRef.current
+      const logoutConfirm = logoutConfirmOpenRef.current
 
-      // PRIORITY 1: Search modal open -> close it only.
+      // PRIORITY 1: Logout confirm open -> close it only.
+      if (logoutConfirm) {
+        setLogoutConfirmOpen(false)
+        return
+      }
+
+      // PRIORITY 2: Search modal open -> close it only.
       if (search) {
         setSearchOpen(false)
         return
       }
 
-      // PRIORITY 2: Mobile sidebar/drawer open -> close it only.
+      // PRIORITY 3: Mobile sidebar/drawer open -> close it only.
       if (mobileNav) {
         setMobileNavOpen(false)
         return
       }
 
-      // PRIORITY 3-6: Deterministic, pathname-based back resolution.
-      // We deliberately do NOT use window.history.state.idx or navigate(-1),
-      // because the Capacitor WebView history can contain unexpected entries.
+      // PRIORITY 4-6: Deterministic, pathname-based back resolution.
       const backTarget = getBackTarget(currentPath)
 
       if (backTarget) {
-        // Use replace so the back target becomes the new "current" entry
-        // and repeated back presses remain predictable.
         navigate(backTarget, { replace: true })
       } else {
-        // On Overview (root) -> exit the Android app.
         App.exitApp()
       }
     }
@@ -372,7 +352,6 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
       if (active) {
         listener = l
       } else {
-        // Component already unmounted before the listener resolved.
         l.remove()
       }
     })
@@ -381,8 +360,7 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
       active = false
       if (listener) listener.remove()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // <-- empty deps: register once
+  }, [])
 
   const displayName = user.email.split('@')[0].split('.')[0]
   const hour = new Date().getHours()
@@ -397,16 +375,16 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
       <AmbientBackground />
 
       <div style={rootFlexStyle}>
-       <Sidebar
-  page={
-    location.pathname === '/' || location.pathname === '/overview'
-      ? 'overview'
-      : location.pathname.slice(1)
-  }
-  onNavigate={handleNavigate}
-  mobileOpen={mobileNavOpen}
-  onCloseMobile={closeMobileNav}
-/>
+        <Sidebar
+          page={
+            location.pathname === '/' || location.pathname === '/overview'
+              ? 'overview'
+              : location.pathname.slice(1)
+          }
+          onNavigate={handleNavigate}
+          mobileOpen={mobileNavOpen}
+          onCloseMobile={closeMobileNav}
+        />
 
         <div style={{ flex: 1, maxWidth: '1040px', minWidth: 0 }}>
           <div style={headerWrap}>
@@ -450,7 +428,8 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
                 <button onClick={onToggleTheme} style={iconButton}>
                   {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
                 </button>
-                <button onClick={onLogout} style={iconButton}>
+                {/* Changed to open confirmation modal */}
+                <button onClick={() => setLogoutConfirmOpen(true)} style={iconButton}>
                   <LogOut size={16} />
                 </button>
               </div>
@@ -467,7 +446,6 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
                 transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
               >
                 <Routes location={location}>
-                  {/* /overview is an alias for the root, never two entries. */}
                   <Route path="/overview" element={<Navigate to="/" replace />} />
 
                   <Route path="/" element={<Overview userId={user.id} onNavigate={handleNavigate} />} />
@@ -488,8 +466,6 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
                   <Route path="/ai" element={<PageCard><AIChat userId={user.id} /></PageCard>} />
                   <Route path="/settings" element={<PageCard><Settings user={user} theme={theme} onToggleTheme={onToggleTheme} /></PageCard>} />
                   <Route path="/about" element={<PageCard><About onNavigate={handleNavigate} /></PageCard>} />
-                  {/* Info children receive onNavigate so their visible Back buttons
-                      can explicitly return to /about instead of window.history.back(). */}
                   <Route path="/privacy" element={<PageCard><PrivacyPolicy onNavigate={handleNavigate} /></PageCard>} />
                   <Route path="/terms" element={<PageCard><Terms onNavigate={handleNavigate} /></PageCard>} />
                   <Route path="/licenses" element={<PageCard><Licenses onNavigate={handleNavigate} /></PageCard>} />
@@ -506,12 +482,98 @@ function Dashboard({ user, onLogout, theme, onToggleTheme }) {
 
         <style>{dashboardStyles}</style>
       </div>
+
+      {/* Premium Logout Confirmation Modal */}
+      <AnimatePresence>
+        {logoutConfirmOpen && (
+          <motion.div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLogoutConfirmOpen(false)}
+          >
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="logout-modal-title"
+              onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: '20px',
+                padding: '28px',
+                maxWidth: '360px',
+                width: '100%',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.3)'
+              }}
+            >
+              <h3 id="logout-modal-title" style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: 'var(--text)', letterSpacing: '-0.02em' }}>
+                Log out of Atlas?
+              </h3>
+              <p style={{ fontSize: '14px', color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '24px' }}>
+                Are you sure you want to log out? You'll need to sign in again to access your account.
+              </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button
+                  autoFocus
+                  onClick={() => setLogoutConfirmOpen(false)}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border)',
+                    background: 'var(--surface-2)',
+                    color: 'var(--text)',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setLogoutConfirmOpen(false)
+                    onLogout()
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: 'var(--accent)',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Log Out
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }
 
-// PERF: memoized — pure wrapper around children with a static style object,
-// no need to re-render/re-create markup beyond what its children require.
+// PERF: memoized wrapper
 const PageCard = memo(function PageCard({ children }) {
   return <div className="card" style={{ padding: '32px', borderRadius: '24px' }}>{children}</div>
 })
