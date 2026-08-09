@@ -11,12 +11,15 @@ const STATUS_OPTIONS = [
   { key: 'late', label: 'Late', color: '#FDE68A' }
 ]
 
+const todayStr = () => new Date().toISOString().split('T')[0]
+
 function AttendanceTracker({ userId }) {
   const [subjects, setSubjects] = useState([])
   const [logs, setLogs] = useState([])
   const [selectedSubject, setSelectedSubject] = useState(null)
   const [minRequired, setMinRequired] = useState(75)
   const [loading, setLoading] = useState(true)
+  const [selectedDate, setSelectedDate] = useState(todayStr())
 
   useEffect(() => { fetchAll() }, [])
 
@@ -31,14 +34,13 @@ function AttendanceTracker({ userId }) {
     setLoading(false)
   }
 
-  async function logToday(subjectId, status) {
-    const today = new Date().toISOString().split('T')[0]
-    const existing = logs.find(l => l.subject_id === subjectId && l.date === today)
+  async function logAttendance(subjectId, status) {
+    const existing = logs.find(l => l.subject_id === subjectId && l.date === selectedDate)
 
     if (existing) {
       await supabase.from('attendance').update({ status }).eq('id', existing.id)
     } else {
-      await supabase.from('attendance').insert([{ subject_id: subjectId, user_id: userId, date: today, status }])
+      await supabase.from('attendance').insert([{ subject_id: subjectId, user_id: userId, date: selectedDate, status }])
     }
     fetchAll()
   }
@@ -48,8 +50,8 @@ function AttendanceTracker({ userId }) {
     return <div className="empty-state"><CalendarCheck size={28} /><span>Add subjects first to start tracking attendance</span></div>
   }
 
-  const today = new Date().toISOString().split('T')[0]
-  const todayLogForSelected = logs.find(l => l.subject_id === selectedSubject && l.date === today)
+  const maxDate = todayStr()
+  const logForSelectedDate = logs.find(l => l.subject_id === selectedSubject && l.date === selectedDate)
   const currentSubject = subjects.find(s => s.id === selectedSubject)
 
   // Attendance math: only present/absent/late count toward total; cancelled/medical excluded
@@ -83,6 +85,20 @@ function AttendanceTracker({ userId }) {
   const canSkip = nextPctIfSkip >= minRequired
   const riskLevel = currentPct - minRequired > 10 ? 'Low' : currentPct - minRequired > 0 ? 'Medium' : 'High'
 
+  // Recent history for selected subject, most recent first
+  const recentHistory = subjectLogs
+    .slice()
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 10)
+
+  const isToday = selectedDate === maxDate
+  const yesterdayStr = (() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 1)
+    return d.toISOString().split('T')[0]
+  })()
+  const isYesterday = selectedDate === yesterdayStr
+
   return (
     <div>
       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
@@ -97,18 +113,40 @@ function AttendanceTracker({ userId }) {
         ))}
       </div>
 
-      {/* Log today's status */}
+      {/* Date selector */}
+      <div style={{ marginBottom: '16px' }}>
+        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px' }}>ATTENDANCE DATE</p>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <input
+            type="date"
+            value={selectedDate}
+            max={maxDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            style={inputStyle}
+          />
+          <button onClick={() => setSelectedDate(maxDate)} style={isToday ? primaryButton : ghostButton}>
+            Today
+          </button>
+          <button onClick={() => setSelectedDate(yesterdayStr)} style={isYesterday ? primaryButton : ghostButton}>
+            Yesterday
+          </button>
+        </div>
+      </div>
+
+      {/* Log status for selected date */}
       <div style={{ marginBottom: '20px' }}>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>MARK TODAY</p>
+        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+          MARK {isToday ? 'TODAY' : selectedDate}
+        </p>
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
           {STATUS_OPTIONS.map(opt => (
             <button
               key={opt.key}
-              onClick={() => logToday(selectedSubject, opt.key)}
+              onClick={() => logAttendance(selectedSubject, opt.key)}
               style={{
                 padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)',
-                background: todayLogForSelected?.status === opt.key ? opt.color : 'var(--surface-2)',
-                color: todayLogForSelected?.status === opt.key ? '#0A0A0F' : 'var(--text)',
+                background: logForSelectedDate?.status === opt.key ? opt.color : 'var(--surface-2)',
+                color: logForSelectedDate?.status === opt.key ? '#0A0A0F' : 'var(--text)',
                 fontSize: '12px', fontWeight: 500
               }}
             >
@@ -166,7 +204,8 @@ function AttendanceTracker({ userId }) {
       {total > 0 && (
         <div style={{
           background: 'var(--surface-2)', borderRadius: '12px', padding: '16px',
-          borderLeft: `3px solid ${canSkip ? '#6EE7B7' : '#FCA5A5'}`
+          borderLeft: `3px solid ${canSkip ? '#6EE7B7' : '#FCA5A5'}`,
+          marginBottom: '16px'
         }}>
           <p style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>Can I skip the next class?</p>
           <p style={{ fontSize: '18px', fontWeight: 700, color: canSkip ? '#6EE7B7' : '#FCA5A5', marginBottom: '6px' }}>
@@ -175,6 +214,35 @@ function AttendanceTracker({ userId }) {
           <p style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
             Attendance after skipping: {nextPctIfSkip.toFixed(1)}% · Risk level: {riskLevel}
           </p>
+        </div>
+      )}
+
+      {/* Recent attendance history */}
+      {recentHistory.length > 0 && (
+        <div>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>RECENT ATTENDANCE</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {recentHistory.map(l => {
+              const opt = STATUS_OPTIONS.find(o => o.key === l.status)
+              return (
+                <button
+                  key={l.id}
+                  onClick={() => setSelectedDate(l.date)}
+                  style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '8px 12px', borderRadius: '8px',
+                    border: `1px solid ${l.date === selectedDate ? opt?.color : 'var(--border)'}`,
+                    background: 'var(--surface-2)', cursor: 'pointer', textAlign: 'left'
+                  }}
+                >
+                  <span style={{ fontSize: '12.5px', color: 'var(--text)' }}>{l.date}</span>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: opt?.color || 'var(--text-muted)' }}>
+                    {opt?.label || l.status}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>
