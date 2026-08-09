@@ -2,10 +2,9 @@ import { useEffect, useState, useRef, memo } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
   Clock3, Sparkles, Brain, CircleCheck,
-  CalendarClock, ChevronLeft, ChevronRight, Plus, Trash2
+  CalendarClock, ChevronLeft, ChevronRight, Plus, Trash2, Target
 } from 'lucide-react'
 import { supabase } from './lib/supabase'
-// NEW
 import { scheduleEventReminder, cancelEventReminder } from './notifications'
 import './Calendar.css'
 
@@ -34,16 +33,10 @@ function CalendarWidget({ userId }) {
 
   const [isMobile, setIsMobile] = useState(false)
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
   const [composerRipples, setComposerRipples] = useState([])
   const [fabRipples, setFabRipples] = useState([])
 
-  const [activeKpiDot, setActiveKpiDot] = useState(0)
-  const kpiScrollRef = useRef(null)
-  const kpiScrollRafRef = useRef(null)
-
   const rippleTimeoutsRef = useRef(new Set())
-
   const prefersReducedMotion = useReducedMotion()
 
   useEffect(() => {
@@ -51,21 +44,13 @@ function CalendarWidget({ userId }) {
     const handleResize = () => setIsMobile(window.innerWidth <= 768)
     handleResize()
     window.addEventListener('resize', handleResize)
-
-    const handleScroll = () => setScrolled(window.scrollY > 40)
-    window.addEventListener('scroll', handleScroll, { passive: true })
-
-    return () => {
-      window.removeEventListener('resize', handleResize)
-      window.removeEventListener('scroll', handleScroll)
-    }
+    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   useEffect(() => {
     return () => {
       rippleTimeoutsRef.current.forEach((id) => clearTimeout(id))
       rippleTimeoutsRef.current.clear()
-      if (kpiScrollRafRef.current) cancelAnimationFrame(kpiScrollRafRef.current)
     }
   }, [])
 
@@ -85,21 +70,19 @@ function CalendarWidget({ userId }) {
     const { data, error } = await supabase
       .from('calendar_events')
       .insert([{ title, user_id: userId, event_date: date, event_time: time || null }])
-      .select() // CHANGED: added .select() so we get the inserted row back
+      .select() 
     if (!error) {
       setTitle('')
       setDate('')
       setTime('')
       setIsMobileDrawerOpen(false)
       fetchEvents()
-      // NEW: schedule the event reminder now that we have the real DB id
       if (data && data[0]) scheduleEventReminder(data[0])
     }
   }
 
   async function deleteEvent(id) {
     await supabase.from('calendar_events').delete().eq('id', id)
-    // NEW: cancel the pending reminder for this event
     cancelEventReminder(id)
     fetchEvents()
   }
@@ -120,30 +103,24 @@ function CalendarWidget({ userId }) {
     rippleTimeoutsRef.current.add(timeoutId)
   }
 
-  function handleKpiScroll() {
-    if (kpiScrollRafRef.current) cancelAnimationFrame(kpiScrollRafRef.current)
-    kpiScrollRafRef.current = requestAnimationFrame(() => {
-      const el = kpiScrollRef.current
-      if (!el) return
-      const children = Array.from(el.children)
-      if (!children.length) return
+  function shiftWeek(delta) {
+    const d = new Date(weekAnchor)
+    d.setDate(d.getDate() + delta * 7)
+    setShiftDirection(delta)
+    setWeekAnchor(d)
+    setSelectedDay(null)
+  }
 
-      const scrollerRect = el.getBoundingClientRect()
-      const scrollerCenter = scrollerRect.left + scrollerRect.width / 2
+  function goToToday() {
+    setWeekAnchor(new Date())
+    setSelectedDay(new Date().toISOString().split('T')[0])
+  }
 
-      let closestIndex = 0
-      let closestDistance = Infinity
-      children.forEach((child, i) => {
-        const rect = child.getBoundingClientRect()
-        const childCenter = rect.left + rect.width / 2
-        const distance = Math.abs(childCenter - scrollerCenter)
-        if (distance < closestDistance) {
-          closestDistance = distance
-          closestIndex = i
-        }
-      })
-      setActiveKpiDot(closestIndex)
-    })
+  function handleDayKeyDown(e, key, isSelected) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      setSelectedDay(isSelected ? null : key)
+    }
   }
 
   const today = new Date().toISOString().split('T')[0]
@@ -154,26 +131,11 @@ function CalendarWidget({ userId }) {
     eventsByDate[ev.event_date].push(ev)
   })
 
-  function shiftWeek(delta) {
-    const d = new Date(weekAnchor)
-    d.setDate(d.getDate() + delta * 7)
-    setShiftDirection(delta)
-    setWeekAnchor(d)
-    setSelectedDay(null)
-  }
-
-  function handleDayKeyDown(e, key, isSelected) {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      setSelectedDay(isSelected ? null : key)
-    }
-  }
-
   const selectedEvents = selectedDay ? (eventsByDate[selectedDay] || []) : []
 
   const todayEventsCount = eventsByDate[today]?.length || 0
-  const upcomingCount = events.filter(ev => new Date(ev.event_date) >= new Date()).length
-  const completedEventsCount = events.filter(ev => new Date(ev.event_date) < new Date()).length
+  const upcomingCount = events.filter(ev => new Date(ev.event_date) >= new Date(today)).length
+  const completedEventsCount = events.filter(ev => new Date(ev.event_date) < new Date(today)).length
   const totalEventsThisMonth = events.length
   const monthProgressRate = totalEventsThisMonth > 0
     ? Math.round((completedEventsCount / totalEventsThisMonth) * 100)
@@ -185,7 +147,7 @@ function CalendarWidget({ userId }) {
     if (list.length === 0) {
       return (
         <div className="empty-events-banner">
-          <div className="empty-icon-badge"><Clock3 size={18} /></div>
+          <div className="empty-icon-badge"><Clock3 size={20} /></div>
           <span className="empty-banner-title">{emptyTitle}</span>
           {emptySub && <p className="empty-banner-sub">{emptySub}</p>}
           <button
@@ -211,8 +173,8 @@ function CalendarWidget({ userId }) {
             <h4 className="event-title-main">{ev.title}</h4>
             <div className="event-meta-info">
               <span className="meta-tag">{tag}</span>
-              <span>·</span>
-              <span>Active timeline</span>
+              <span className="meta-separator">·</span>
+              <span className="meta-status">Active timeline</span>
             </div>
           </div>
           <button onClick={() => deleteEvent(ev.id)} className="btn-delete-event" aria-label={`Delete ${ev.title}`}>
@@ -233,55 +195,53 @@ function CalendarWidget({ userId }) {
       <div className="calendar-dashboard-layout">
 
         <div className="left-pane">
+          
+          {/* Page Header */}
+          <div className="cal-page-header">
+            <div className="header-title-block">
+              <h2>Calendar</h2>
+              <p>{weekDates[0].toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+            </div>
+            <button onClick={goToToday} className="btn-today-pill">Today</button>
+          </div>
 
-          <div
-            className="stats-carousel-grid"
-            ref={kpiScrollRef}
-            onScroll={handleKpiScroll}
-          >
+          {/* Responsive Grid Stats */}
+          <div className="stats-carousel-grid">
             <SummaryCard
               label="Today's Events"
               value={todayEventsCount}
-              icon={<CalendarClock size={15} />}
+              icon={<CalendarClock size={16} />}
               desc="Due within 24 hours"
               sparklinePath="M0,15 C10,12 20,18 30,5 C40,2 50,14 60,8"
-              accent="#f59e0b"
+              accent="var(--accent-amber)"
             />
             <SummaryCard
               label="Upcoming"
               value={upcomingCount}
-              icon={<Clock3 size={15} />}
+              icon={<Clock3 size={16} />}
               desc="Scheduled events"
               sparklinePath="M0,8 C10,14 20,5 30,12 C40,16 50,2 60,10"
-              accent="#60a5fa"
+              accent="var(--accent-blue)"
             />
             <SummaryCard
               label="Focus Score"
               value="9.2"
-              icon={<Brain size={15} />}
+              icon={<Brain size={16} />}
               desc="Target: 9.5 scale"
               sparklinePath="M0,18 C10,15 20,10 30,10 C40,10 50,3 60,3"
-              accent="#8b5cf6"
+              accent="var(--accent-purple)"
             />
             <SummaryCard
               label="Accomplished"
               value={completedEventsCount}
-              icon={<CircleCheck size={15} />}
+              icon={<CircleCheck size={16} />}
               desc="Finished logs"
               sparklinePath="M0,4 C10,12 20,2 30,8 C40,14 50,2 60,15"
-              accent="#10b981"
+              accent="var(--accent-emerald)"
             />
           </div>
 
-          <div className="cal-pager-dots" aria-hidden="true">
-            {[0, 1, 2, 3].map((i) => (
-              <span
-                key={i}
-                className={`cal-pager-dot ${activeKpiDot === i ? 'active' : ''}`}
-              />
-            ))}
-          </div>
-
+          {/* Calendar Date Navigation */}
           <div className="calendar-nav-card">
             <div className="calendar-nav-header">
               <AnimatePresence mode="wait">
@@ -301,21 +261,19 @@ function CalendarWidget({ userId }) {
                   onClick={() => shiftWeek(-1)}
                   className="btn-nav-arrow"
                   aria-label="Previous week"
-                  whileHover={{ y: -1 }}
                   whileTap={{ scale: 0.92 }}
                   transition={{ type: 'spring', stiffness: 420, damping: 24 }}
                 >
-                  <ChevronLeft size={16} />
+                  <ChevronLeft size={18} />
                 </motion.button>
                 <motion.button
                   onClick={() => shiftWeek(1)}
                   className="btn-nav-arrow"
                   aria-label="Next week"
-                  whileHover={{ y: -1 }}
                   whileTap={{ scale: 0.92 }}
                   transition={{ type: 'spring', stiffness: 420, damping: 24 }}
                 >
-                  <ChevronRight size={16} />
+                  <ChevronRight size={18} />
                 </motion.button>
               </div>
             </div>
@@ -344,21 +302,19 @@ function CalendarWidget({ userId }) {
                       aria-pressed={isSelected}
                       aria-label={d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + (isToday ? ' (today)' : '')}
                       className={`day-ribbon-card ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}`}
-                      animate={{ y: isSelected ? -3 : 0, scale: isSelected ? 1.03 : 1 }}
-                      transition={{ type: 'spring', stiffness: 340, damping: 22 }}
-                      whileTap={{ scale: 0.96 }}
+                      whileTap={{ scale: 0.95 }}
                     >
                       <span className="day-label-text">
                         {d.toLocaleDateString('en-US', { weekday: 'short' })}
                       </span>
                       <span className="day-number-text">{d.getDate()}</span>
-                      {isToday && <div className="today-glow-dot" />}
-                      {dayEvents.length > 0 && !isToday && (
-                        <div style={{
-                          width: '5px', height: '5px', borderRadius: '50%',
-                          background: isSelected ? '#ffffff' : 'var(--accent-purple-light)',
-                        }} />
-                      )}
+                      <div className="day-dot-container">
+                        {isToday ? (
+                          <div className="today-glow-dot" />
+                        ) : dayEvents.length > 0 ? (
+                          <div className="event-existence-dot" style={{ background: isSelected ? '#ffffff' : 'var(--accent-purple-light)' }} />
+                        ) : null}
+                      </div>
                     </motion.div>
                   )
                 })}
@@ -366,14 +322,18 @@ function CalendarWidget({ userId }) {
             </AnimatePresence>
           </div>
 
+          {/* Timeline */}
           <div className="timeline-container">
-            <h3 style={{ fontSize: 'clamp(14px, 3.2vw, 15px)', fontWeight: 700, margin: '0 0 var(--space-sm) 0' }}>
-              {selectedDay ? (
-                new Date(selectedDay).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-              ) : (
-                "Today's Timeline"
-              )}
-            </h3>
+            <div className="timeline-header">
+              <h3>
+                {selectedDay ? (
+                  new Date(selectedDay).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+                ) : (
+                  "Today's Timeline"
+                )}
+              </h3>
+              <span className="timeline-count">{selectedEvents.length > 0 ? `${selectedEvents.length} event${selectedEvents.length > 1 ? 's' : ''}` : 'Free'}</span>
+            </div>
 
             <div className="timeline-axis">
               {selectedDay
@@ -388,7 +348,10 @@ function CalendarWidget({ userId }) {
 
           {!isMobile && (
             <div className="composer-card-glass">
-              <h3 className="composer-title">Create Schedule Node</h3>
+              <div className="right-pane-card-header">
+                <Plus size={18} className="header-icon" />
+                <h3>Create Schedule Node</h3>
+              </div>
               <form onSubmit={addEvent} className="composer-form">
                 <input
                   value={title}
@@ -397,20 +360,22 @@ function CalendarWidget({ userId }) {
                   className="composer-input title"
                   aria-label="Event title"
                 />
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="composer-input date-picker"
-                  aria-label="Event date"
-                />
-                <input
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  className="composer-input time-picker"
-                  aria-label="Event time"
-                />
+                <div className="composer-row">
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="composer-input date-picker"
+                    aria-label="Event date"
+                  />
+                  <input
+                    type="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                    className="composer-input time-picker"
+                    aria-label="Event time"
+                  />
+                </div>
                 <motion.button
                   type="submit"
                   className="btn-composer-add"
@@ -433,20 +398,20 @@ function CalendarWidget({ userId }) {
           )}
 
           <div className="ai-assistant-card">
-            <h3 style={{ fontSize: 'clamp(14px, 3.2vw, 15px)', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className="ai-sparkle-icon"><Sparkles size={16} color="var(--accent-amber)" /></span>
-              <span>Atlas AI Suggestions</span>
-            </h3>
+            <div className="right-pane-card-header">
+              <span className="ai-sparkle-icon"><Sparkles size={18} color="var(--accent-amber)" /></span>
+              <h3>Atlas AI Suggestions</h3>
+            </div>
 
-            <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.985 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
-              <div className="suggestion-bullet" style={{ background: 'var(--accent-amber)', boxShadow: '0 0 6px rgba(245, 158, 11, 0.45)' }} />
+            <motion.div className="ai-suggestion-box" whileTap={{ scale: 0.985 }}>
+              <div className="suggestion-bullet" style={{ background: 'var(--accent-amber)', boxShadow: '0 0 8px var(--accent-amber)' }} />
               <div>
                 You have <strong>3 hours free</strong> in your afternoon slot. Schedule a focus session?
               </div>
             </motion.div>
 
-            <motion.div className="ai-suggestion-box" whileHover={{ y: -2 }} whileTap={{ scale: 0.985 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
-              <div className="suggestion-bullet" style={{ background: 'var(--accent-red)', boxShadow: '0 0 6px rgba(239, 68, 68, 0.4)' }} />
+            <motion.div className="ai-suggestion-box" whileTap={{ scale: 0.985 }}>
+              <div className="suggestion-bullet" style={{ background: 'var(--accent-red)', boxShadow: '0 0 8px var(--accent-red)' }} />
               <div>
                 Assignment due tomorrow. Ensure preparation notes are reviewed.
               </div>
@@ -454,33 +419,39 @@ function CalendarWidget({ userId }) {
           </div>
 
           <div className="month-radial-card">
-            <div className="month-radial-text">
-              <h3>Month Completion</h3>
-              <p>Based on overall metrics.</p>
+            <div className="right-pane-card-header">
+              <Target size={18} className="header-icon" />
+              <h3>Month Progress</h3>
             </div>
+            <div className="radial-content-wrap">
+              <div className="month-radial-text">
+                <p>Based on overall metrics.</p>
+                <span className="radial-sub-status">{completedEventsCount} of {totalEventsThisMonth} completed</span>
+              </div>
 
-            <div className="radial-progress-wrap">
-              <svg viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }}>
-                <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
-                <motion.path
-                  fill="none"
-                  stroke="url(#gradientRing)"
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: monthProgressRate / 100 }}
-                  transition={{ duration: motionOK ? 1.2 : 0, ease }}
-                />
-                <defs>
-                  <linearGradient id="gradientRing" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#60a5fa" />
-                    <stop offset="100%" stopColor="#8b5cf6" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="radial-progress-label">
-                {monthProgressRate}%
+              <div className="radial-progress-wrap">
+                <svg viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }}>
+                  <circle cx="18" cy="18" r="16" fill="none" stroke="var(--glass-border)" strokeWidth="3" />
+                  <motion.path
+                    fill="none"
+                    stroke="url(#gradientRing)"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: monthProgressRate / 100 }}
+                    transition={{ duration: motionOK ? 1.2 : 0, ease }}
+                  />
+                  <defs>
+                    <linearGradient id="gradientRing" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="var(--accent-blue)" />
+                      <stop offset="100%" stopColor="var(--accent-purple)" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="radial-progress-label">
+                  {monthProgressRate}<span className="percent-symbol">%</span>
+                </div>
               </div>
             </div>
           </div>
@@ -496,7 +467,6 @@ function CalendarWidget({ userId }) {
             onClick={() => setIsMobileDrawerOpen(true)}
             onPointerDown={(e) => spawnRipple(e, setFabRipples)}
             aria-label="Add event"
-            animate={{ y: scrolled ? -3 : 0 }}
             whileTap={{ scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 380, damping: 22 }}
           >
@@ -516,16 +486,17 @@ function CalendarWidget({ userId }) {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <div style={{ flex: 1 }} onClick={() => setIsMobileDrawerOpen(false)} />
+                <div className="drawer-backdrop" onClick={() => setIsMobileDrawerOpen(false)} />
 
                 <motion.div
                   className="mobile-drawer-body"
                   initial={{ y: '100%' }}
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                  transition={{ type: 'spring', damping: 28, stiffness: 260 }}
                 >
-                  <h3 className="composer-title" style={{ margin: 0 }}>Add Event Node</h3>
+                  <div className="drawer-grabber" />
+                  <h3 className="composer-title">Add Event Node</h3>
 
                   <form onSubmit={addEvent} className="composer-form">
                     <input
@@ -535,13 +506,12 @@ function CalendarWidget({ userId }) {
                       className="composer-input"
                       aria-label="Event title"
                     />
-                    <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                    <div className="composer-row">
                       <input
                         type="date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
                         className="composer-input"
-                        style={{ flex: 1, minWidth: 0 }}
                         aria-label="Event date"
                       />
                       <input
@@ -549,21 +519,19 @@ function CalendarWidget({ userId }) {
                         value={time}
                         onChange={(e) => setTime(e.target.value)}
                         className="composer-input"
-                        style={{ flex: 1, minWidth: 0 }}
                         aria-label="Event time"
                       />
                     </div>
-                    <div style={{ display: 'flex', gap: '10px', width: '100%', marginTop: '10px' }}>
+                    <div className="drawer-actions-row">
                       <button
                         type="button"
                         onClick={() => setIsMobileDrawerOpen(false)}
-                        className="composer-input"
-                        style={{ flex: 1, border: '1px solid var(--glass-border)', background: 'none', cursor: 'pointer' }}
+                        className="btn-drawer-cancel"
                       >
                         Cancel
                       </button>
-                      <button type="submit" className="btn-composer-add" style={{ flex: 2, justifyContent: 'center' }}>
-                        <span className="btn-composer-content" style={{ justifyContent: 'center', width: '100%' }}>Add Event</span>
+                      <button type="submit" className="btn-composer-add">
+                        <span className="btn-composer-content">Add Event</span>
                       </button>
                     </div>
                   </form>
@@ -580,30 +548,23 @@ function CalendarWidget({ userId }) {
 
 const SummaryCard = memo(function SummaryCard({ label, value, icon, desc, sparklinePath, accent }) {
   const gradId = 'cal-spark-' + label.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-  const accentColor = accent || '#8b5cf6'
-  
   return (
-    <div className="kpi-card-glass" tabIndex={0}>
+    <div className="kpi-card-glass">
       <div className="kpi-header-row">
         <span className="kpi-label">{label}</span>
-        <span className="kpi-icon-wrapper" style={{ background: accentColor + '22', color: accentColor }}>{icon}</span>
+        <span className="kpi-icon-wrapper" style={{ background: `color-mix(in srgb, ${accent} 18%, transparent)`, color: accent }}>{icon}</span>
       </div>
       <div className="kpi-main-metric">{value}</div>
       <div className="kpi-desc-row">
         <span className="kpi-desc">{desc}</span>
-        <svg viewBox="0 0 60 20" fill="none">
+        <svg viewBox="0 0 60 20" fill="none" className="kpi-sparkline">
           <defs>
             <linearGradient id={gradId} x1="0" y1="0" x2="60" y2="0" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor={accentColor} stopOpacity="0.3" />
-              <stop offset="100%" stopColor={accentColor} stopOpacity="1" />
+              <stop offset="0%" stopColor={accent} stopOpacity="0.3" />
+              <stop offset="100%" stopColor={accent} stopOpacity="1" />
             </linearGradient>
           </defs>
-          <path
-            d={sparklinePath}
-            stroke={`url(#${gradId})`}
-            strokeWidth="1.75"
-            strokeLinecap="round"
-          />
+          <path d={sparklinePath} stroke={`url(#${gradId})`} strokeWidth="1.75" strokeLinecap="round" />
         </svg>
       </div>
     </div>
