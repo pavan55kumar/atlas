@@ -16,34 +16,67 @@
   min-height: 118px;
   box-sizing: border-box;
   overflow: hidden;
+
+  /* Enable container queries so the value font-size can react to the
+     CARD's actual width — not the viewport. This is what lets a value
+     like ₹1000000.00 shrink gracefully before ellipsis kicks in. */
+  container-type: inline-size;
+  container-name: kpicard;
 }
 .exp-kpi-icon { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; flex-shrink: 0; }
 .exp-kpi-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
-.exp-kpi-value { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+
+/* Value: one line, never grows the card, scales down before ellipsis. */
+.exp-kpi-value {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .exp-kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 
-/* Row that holds the icon/label/value block alongside the sparkline */
-.exp-kpi-row { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
-.exp-kpi-main { min-width: 0; flex: 1 1 auto; }
+/* Row that holds the icon/label/value block alongside the sparkline.
+   Added gap + min-width:0 on the main block so flex children can shrink. */
+.exp-kpi-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  gap: 8px;
+}
+.exp-kpi-main {
+  min-width: 0;          /* allows the value to ellipsis instead of pushing */
+  flex: 1 1 auto;
+  overflow: hidden;
+}
 
-/* Fixed, non-growing sparkline container — graph scales inside it, never the reverse */
+/* ---------- Sparkline container ----------
+   Fixed, non-growing area. The SVG fills it via width/height="100%".
+   No overflow:hidden here — the SVG scales inside and never overflows,
+   so nothing important gets clipped. */
 .exp-kpi-spark {
-  flex: 0 0 56px;
+  flex: 0 0 56px;        /* desktop: fixed 56×30, never grows, never shrinks */
   width: 56px;
   height: 30px;
-  overflow: hidden;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: flex-end;
   align-self: flex-start;
 }
 .exp-kpi-spark svg,
 .exp-kpi-spark canvas {
   display: block;
-  width: 100% !important;
-  height: 100% !important;
+  width: 100%;
+  height: 100%;
   max-width: 100%;
   max-height: 100%;
+  /* NOTE: no !important — the SVG itself uses width/height="100%" via attrs */
 }
 
 .exp-insights { display: flex; flex-direction: column; gap: 8px; }
@@ -140,7 +173,11 @@
   .exp-amount-wrap { width: 104px; }
 
   /* Slightly smaller sparkline on mobile, still fixed and non-growing */
-  .exp-kpi-spark { flex-basis: 44px; width: 44px; height: 24px; }
+  .exp-kpi-spark { flex: 0 0 44px; width: 44px; height: 24px; }
+
+  /* Tighter value font on mobile from the start; container queries
+     below will shrink it further if the card gets even narrower. */
+  .exp-kpi-value { font-size: 18px; }
 }
 
 /* Extremely narrow screens: horizontal scroll fallback for KPI row */
@@ -158,3 +195,12 @@
   .exp-kpi-grid::-webkit-scrollbar { display: none; } /* Chrome/Safari */
   .exp-kpi-grid > * { flex: 0 0 72%; scroll-snap-align: start; }
 }
+
+/* ---------- Responsive value font based on CARD width (not viewport) ----------
+   Desktop card is ~min 160px wide; value never needs to shrink there.
+   On mobile (2-col) the card can drop to ~120–140px, so we step the
+   font down in small increments. Ellipsis is the last resort. */
+@container kpicard (max-width: 168px) { .exp-kpi-value { font-size: 19px; } }
+@container kpicard (max-width: 148px) { .exp-kpi-value { font-size: 16px; } }
+@container kpicard (max-width: 128px) { .exp-kpi-value { font-size: 13px; } }
+@container kpicard (max-width: 112px) { .exp-kpi-value { font-size: 11px; } }
