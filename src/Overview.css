@@ -52,6 +52,13 @@
 .card.ov-glass {
   position: relative;
   overflow: hidden;
+  /* PERF: overflow:hidden already clips this element's own contents, so
+     paint containment costs nothing visually — it just tells the browser
+     this subtree's painting can be isolated from the rest of the page,
+     which is exactly what the translateZ(0)/will-change theme-switch fix
+     below is trying to achieve. layout containment is safe here because
+     nothing outside .ov-glass depends on this element's internal layout. */
+  contain: layout paint;
   background:
     linear-gradient(165deg,
       color-mix(in srgb, var(--surface) 90%, #0a0a10 10%) 0%,
@@ -148,6 +155,10 @@
 .ov-ai-cta {
   display: inline-flex; align-items: center; gap: 6px; margin-top: 14px;
   background: transparent; border: none; color: #9C8CFF; font-size: 12.5px; font-weight: 700;
+  /* PERF: removes the ~300ms tap-delay check Android WebView otherwise runs
+     to detect a possible double-tap-to-zoom gesture. Purely a responsiveness
+     change — no visual difference. */
+  touch-action: manipulation;
 }
 
 .ov-section-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; letter-spacing: -0.01em; }

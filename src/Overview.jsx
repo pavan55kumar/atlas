@@ -1,4 +1,4 @@
-import { lazy, Suspense, memo, useEffect, useState, useCallback } from 'react'
+import { lazy, Suspense, memo, useEffect, useState, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   CheckCircle2, Flame, Target, Calendar as CalIcon, PlusCircle,
@@ -28,6 +28,31 @@ const fadeUp = function (delay) {
     transition: { duration: 0.5, delay: delay || 0, ease: ease }
   }
 }
+
+// PERF: The 4 fade-up configs used in render are always the same 4 delay
+// values (0, 0.1, 0.2, 0.3). Previously `fadeUp(x)` was called inline in
+// JSX on every render, allocating 3 new objects (initial/animate/transition)
+// each time for no reason — the values never change. Hoisting to module
+// scope computes them exactly once for the lifetime of the app.
+const heroFade = fadeUp(0)
+const kpiGridFade = fadeUp(0.1)
+const twoColFade1 = fadeUp(0.2)
+const twoColFade2 = fadeUp(0.3)
+
+// PERF: Icons passed into memo()'d components (RingKpi/TrendKpi/QuickAction)
+// as props. JSX like `<CheckCircle2 size={17} color="#fff" />` creates a
+// brand-new element object every render. Since these icons never change,
+// a fresh reference each time defeats React.memo's shallow prop comparison
+// on the exact components we memoized specifically to avoid re-rendering.
+// Hoisting them to constants makes the memo checks actually work.
+const taskIcon = <CheckCircle2 size={17} color="#fff" />
+const habitIcon = <Flame size={17} color="#fff" />
+const goalIcon = <Target size={17} color="#fff" />
+const eventIcon = <CalIcon size={17} color="#fff" />
+const quickTaskIcon = <PlusCircle size={16} />
+const quickHabitIcon = <Flame size={16} />
+const quickGoalIcon = <Target size={16} />
+const quickEventIcon = <CalIcon size={16} />
 
 const RingKpi = memo(function RingKpi({ icon, accent, label, value, sub, delay, ringValue, ringColor, isHoverable }) {
   return (
@@ -107,7 +132,8 @@ const QuickAction = memo(function QuickAction({ icon, label, color, onClick, isH
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
         padding: '18px 8px', borderRadius: '14px', border: '1px solid var(--border)',
         background: 'color-mix(in srgb, var(--surface-2) 92%, ' + color + ' 5%)',
-        color: 'var(--text)', fontSize: '12px', fontWeight: 600
+        color: 'var(--text)', fontSize: '12px', fontWeight: 600,
+        touchAction: 'manipulation' // PERF: skips the ~300ms tap-delay check on Android WebView; purely behavioral, no visual change
       }}
     >
       <div style={{
@@ -123,10 +149,72 @@ const QuickAction = memo(function QuickAction({ icon, label, color, onClick, isH
   )
 })
 
+// PERF: Extracted so the (potentially long) task list only re-renders when
+// `tasks` itself changes, isolating its reconciliation cost from sibling
+// KPI/schedule updates. memo() keeps this cheap even as the list grows.
+const RecentTasksList = memo(function RecentTasksList({ tasks }) {
+  if (tasks.length === 0) {
+    return <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No tasks yet</p>
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      {tasks.map(function (t) {
+        const done = t.progress === 100
+        const priorityColor = t.priority === 'high' ? '#F87171' : t.priority === 'low' ? '#34D399' : '#FDBA74'
+        return (
+          <div
+            key={t.id}
+            className="ov-task-row"
+            style={{ borderLeftColor: done ? 'var(--border)' : priorityColor }}
+          >
+            <span style={{ textDecoration: done ? 'line-through' : 'none', color: done ? 'var(--text-muted)' : 'var(--text)', fontSize: '13px' }}>
+              {t.title}
+            </span>
+            <span className="ov-task-chip" style={{ color: done ? 'var(--text-muted)' : priorityColor, borderColor: done ? 'var(--border)' : priorityColor }}>
+              {done ? 'Done' : 'Pending'}
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+})
+
+// PERF: Same rationale as RecentTasksList — isolates the schedule timeline's
+// render cost from the rest of Overview.
+const ScheduleTimeline = memo(function ScheduleTimeline({ events }) {
+  if (events.length === 0) {
+    return (
+      <div className="empty-state">
+        <CalIcon size={26} className="ov-breathing-icon" />
+        <span style={{ fontWeight: 500 }}>Nothing planned today</span>
+        <span>Enjoy your free time.</span>
+      </div>
+    )
+  }
+  return (
+    <div className="ov-timeline">
+      {events.map(function (ev) {
+        return (
+          <div key={ev.id} className="ov-timeline-row">
+            <div className="ov-timeline-dot" />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p className="ov-timeline-title">{ev.title}</p>
+            </div>
+            {ev.event_time && (
+              <span className="ov-timeline-chip">
+                <Clock3 size={11} /> {ev.event_time.slice(0, 5)}
+              </span>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+})
+
 function Overview({ userId, onNavigate }) {
   const [stats, setStats] = useState(null)
-  const [recentTasks, setRecentTasks] = useState([])
-  const [taskTrend, setTaskTrend] = useState([])
   const [isHoverable, setIsHoverable] = useState(false)
 
   useEffect(function () { fetchStats() }, [])
@@ -143,7 +231,7 @@ function Overview({ userId, onNavigate }) {
       supabase.from('goals').select('progress'),
       supabase.from('calendar_events').select('id, title, event_time, event_date').eq('event_date', today)
     ])
-    
+
     const tasks = results[0].data
     const habits = results[1].data
     const goals = results[2].data
@@ -163,12 +251,16 @@ function Overview({ userId, onNavigate }) {
       const count = (tasks || []).filter(function (t) { return t.created_at && t.created_at.slice(0, 10) === key }).length
       days.push(count)
     }
-    setTaskTrend(days)
 
-    setRecentTasks((tasks || []).slice(0, 4))
+    // PERF: Previously this was 3 separate setState calls (setTaskTrend,
+    // setRecentTasks, setStats), each capable of triggering its own render
+    // pass. All three pieces of data are always produced and consumed
+    // together (nothing in render reads one without the others), so they're
+    // combined into a single setState — one commit instead of up to three.
     setStats({
       pending: pending, completed: completed, habitCount: (habits || []).length, doneToday: doneToday,
-      longestStreak: longestStreak, goalCount: (goals || []).length, goalAvg: goalAvg, events: events || []
+      longestStreak: longestStreak, goalCount: (goals || []).length, goalAvg: goalAvg, events: events || [],
+      taskTrend: days, recentTasks: (tasks || []).slice(0, 4)
     })
   }
 
@@ -182,6 +274,33 @@ function Overview({ userId, onNavigate }) {
   const goToGoals = useCallback(function () { onNavigate('goals') }, [onNavigate])
   const goToCalendar = useCallback(function () { onNavigate('calendar') }, [onNavigate])
 
+  // PERF: All of these were plain `const` calculations re-run on every
+  // render, including renders triggered by unrelated state (e.g. isHoverable
+  // toggling). useMemo re-runs them only when `stats` actually changes.
+  // This also fixes the KPI-grid trend array: it used to be a brand-new
+  // array literal every render (`[1,2,1,3,2,4, stats.events.length || 1]`),
+  // which silently defeated the TrendKpi memoization below — a new array
+  // reference always looks "changed" to React.memo's shallow comparison,
+  // even when its contents are identical.
+  const derived = useMemo(function () {
+    if (!stats) return null
+    const habitPct = stats.habitCount > 0 ? Math.round((stats.doneToday / stats.habitCount) * 100) : 0
+    const taskComponent = (stats.pending + stats.completed) > 0 ? (stats.completed / (stats.pending + stats.completed)) * 100 : 0
+    const activeComponents = [(stats.pending + stats.completed) > 0, stats.habitCount > 0, stats.goalCount > 0].filter(Boolean).length
+    const productivityScore = activeComponents > 0
+      ? Math.round((taskComponent + habitPct + stats.goalAvg) / (activeComponents || 1))
+      : null
+
+    let subtitle = "Let's make today count."
+    if (stats.pending === 0 && stats.completed > 0) subtitle = "All caught up — nice work."
+    else if (stats.completed > stats.pending && stats.completed > 0) subtitle = "You're ahead of schedule today."
+    else if (habitPct >= 80 && stats.habitCount > 0) subtitle = 'Your habits are on point today.'
+
+    const eventsTrend = [1, 2, 1, 3, 2, 4, stats.events.length || 1]
+
+    return { habitPct: habitPct, productivityScore: productivityScore, subtitle: subtitle, eventsTrend: eventsTrend }
+  }, [stats])
+
   if (!stats) {
     return (
       <div className="ov-page">
@@ -190,25 +309,16 @@ function Overview({ userId, onNavigate }) {
     )
   }
 
-  const habitPct = stats.habitCount > 0 ? Math.round((stats.doneToday / stats.habitCount) * 100) : 0
-
-  const taskComponent = (stats.pending + stats.completed) > 0 ? (stats.completed / (stats.pending + stats.completed)) * 100 : 0
-  const activeComponents = [(stats.pending + stats.completed) > 0, stats.habitCount > 0, stats.goalCount > 0].filter(Boolean).length
-  const productivityScore = activeComponents > 0
-    ? Math.round((taskComponent + habitPct + stats.goalAvg) / (activeComponents || 1))
-    : null
-
-  let subtitle = "Let's make today count."
-  if (stats.pending === 0 && stats.completed > 0) subtitle = "All caught up — nice work."
-  else if (stats.completed > stats.pending && stats.completed > 0) subtitle = "You're ahead of schedule today."
-  else if (habitPct >= 80 && stats.habitCount > 0) subtitle = 'Your habits are on point today.'
+  const habitPct = derived.habitPct
+  const productivityScore = derived.productivityScore
+  const subtitle = derived.subtitle
 
   return (
     <div className="ov-page">
 
       {/* 1. Entrance Animation: Hero */}
       <motion.div
-        {...fadeUp(0)}
+        {...heroFade}
         whileHover={isHoverable ? { y: -2 } : undefined}
         transition={springTap}
         className="card ov-hero ov-glass"
@@ -238,15 +348,15 @@ function Overview({ userId, onNavigate }) {
       </motion.div>
 
       {/* 2. Entrance Animation: KPI Grid */}
-      <motion.div {...fadeUp(0.1)} className="ov-kpi-grid">
-        <MemoTiltCard><TrendKpi icon={<CheckCircle2 size={17} color="#fff" />} accent="#6C6CF0" label="Tasks" value={stats.pending} sub={stats.completed + ' completed'} trend={taskTrend} trendColor="#6C6CF0" isHoverable={isHoverable} /></MemoTiltCard>
-        <MemoTiltCard><RingKpi icon={<Flame size={17} color="#fff" />} accent="#F0876C" label="Habit streak" value={stats.longestStreak} sub={stats.doneToday + '/' + stats.habitCount + ' done today'} ringValue={habitPct} ringColor="#F0876C" isHoverable={isHoverable} /></MemoTiltCard>
-        <MemoTiltCard><RingKpi icon={<Target size={17} color="#fff" />} accent="#6CC7F0" label="Goals" value={stats.goalAvg + '%'} sub={stats.goalCount + ' active'} ringValue={stats.goalAvg} ringColor="#6CC7F0" isHoverable={isHoverable} /></MemoTiltCard>
-        <MemoTiltCard><TrendKpi icon={<CalIcon size={17} color="#fff" />} accent="#8CF06C" label="Today" value={stats.events.length} sub="events scheduled" trend={[1, 2, 1, 3, 2, 4, stats.events.length || 1]} trendColor="#8CF06C" isHoverable={isHoverable} /></MemoTiltCard>
+      <motion.div {...kpiGridFade} className="ov-kpi-grid">
+        <MemoTiltCard><TrendKpi icon={taskIcon} accent="#6C6CF0" label="Tasks" value={stats.pending} sub={stats.completed + ' completed'} trend={stats.taskTrend} trendColor="#6C6CF0" isHoverable={isHoverable} /></MemoTiltCard>
+        <MemoTiltCard><RingKpi icon={habitIcon} accent="#F0876C" label="Habit streak" value={stats.longestStreak} sub={stats.doneToday + '/' + stats.habitCount + ' done today'} ringValue={habitPct} ringColor="#F0876C" isHoverable={isHoverable} /></MemoTiltCard>
+        <MemoTiltCard><RingKpi icon={goalIcon} accent="#6CC7F0" label="Goals" value={stats.goalAvg + '%'} sub={stats.goalCount + ' active'} ringValue={stats.goalAvg} ringColor="#6CC7F0" isHoverable={isHoverable} /></MemoTiltCard>
+        <MemoTiltCard><TrendKpi icon={eventIcon} accent="#8CF06C" label="Today" value={stats.events.length} sub="events scheduled" trend={derived.eventsTrend} trendColor="#8CF06C" isHoverable={isHoverable} /></MemoTiltCard>
       </motion.div>
 
       {/* 3. Entrance Animation: Two Column Row 1 */}
-      <motion.div {...fadeUp(0.2)} className="ov-two-col">
+      <motion.div {...twoColFade1} className="ov-two-col">
         <div className="card ov-ai-panel ov-glass">
           <div className="ov-ai-header">
             <div className="ov-ai-orb">
@@ -267,71 +377,24 @@ function Overview({ userId, onNavigate }) {
 
         <div className="card ov-schedule-panel ov-glass">
           <p className="ov-section-title">Today's Schedule</p>
-          {stats.events.length === 0 ? (
-            <div className="empty-state">
-              <CalIcon size={26} className="ov-breathing-icon" />
-              <span style={{ fontWeight: 500 }}>Nothing planned today</span>
-              <span>Enjoy your free time.</span>
-            </div>
-          ) : (
-            <div className="ov-timeline">
-              {stats.events.map(function (ev) {
-                return (
-                  <div key={ev.id} className="ov-timeline-row">
-                    <div className="ov-timeline-dot" />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p className="ov-timeline-title">{ev.title}</p>
-                    </div>
-                    {ev.event_time && (
-                      <span className="ov-timeline-chip">
-                        <Clock3 size={11} /> {ev.event_time.slice(0, 5)}
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
+          <ScheduleTimeline events={stats.events} />
         </div>
       </motion.div>
 
       {/* 4. Entrance Animation: Two Column Row 2 */}
-      <motion.div {...fadeUp(0.3)} className="ov-two-col">
+      <motion.div {...twoColFade2} className="ov-two-col">
         <div className="card ov-glass">
           <p className="ov-section-title">Recent Tasks</p>
-          {recentTasks.length === 0 ? (
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No tasks yet</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {recentTasks.map(function (t) {
-                const done = t.progress === 100
-                const priorityColor = t.priority === 'high' ? '#F87171' : t.priority === 'low' ? '#34D399' : '#FDBA74'
-                return (
-                  <div
-                    key={t.id}
-                    className="ov-task-row"
-                    style={{ borderLeftColor: done ? 'var(--border)' : priorityColor }}
-                  >
-                    <span style={{ textDecoration: done ? 'line-through' : 'none', color: done ? 'var(--text-muted)' : 'var(--text)', fontSize: '13px' }}>
-                      {t.title}
-                    </span>
-                    <span className="ov-task-chip" style={{ color: done ? 'var(--text-muted)' : priorityColor, borderColor: done ? 'var(--border)' : priorityColor }}>
-                      {done ? 'Done' : 'Pending'}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          )}
+          <RecentTasksList tasks={stats.recentTasks} />
         </div>
 
         <div className="card ov-glass">
           <p className="ov-section-title">Quick Actions</p>
           <div className="ov-quick-grid">
-            <QuickAction icon={<PlusCircle size={16} />} label="Task" color="#6C6CF0" onClick={goToTasks} isHoverable={isHoverable} />
-            <QuickAction icon={<Flame size={16} />} label="Habit" color="#F0876C" onClick={goToHabits} isHoverable={isHoverable} />
-            <QuickAction icon={<Target size={16} />} label="Goal" color="#6CC7F0" onClick={goToGoals} isHoverable={isHoverable} />
-            <QuickAction icon={<CalIcon size={16} />} label="Event" color="#8CF06C" onClick={goToCalendar} isHoverable={isHoverable} />
+            <QuickAction icon={quickTaskIcon} label="Task" color="#6C6CF0" onClick={goToTasks} isHoverable={isHoverable} />
+            <QuickAction icon={quickHabitIcon} label="Habit" color="#F0876C" onClick={goToHabits} isHoverable={isHoverable} />
+            <QuickAction icon={quickGoalIcon} label="Goal" color="#6CC7F0" onClick={goToGoals} isHoverable={isHoverable} />
+            <QuickAction icon={quickEventIcon} label="Event" color="#8CF06C" onClick={goToCalendar} isHoverable={isHoverable} />
           </div>
         </div>
       </motion.div>
@@ -339,4 +402,7 @@ function Overview({ userId, onNavigate }) {
   )
 }
 
-export default Overview
+// PERF: memoize the page component itself. If a parent re-renders with the
+// same userId/onNavigate reference, Overview now skips re-rendering entirely
+// instead of re-running fetchStats' dependents and all the JSX below.
+export default memo(Overview)
