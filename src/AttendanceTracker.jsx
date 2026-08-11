@@ -11,7 +11,25 @@ const STATUS_OPTIONS = [
   { key: 'cancelled', label: 'Cancelled', color: '#93C5FD', short: 'Cancelled' }
 ]
 
-const todayStr = () => new Date().toISOString().split('T')[0]
+// FIX: build the date string from LOCAL date parts instead of toISOString(),
+// which converts to UTC first and can report the wrong calendar day for
+// timezones ahead of UTC (e.g. IST) during early morning hours.
+const toLocalDateStr = (d) => {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const todayStr = () => toLocalDateStr(new Date())
+
+// FIX: parse a "YYYY-MM-DD" string as a LOCAL date. `new Date("YYYY-MM-DD")`
+// parses it as UTC midnight, which can shift the displayed/computed date by
+// a day depending on the user's timezone offset.
+const parseLocalDate = (dateStr) => {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
 
 const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
   const [subjects, setSubjects] = useState([])
@@ -128,10 +146,14 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
     return { attended, total, currentPct, requiredClasses, maxBunks, nextPctIfSkip, canSkip, riskLevel }
   }, [subjectLogs, minRequired])
 
+  // FIX: the previous `.sort((a, b) => a.id - b.id)` assumed numeric ids, but
+  // ids here are UUID strings (or "temp-..." strings for optimistic entries).
+  // Subtracting strings always yields NaN, so that comparator never actually
+  // sorted anything (it silently no-op'd). subjectLogs is already in correct
+  // chronological order (fetch order + appended new entries), so we just use
+  // the filtered array directly instead of a sort call that did nothing.
   const todaysSessions = useMemo(() => {
-    return subjectLogs
-      .filter(l => l.date === selectedDate)
-      .sort((a, b) => a.id - b.id) // Stable numeric sort
+    return subjectLogs.filter(l => l.date === selectedDate)
   }, [subjectLogs, selectedDate])
 
   const subjectGraphData = useMemo(() => {
@@ -152,9 +174,9 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
   }, [subjectLogs])
 
   const changeDate = (days) => {
-    const d = new Date(selectedDate)
+    const d = parseLocalDate(selectedDate)
     d.setDate(d.getDate() + days)
-    const newDate = d.toISOString().split('T')[0]
+    const newDate = toLocalDateStr(d)
     if (newDate > todayStr()) return
     setSelectedDate(newDate)
   }
@@ -163,7 +185,7 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
   const yesterdayStr = useMemo(() => {
     const d = new Date()
     d.setDate(d.getDate() - 1)
-    return d.toISOString().split('T')[0]
+    return toLocalDateStr(d)
   }, [])
   const isYesterday = selectedDate === yesterdayStr
   const maxDate = todayStr()
@@ -250,7 +272,7 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
             <ChevronLeft size={20} />
           </button>
           <label style={{ cursor: 'pointer', textAlign: 'center', fontSize: '15px', fontWeight: '600', color: 'var(--text)' }}>
-            {new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+            {parseLocalDate(selectedDate).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
             <input type="date" value={selectedDate} max={maxDate} onChange={(e) => setSelectedDate(e.target.value)} style={{ display: 'none' }} />
           </label>
           <button onClick={() => changeDate(1)} disabled={isToday} style={{ background: 'none', border: 'none', color: isToday ? 'var(--border)' : 'var(--text-muted)', padding: '8px' }}>
@@ -376,7 +398,7 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {recentHistory.map(l => {
               const opt = STATUS_OPTIONS.find(o => o.key === l.status)
-              const d = new Date(l.date)
+              const d = parseLocalDate(l.date)
               const sameDateSessions = subjectLogs.filter(x => x.date === l.date).length
               return (
                 <button

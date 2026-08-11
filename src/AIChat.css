@@ -1,5 +1,5 @@
 /* ============================================================================
-   AIChat.css — Premium "Licenses" Design Language
+   AIChat.css — Premium "Atlas" Design Language
    ============================================================================ */
 
 .ai-workspace-container {
@@ -10,6 +10,10 @@
   box-sizing: border-box;
   padding: 24px;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: calc(100dvh - 64px); /* Fallback to ensure full height */
 }
 
 /* Remove aurora orbs to match the clean aesthetic */
@@ -48,9 +52,10 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 28px;
+  gap: 12px;
+  margin-bottom: 20px;
   padding-top: 8px;
+  flex-shrink: 0;
 }
 
 .hero-info { 
@@ -59,10 +64,10 @@
 }
 
 .hero-info h1 { 
-  font-size: clamp(22px, 5vw, 28px); 
+  font-size: clamp(24px, 5vw, 30px); 
   font-weight: 700; 
   letter-spacing: -0.03em; 
-  margin: 0 0 6px 0; 
+  margin: 0 0 4px 0; 
   color: var(--text, #f5f5f7); 
   line-height: 1.2; 
 }
@@ -88,7 +93,7 @@
   color: var(--accent, #8b5cf6); 
   background-color: var(--accent-soft, rgba(139, 92, 246, 0.1)); 
   border: 1px solid var(--accent-border, rgba(139, 92, 246, 0.25)); 
-  padding: 6px 10px; 
+  padding: 6px 12px; 
   border-radius: 8px; 
   display: inline-flex; 
   align-items: center; 
@@ -114,11 +119,12 @@
   display: flex; 
   gap: 10px; 
   overflow-x: auto; 
-  margin-bottom: 24px; 
+  margin-bottom: 16px; 
   scrollbar-width: none; 
   padding-bottom: 4px; 
   position: relative; 
-  z-index: 1; 
+  z-index: 1;
+  flex-shrink: 0;
 }
 
 .suggestions-carousel::-webkit-scrollbar { 
@@ -128,11 +134,11 @@
 .suggestion-pill-card { 
   background-color: var(--surface-2, #161618); 
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
-  border-radius: 10px; 
+  border-radius: 12px; 
   padding: 10px 16px; 
   font-size: 13px; 
   font-weight: 600; 
-  color: var(--text, #f5f5f7); 
+  color: var(--text-muted, #71717a); 
   cursor: pointer; 
   white-space: nowrap; 
   flex-shrink: 0; 
@@ -140,23 +146,26 @@
 }
 
 .suggestion-pill-card:hover { 
-  border-color: var(--accent, #8b5cf6); 
+  border-color: var(--accent-border, rgba(139, 92, 246, 0.4)); 
   background-color: var(--surface, #131316); 
+  color: var(--text, #f5f5f7); 
   transform: translateY(-1px);
 }
 
-/* --- Layout --- */
+/* --- Split Workspace --- */
 .ai-split-workspace { 
   display: grid; 
   grid-template-columns: 1fr; 
   gap: 16px; 
   position: relative; 
   z-index: 1; 
+  flex: 1;
+  min-height: 0; /* Crucial for allowing flex children to scroll properly */
 }
 
-@media (min-width: 768px) { 
+@media (min-width: 769px) { 
   .ai-split-workspace { 
-    grid-template-columns: 1fr 300px; 
+    grid-template-columns: 1fr 320px; /* Slightly wider summary pane for balance */
   } 
 }
 
@@ -168,11 +177,25 @@
   padding: 0; 
   display: flex; 
   flex-direction: column; 
-  height: calc(100vh - 280px); 
-  min-height: 450px; 
-  max-height: 750px; 
+  height: 100%; 
+  min-height: 400px;
+  max-height: 100%;
   overflow: hidden; 
-  box-shadow: 0 10px 40px rgba(0,0,0,0.1); 
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--border); 
+  position: relative;
+}
+
+/* Subtle top highlight to make the card feel premium and layered */
+.chat-workspace-pane::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(to bottom, var(--accent-soft, rgba(139, 92, 246, 0.05)), transparent);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .chat-messages-container { 
@@ -183,6 +206,18 @@
   flex-direction: column; 
   gap: 16px; 
   -webkit-overflow-scrolling: touch; 
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  position: relative;
+  z-index: 1;
+}
+
+.chat-messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+.chat-messages-container::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 3px;
 }
 
 .message-bubble-row { 
@@ -206,11 +241,11 @@
 
 .msg-bubble { 
   max-width: 80%; 
-  min-width: 50px;
+  min-width: 60px;
   padding: 14px 18px; 
-  border-radius: 18px; 
-  font-size: 14.5px; 
-  line-height: 1.6; 
+  border-radius: 20px; 
+  font-size: 15px; 
+  line-height: 1.5; 
   word-wrap: break-word; 
   overflow-wrap: break-word; 
 }
@@ -220,11 +255,12 @@
   color: #ffffff; 
   border-bottom-right-radius: 6px; 
   font-weight: 500;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.2);
 }
 
 .is-assistant .msg-bubble { 
   background-color: var(--surface, #131316); 
-  border: 1px solid var(--border, rgba(255, 255, 255, 0.06)); 
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
   color: var(--text, #f5f5f7); 
   border-bottom-left-radius: 6px; 
 }
@@ -238,13 +274,13 @@
   flex: 1; 
   text-align: center; 
   color: var(--text-muted, #71717a); 
-  padding: 20px;
+  padding: 24px 16px;
 }
 
 .pulse-orb-outer { 
   position: relative; 
-  width: 80px; 
-  height: 80px; 
+  width: 96px; 
+  height: 96px; 
   margin-bottom: 24px; 
   display: flex; 
   align-items: center; 
@@ -255,18 +291,18 @@
   position: absolute; 
   width: 100%; 
   height: 100%; 
-  border: 1.5px dashed var(--border, rgba(255, 255, 255, 0.1)); 
+  border: 1.5px solid var(--accent-border, rgba(139, 92, 246, 0.15)); 
   border-radius: 50%; 
-  animation: rotateOrb 16s infinite linear; 
+  animation: rotateOrb 20s infinite linear; 
 }
 
 .pulse-orb-center { 
-  width: 40px; 
-  height: 40px; 
-  background: var(--accent, #8b5cf6); 
+  width: 48px; 
+  height: 48px; 
+  background: radial-gradient(circle at 30% 30%, #a78bfa, var(--accent, #8b5cf6)); 
   border-radius: 50%; 
-  animation: breatheCore 3s infinite alternate ease-in-out; 
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+  animation: breatheCore 4s infinite alternate ease-in-out; 
+  box-shadow: 0 0 32px rgba(139, 92, 246, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.2);
 }
 
 @keyframes rotateOrb { 
@@ -305,12 +341,15 @@
 /* --- Input Dock --- */
 .input-dock-layer { 
   border-top: 1px solid var(--border, rgba(255, 255, 255, 0.06)); 
-  padding: 16px 20px 20px 20px; 
+  padding: 16px 20px; 
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); 
   display: flex; 
   flex-direction: column; 
   gap: 12px; 
   flex-shrink: 0; 
   background-color: var(--surface-2, #161618);
+  position: relative;
+  z-index: 2;
 }
 
 .linked-context-chips-row { 
@@ -331,7 +370,7 @@
   font-size: 11px; 
   font-weight: 600; 
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
-  padding: 4px 10px; 
+  padding: 5px 10px; 
   border-radius: 6px; 
   flex-shrink: 0; 
   display: inline-flex; 
@@ -393,15 +432,16 @@
   align-items: center; 
   background-color: var(--surface, #131316); 
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
-  border-radius: 12px; 
+  border-radius: 14px; 
   padding: 6px 6px 6px 18px; 
   gap: 8px; 
   transition: all 0.2s ease; 
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .capsule-input-bar.focused-glow { 
   border-color: var(--accent, #8b5cf6); 
-  box-shadow: 0 0 0 4px var(--accent-soft, rgba(139, 92, 246, 0.1)); 
+  box-shadow: 0 0 0 3px var(--accent-soft, rgba(139, 92, 246, 0.1)); 
 }
 
 .capsule-field { 
@@ -410,7 +450,7 @@
   background: none; 
   border: none; 
   color: var(--text, #f5f5f7); 
-  font-size: 15px; /* Slightly larger for better UX */
+  font-size: 16px; /* 16px prevents forced zoom on mobile inputs */
   font-weight: 500; 
   outline: none !important; 
   box-shadow: none !important; 
@@ -428,9 +468,9 @@
   border: none; 
   color: var(--text-muted, #71717a); 
   cursor: pointer; 
-  width: 38px; 
-  height: 38px; 
-  border-radius: 10px; 
+  width: 40px; 
+  height: 40px; 
+  border-radius: 12px; 
   display: flex; 
   align-items: center; 
   justify-content: center; 
@@ -450,7 +490,7 @@
 .btn-dock-send { 
   background-color: var(--accent, #8b5cf6); 
   color: #ffffff; 
-  border-radius: 10px; 
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
 }
 
 .btn-dock-send:hover { 
@@ -472,8 +512,9 @@
 .summary-pane-card { 
   background-color: var(--surface-2, #161618); 
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08)); 
-  border-radius: 20px; 
+  border-radius: 16px; 
   padding: 24px; 
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
 .summary-pane-card h4 { 
@@ -513,9 +554,12 @@
 }
 
 /* --- Responsive Layout Rules --- */
-@media (max-width: 899px) {
+@media (max-width: 768px) {
   .ai-workspace-container { 
-    padding: 16px 12px; 
+    padding: 16px 12px;
+    height: 100%; /* Fill available space in the app shell */
+    min-height: calc(100dvh - 64px); /* Fallback */
+    overflow: hidden;
   }
   
   .system-summary-pane { 
@@ -523,8 +567,9 @@
   }
   
   .chat-workspace-pane { 
-    height: calc(100dvh - 220px); 
-    min-height: 350px; 
+    height: 100%; 
+    min-height: 0;
+    max-height: none;
     border-radius: 16px; 
   }
   
@@ -533,11 +578,45 @@
   }
   
   .input-dock-layer {
-    padding: 12px 16px 16px 16px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)) 16px;
   }
   
   .msg-bubble { 
     max-width: 85%; 
+    font-size: 15px;
+  }
+  
+  .hero-info h1 {
+    font-size: 22px;
+  }
+  
+  .hero-info p {
+    font-size: 13px;
+  }
+
+  .ai-hero-header {
+    margin-bottom: 16px;
+    padding-top: 4px;
+  }
+  
+  .suggestions-carousel {
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .ai-workspace-container {
+    padding: 12px 8px;
+  }
+  .chat-messages-container {
+    padding: 12px;
+  }
+  .input-dock-layer {
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)) 12px;
+  }
+  .msg-bubble {
+    padding: 12px 14px;
+    font-size: 14px;
   }
 }
 
