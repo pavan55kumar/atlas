@@ -279,10 +279,11 @@ const SubjectCard = memo(function SubjectCard({ subject, onDelete }) {
           <h4>{subject.name}</h4>
           <p>{subject.credits} Credits {subject.faculty ? `· ${subject.faculty}` : ''}</p>
         </div>
-      </div>
-
-      <div className="card-bottom">
-        <button onClick={() => onDelete(subject)} className="btn-delete" aria-label={`Delete ${subject.name}`}>
+        <button 
+          onClick={() => onDelete(subject)} 
+          className="btn-delete" 
+          aria-label={`Delete ${subject.name}`}
+        >
           <Trash2 size={16} />
         </button>
       </div>

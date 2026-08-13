@@ -12,7 +12,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   gap: 12px;
 }
 .academic-title {
@@ -34,8 +34,8 @@
   color: var(--text-muted);
   background: var(--surface-2);
   border: 1px solid var(--border);
-  padding: 6px 12px;
-  border-radius: 999px;
+  padding: 0 12px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   height: 32px;
@@ -46,17 +46,17 @@
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  margin-bottom: 28px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 .summary-card {
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 .summary-label {
   font-size: 11px;
@@ -66,7 +66,7 @@
   letter-spacing: 0.05em;
 }
 .summary-value {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text);
   line-height: 1.1;
@@ -81,7 +81,7 @@
 .subjects-section-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   margin-bottom: 16px;
   gap: 12px;
 }
@@ -89,7 +89,7 @@
   font-size: 16px;
   font-weight: 600;
   color: var(--text);
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
 }
 .section-sub {
   font-size: 13px;
@@ -103,14 +103,14 @@
   background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
   border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border));
   color: var(--accent);
-  padding: 8px 14px;
-  border-radius: 10px;
+  padding: 0 12px;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: inherit;
-  height: 36px;
+  height: 32px;
   flex-shrink: 0;
 }
 .add-subject-btn:hover {
@@ -198,39 +198,40 @@
   opacity: 0.9;
 }
 
-/* ========== SUBJECT CARDS (unified — desktop + mobile) ========== */
+/* ========== SUBJECT CARDS (Unified & Compact) ========== */
 .subjects-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: 12px;
 }
 .subject-card {
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 18px;
+  border-radius: 12px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  gap: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 16px rgba(0, 0, 0, 0.05);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 @media (hover: hover) {
   .subject-card:hover {
     border-color: var(--accent);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06), 0 16px 36px color-mix(in srgb, var(--accent) 14%, transparent);
-    transform: translateY(-2px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05), 0 12px 30px color-mix(in srgb, var(--accent) 12%, transparent);
+    transform: translateY(-1px);
   }
 }
 .card-top {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
 }
 .subject-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   background: color-mix(in srgb, var(--accent) 10%, var(--surface));
   display: flex;
   align-items: center;
@@ -244,7 +245,7 @@
   min-width: 0;
 }
 .subject-info h4 {
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
   font-size: 15px;
   font-weight: 600;
   color: var(--text);
@@ -254,32 +255,26 @@
 }
 .subject-info p {
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.card-bottom {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
 }
 .btn-delete {
   background: transparent;
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 10px;
-  border-radius: 8px;
+  padding: 0;
+  border-radius: 999px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 40px;
-  min-height: 40px;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 .btn-delete:hover {
   background: rgba(239, 68, 68, 0.1);
@@ -313,9 +308,9 @@
 .skeleton-card {
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 16px;
-  height: 110px;
+  border-radius: 12px;
+  padding: 12px 14px;
+  height: 56px;
 }
 .skeleton-line {
   height: 12px;
@@ -388,7 +383,7 @@
 /* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
   .academic-header {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
   .academic-title {
     font-size: 16px;
@@ -398,17 +393,20 @@
   }
   .semester-badge {
     height: 30px;
-    padding: 4px 10px;
+    padding: 0 10px;
     font-size: 11px;
   }
+  .add-subject-btn {
+    height: 30px;
+  }
   .summary-card {
-    padding: 14px;
+    padding: 12px 14px;
   }
   .summary-value {
     font-size: 20px;
   }
   .subjects-section-header {
-    align-items: flex-end;
+    align-items: center;
     margin-bottom: 12px;
   }
   .form-grid {
@@ -417,7 +415,7 @@
   }
   .subjects-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
   }
 }
 
@@ -425,7 +423,7 @@
   .btn-text-desktop { display: none; }
   .btn-text-mobile { display: inline; }
   .add-subject-btn {
-    padding: 8px 12px;
+    padding: 0 10px;
   }
 }
 
