@@ -786,18 +786,19 @@ const FloatingCalendar = React.memo(function FloatingCalendar({ selectedDate, ma
   );
 });
 
-// --- SUBJECT-WISE BAR CHART COMPONENT (ALIGNMENT BUG FIXED) ---
+// --- SUBJECT-WISE BAR CHART COMPONENT (LABEL VISIBILITY FIXED) ---
 const SubjectAttendanceGraph = React.memo(function SubjectAttendanceGraph({ data, minRequired }) {
   // Clamp threshold to chart scale [0, 100]
   const safeThreshold = Math.max(0, Math.min(100, minRequired));
 
   return (
     <div style={{ overflowX: 'auto', paddingBottom: '8px', position: 'relative', WebkitOverflowScrolling: 'touch' }}>
-      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', height: '140px', position: 'relative', padding: '0 10px 24px', minWidth: 'min-content' }}>
-        {/* Grid + Threshold — aligned to the BAR AREA only (excludes label strip) */}
+      {/* FIX: Increased container height to 180px and added 24px top padding to prevent label clipping */}
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', height: '180px', position: 'relative', padding: '24px 10px 28px', minWidth: 'min-content' }}>
+        {/* Grid + Threshold — aligned to the BAR AREA only (excludes label strips) */}
         <div style={{
           position: 'absolute',
-          top: 0, left: 0, right: 0, bottom: '24px', /* matches padding-bottom of bar container */
+          top: '24px', left: 0, right: 0, bottom: '28px', /* matches padding-top and padding-bottom of bar container */
           pointerEvents: 'none'
         }}>
           {[100, 75, 50, 25, 0].map(y => (
@@ -822,14 +823,7 @@ const SubjectAttendanceGraph = React.memo(function SubjectAttendanceGraph({ data
           </div>
         </div>
 
-        {/*
-          Bars — FIX: wrapper height was previously `calc(100% - 24px)`, which double-subtracted
-          the 24px label strip (it's already excluded from this flex container's content box via
-          padding-bottom, and the grid/threshold overlay above is sized to that same content box).
-          That extra subtraction made a 100% bar stop ~24px short of the top, so it rendered below
-          the 85% threshold line. Using the full `100%` here makes the bar's scale match the grid's
-          scale exactly, 1:1.
-        */}
+        {/* Bars */}
         {data.map(sub => (
           <div key={sub.id} style={{ 
             height: '100%', 
