@@ -263,6 +263,8 @@ function Subjects({ userId }) {
 // in Subjects.css, so there's no separate desktop/mobile component tree
 // and no JS resize listener needed to pick between them.
 const SubjectCard = memo(function SubjectCard({ subject, onDelete }) {
+  const creditLabel = subject.credits === 1 ? '1 Credit' : `${subject.credits} Credits`
+
   return (
     <motion.div
       className="subject-card"
@@ -275,17 +277,26 @@ const SubjectCard = memo(function SubjectCard({ subject, onDelete }) {
         <div className="subject-icon">
           <School size={16} />
         </div>
-        <div className="subject-info">
-          <h4>{subject.name}</h4>
-          <p>{subject.credits} Credits {subject.faculty ? `· ${subject.faculty}` : ''}</p>
+        <div className="subject-name-wrap">
+          <h4 className="subject-name">{subject.name}</h4>
+          <p className="subject-faculty">
+            {subject.faculty ? subject.faculty : 'Faculty not assigned'}
+          </p>
         </div>
-        <button 
-          onClick={() => onDelete(subject)} 
-          className="btn-delete" 
+        <button
+          onClick={() => onDelete(subject)}
+          className="btn-delete"
           aria-label={`Delete ${subject.name}`}
         >
-          <Trash2 size={16} />
+          <Trash2 size={15} />
         </button>
+      </div>
+
+      <div className="card-bottom">
+        <span className="credit-pill">
+          <span className="credit-dot" />
+          {creditLabel}
+        </span>
       </div>
     </motion.div>
   )
