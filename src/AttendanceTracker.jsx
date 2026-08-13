@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react'
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { CalendarCheck, ChevronDown, ChevronLeft, ChevronRight, Plus, Search, X, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { inputStyle } from './styles'
@@ -11,9 +11,6 @@ const STATUS_OPTIONS = [
   { key: 'cancelled', label: 'Cancelled', color: '#93C5FD', short: 'Cancelled' }
 ]
 
-// FIX: build the date string from LOCAL date parts instead of toISOString(),
-// which converts to UTC first and can report the wrong calendar day for
-// timezones ahead of UTC (e.g. IST) during early morning hours.
 const toLocalDateStr = (d) => {
   const year = d.getFullYear()
   const month = String(d.getMonth() + 1).padStart(2, '0')
@@ -23,9 +20,6 @@ const toLocalDateStr = (d) => {
 
 const todayStr = () => toLocalDateStr(new Date())
 
-// FIX: parse a "YYYY-MM-DD" string as a LOCAL date. `new Date("YYYY-MM-DD")`
-// parses it as UTC midnight, which can shift the displayed/computed date by
-// a day depending on the user's timezone offset.
 const parseLocalDate = (dateStr) => {
   const [year, month, day] = dateStr.split('-').map(Number)
   return new Date(year, month - 1, day)
@@ -35,14 +29,31 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
   const [subjects, setSubjects] = useState([])
   const [logs, setLogs] = useState([])
   const [selectedSubject, setSelectedSubject] = useState(null)
-  const [minRequired, setMinRequired] = useState(75)
+  
+  // Load minRequired from localStorage (or Capacitor Preferences fallback in webview)
+  const [minRequired, setMinRequired] = useState(() => {
+    const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('attendanceMinRequired') : null;
+    return saved ? Number(saved) : 75;
+  });
+  const [minInputValue, setMinInputValue] = useState(String(minRequired));
+
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState(todayStr())
   
   // UI States
   const [showSubjectSheet, setShowSubjectSheet] = useState(false)
+  const [showCalendar, setShowCalendar] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [toast, setToast] = useState(null)
+
+  // Touch tracking for swipe
+  const touchStartX = useRef(0);
+
+  const triggerHaptic = useCallback(() => {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(10);
+    }
+  }, []);
 
   const showToast = useCallback((message, type = 'error') => {
     setToast({ message, type })
@@ -75,6 +86,7 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
 
   const handleAddClass = useCallback(async () => {
     if (!selectedSubject) return
+    triggerHaptic();
     
     const tempId = `temp-${Date.now()}`
     const newLog = {
@@ -101,9 +113,10 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
       setLogs(prev => prev.filter(l => l.id !== tempId))
       showToast('Failed to add class. Database might restrict multiple sessions per day.')
     }
-  }, [selectedSubject, userId, selectedDate, showToast])
+  }, [selectedSubject, userId, selectedDate, showToast, triggerHaptic])
 
   const handleUpdateStatus = useCallback(async (logId, status) => {
+    triggerHaptic();
     const prevLogs = logs
     setLogs(prev => prev.map(l => l.id === logId ? { ...l, status } : l))
 
@@ -114,7 +127,7 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
       setLogs(prevLogs)
       showToast('Failed to update attendance status')
     }
-  }, [logs, showToast])
+  }, [logs, showToast, triggerHaptic])
 
   // --- DERIVED DATA & CALCULATIONS (Preserved exact logic) ---
   const subjectLogs = useMemo(() => logs.filter(l => l.subject_id === selectedSubject), [logs, selectedSubject])
@@ -146,12 +159,6 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
     return { attended, total, currentPct, requiredClasses, maxBunks, nextPctIfSkip, canSkip, riskLevel }
   }, [subjectLogs, minRequired])
 
-  // FIX: the previous `.sort((a, b) => a.id - b.id)` assumed numeric ids, but
-  // ids here are UUID strings (or "temp-..." strings for optimistic entries).
-  // Subtracting strings always yields NaN, so that comparator never actually
-  // sorted anything (it silently no-op'd). subjectLogs is already in correct
-  // chronological order (fetch order + appended new entries), so we just use
-  // the filtered array directly instead of a sort call that did nothing.
   const todaysSessions = useMemo(() => {
     return subjectLogs.filter(l => l.date === selectedDate)
   }, [subjectLogs, selectedDate])
@@ -173,13 +180,49 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
       .slice(0, 8)
   }, [subjectLogs])
 
-  const changeDate = (days) => {
-    const d = parseLocalDate(selectedDate)
-    d.setDate(d.getDate() + days)
-    const newDate = toLocalDateStr(d)
-    if (newDate > todayStr()) return
-    setSelectedDate(newDate)
-  }
+  const changeDate = useCallback((days) => {
+    triggerHaptic();
+    setSelectedDate(prev => {
+      const d = parseLocalDate(prev)
+      d.setDate(d.getDate() + days)
+      const newDate = toLocalDateStr(d)
+      if (newDate > todayStr()) return prev;
+      return newDate;
+    })
+  }, [triggerHaptic]);
+
+  const handleMinChange = (e) => {
+    let val = e.target.value.replace(/[^0-9]/g, '');
+    setMinInputValue(val);
+  };
+
+  const handleMinBlur = () => {
+    let num = parseInt(minInputValue, 10);
+    if (isNaN(num) || minInputValue === '') {
+      num = minRequired; 
+    } else {
+      if (num < 1) num = 1;
+      if (num > 100) num = 100;
+    }
+    setMinRequired(num);
+    setMinInputValue(String(num));
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('attendanceMinRequired', String(num));
+    }
+  };
+
+  // Swipe Handlers
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  
+  const handleTouchEnd = (e) => {
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(deltaX) > 50) {
+      if (deltaX > 0) changeDate(-1);
+      else changeDate(1);
+    }
+  };
 
   const isToday = selectedDate === todayStr()
   const yesterdayStr = useMemo(() => {
@@ -207,9 +250,11 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
     <div style={{ paddingBottom: '40px', position: 'relative' }}>
       <style>{`
         .att-scroll-y { overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        .att-status-btn { transition: transform 0.1s ease; }
+        .att-status-btn { transition: transform 0.1s ease, background 0.2s, border-color 0.2s; min-height: 40px; display: flex; align-items: center; justify-content: center; }
         .att-status-btn:active { transform: scale(0.95); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
       `}</style>
 
       {toast && (
@@ -217,7 +262,8 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
           position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)',
           background: toast.type === 'error' ? '#FCA5A5' : '#6EE7B7', color: '#0A0A0F',
           padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.2)', zIndex: 1000, display: 'flex', alignItems: 'center', gap: '8px'
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)', zIndex: 1200, display: 'flex', alignItems: 'center', gap: '8px',
+          animation: 'fadeIn 0.2s ease'
         }}>
           {toast.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
           {toast.message}
@@ -266,22 +312,29 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
         </div>
       </div>
 
-      <div style={{ marginBottom: '20px' }}>
+      <div 
+        style={{ marginBottom: '20px', touchAction: 'pan-y' }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <button onClick={() => changeDate(-1)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', padding: '8px' }}>
+          <button onClick={() => changeDate(-1)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', padding: '8px', cursor: 'pointer' }}>
             <ChevronLeft size={20} />
           </button>
-          <label style={{ cursor: 'pointer', textAlign: 'center', fontSize: '15px', fontWeight: '600', color: 'var(--text)' }}>
+          <button 
+            onClick={() => setShowCalendar(true)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center', fontSize: '15px', fontWeight: '600', color: 'var(--text)', padding: '8px 12px', borderRadius: '8px' }}
+          >
             {parseLocalDate(selectedDate).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
-            <input type="date" value={selectedDate} max={maxDate} onChange={(e) => setSelectedDate(e.target.value)} style={{ display: 'none' }} />
-          </label>
-          <button onClick={() => changeDate(1)} disabled={isToday} style={{ background: 'none', border: 'none', color: isToday ? 'var(--border)' : 'var(--text-muted)', padding: '8px' }}>
+          </button>
+          <button onClick={() => changeDate(1)} disabled={isToday} style={{ background: 'none', border: 'none', color: isToday ? 'var(--border)' : 'var(--text-muted)', padding: '8px', cursor: isToday ? 'default' : 'pointer' }}>
             <ChevronRight size={20} />
           </button>
         </div>
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-          <button onClick={() => setSelectedDate(yesterdayStr)} style={isYesterday ? pillBtnActive : pillBtn}>Yesterday</button>
-          <button onClick={() => setSelectedDate(todayStr())} style={isToday ? pillBtnActive : pillBtn}>Today</button>
+          <button onClick={() => { triggerHaptic(); setSelectedDate(yesterdayStr); }} style={isYesterday ? pillBtnActive : pillBtn}>Yesterday</button>
+          <button onClick={() => { triggerHaptic(); setSelectedDate(todayStr()); }} style={isToday ? pillBtnActive : pillBtn}>Today</button>
+          <button onClick={() => setShowCalendar(true)} style={pillBtn}>Pick Date</button>
         </div>
       </div>
 
@@ -290,7 +343,7 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
           {isToday ? "Today's Classes" : "Classes on this date"}
         </p>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {todaysSessions.length === 0 && (
             <div style={{ textAlign: 'center', padding: '20px', border: '1px dashed var(--border)', borderRadius: '12px', color: 'var(--text-muted)', fontSize: '13px' }}>
               No classes logged for this date.
@@ -299,12 +352,12 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
           
           {todaysSessions.map((session, idx) => {
             return (
-              <div key={session.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <div key={session.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                   <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text)' }}>Class {idx + 1}</span>
                   {session.id.toString().startsWith('temp-') && <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Saving...</span>}
                 </div>
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '8px' }}>
                   {STATUS_OPTIONS.map(opt => (
                     <button
                       key={opt.key}
@@ -315,7 +368,7 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
                         border: `1px solid ${session.status === opt.key ? opt.color : 'var(--border)'}`,
                         background: session.status === opt.key ? opt.color : 'var(--surface-2)',
                         color: session.status === opt.key ? '#0A0A0F' : 'var(--text)',
-                        flex: '1 1 30%', minWidth: '80px', textAlign: 'center'
+                        textAlign: 'center'
                       }}
                     >
                       {opt.short}
@@ -330,9 +383,10 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
         <button 
           onClick={handleAddClass}
           style={{
-            marginTop: '12px', width: '100%', padding: '12px', borderRadius: '12px',
+            marginTop: '16px', width: '100%', padding: '14px', borderRadius: '12px',
             border: '1px dashed var(--accent)', background: 'transparent', color: 'var(--accent)',
-            fontWeight: '600', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+            fontWeight: '600', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+            cursor: 'pointer', transition: 'background 0.2s'
           }}
         >
           <Plus size={16} />
@@ -340,7 +394,6 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
         </button>
       </div>
 
-      {/* 6. SUBJECT-WISE ATTENDANCE GRAPH */}
       <div style={{ marginBottom: '24px' }}>
         <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '10px', letterSpacing: '1px', textTransform: 'uppercase' }}>Subject Attendance</p>
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px 8px 8px' }}>
@@ -358,9 +411,12 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
             <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Minimum required</span>
             <input
-              type="number"
-              value={minRequired}
-              onChange={(e) => setMinRequired(Number(e.target.value))}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={minInputValue}
+              onChange={handleMinChange}
+              onBlur={handleMinBlur}
               style={{ ...inputStyle, width: '60px', padding: '4px 8px', textAlign: 'center' }}
             />
             <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>%</span>
@@ -403,7 +459,7 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
               return (
                 <button
                   key={l.id}
-                  onClick={() => setSelectedDate(l.date)}
+                  onClick={() => { triggerHaptic(); setSelectedDate(l.date); }}
                   style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     padding: '10px 14px', borderRadius: '8px',
@@ -431,15 +487,28 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
         </div>
       )}
 
+      {showCalendar && (
+        <FloatingCalendar 
+          selectedDate={selectedDate} 
+          maxDate={maxDate} 
+          onSelect={(d) => {
+            setSelectedDate(d);
+            setShowCalendar(false);
+            triggerHaptic();
+          }} 
+          onClose={() => setShowCalendar(false)} 
+        />
+      )}
+
       {showSubjectSheet && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }} onClick={() => setShowSubjectSheet(false)}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', zIndex: 1100, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', animation: 'fadeIn 0.2s ease' }} onClick={() => setShowSubjectSheet(false)}>
           <div 
             onClick={e => e.stopPropagation()}
-            style={{ background: 'var(--surface)', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', maxHeight: '70vh', display: 'flex', flexDirection: 'column', paddingBottom: '20px' }}
+            style={{ background: 'var(--surface)', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', maxHeight: '70vh', display: 'flex', flexDirection: 'column', paddingBottom: '20px', animation: 'slideUp 0.3s ease' }}
           >
             <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <p style={{ fontWeight: '600', fontSize: '16px', color: 'var(--text)' }}>Select Subject</p>
-              <button onClick={() => setShowSubjectSheet(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)' }}>
+              <button onClick={() => setShowSubjectSheet(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <X size={20} />
               </button>
             </div>
@@ -458,12 +527,12 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
               {filteredSubjects.map(s => (
                 <button
                   key={s.id}
-                  onClick={() => { setSelectedSubject(s.id); setShowSubjectSheet(false); setSearchQuery('') }}
+                  onClick={() => { setSelectedSubject(s.id); setShowSubjectSheet(false); setSearchQuery(''); triggerHaptic(); }}
                   style={{
                     width: '100%', padding: '14px', borderRadius: '10px', marginBottom: '6px', textAlign: 'left',
                     background: selectedSubject === s.id ? 'var(--surface-2)' : 'transparent',
                     border: `1px solid ${selectedSubject === s.id ? 'var(--accent)' : 'transparent'}`,
-                    color: 'var(--text)', fontWeight: '500', fontSize: '14px'
+                    color: 'var(--text)', fontWeight: '500', fontSize: '14px', cursor: 'pointer'
                   }}
                 >
                   {s.name}
@@ -477,6 +546,91 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
     </div>
   )
 })
+
+// --- FLOATING CALENDAR MODAL ---
+const FloatingCalendar = React.memo(function FloatingCalendar({ selectedDate, maxDate, onSelect, onClose }) {
+  const [viewDate, setViewDate] = useState(() => parseLocalDate(selectedDate));
+  
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  
+  const days = [];
+  for (let i = 0; i < firstDayOfMonth; i++) days.push(null);
+  for (let i = 1; i <= daysInMonth; i++) {
+    const d = new Date(year, month, i);
+    const dStr = toLocalDateStr(d);
+    days.push({
+      date: dStr,
+      day: i,
+      isFuture: dStr > maxDate,
+      isSelected: dStr === selectedDate
+    });
+  }
+
+  const changeMonth = (offset) => {
+    setViewDate(new Date(year, month + offset, 1));
+  };
+
+  return (
+    <div style={{ 
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+      zIndex: 1150, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
+      animation: 'fadeIn 0.2s ease'
+    }} onClick={onClose}>
+      <div style={{
+        background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '20px',
+        width: '100%', maxWidth: '360px', padding: '20px', boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+        animation: 'scaleIn 0.2s ease'
+      }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <button onClick={() => changeMonth(-1)} style={{ background: 'var(--surface-2)', border: 'none', borderRadius: '8px', padding: '8px', color: 'var(--text)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+            <ChevronLeft size={18} />
+          </button>
+          <span style={{ fontWeight: '600', fontSize: '15px', color: 'var(--text)' }}>
+            {viewDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+          </span>
+          <button onClick={() => changeMonth(1)} style={{ background: 'var(--surface-2)', border: 'none', borderRadius: '8px', padding: '8px', color: 'var(--text)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+            <ChevronRight size={18} />
+          </button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '8px' }}>
+          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+            <div key={i} style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>{d}</div>
+          ))}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+          {days.map((day, i) => (
+            day ? (
+              <button
+                key={i}
+                disabled={day.isFuture}
+                onClick={() => onSelect(day.date)}
+                style={{
+                  aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  borderRadius: '50%', fontSize: '13px', fontWeight: '600',
+                  border: 'none',
+                  background: day.isSelected ? 'var(--accent)' : 'transparent',
+                  color: day.isSelected ? '#0A0A0F' : day.isFuture ? 'var(--border)' : 'var(--text)',
+                  cursor: day.isFuture ? 'not-allowed' : 'pointer',
+                  transition: 'background 0.2s'
+                }}
+              >
+                {day.day}
+              </button>
+            ) : (
+              <div key={i} />
+            )
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+});
 
 // --- SUBJECT-WISE BAR CHART COMPONENT ---
 const SubjectAttendanceGraph = React.memo(function SubjectAttendanceGraph({ data, minRequired }) {
@@ -560,8 +714,9 @@ const SubjectAttendanceGraph = React.memo(function SubjectAttendanceGraph({ data
 })
 
 const pillBtn = {
-  padding: '6px 14px', borderRadius: '20px', border: '1px solid var(--border)', 
-  background: 'var(--surface-2)', color: 'var(--text)', fontSize: '12px', fontWeight: '500'
+  padding: '8px 14px', borderRadius: '20px', border: '1px solid var(--border)', 
+  background: 'var(--surface-2)', color: 'var(--text)', fontSize: '12px', fontWeight: '500',
+  cursor: 'pointer', transition: 'background 0.2s'
 }
 const pillBtnActive = {
   ...pillBtn,
