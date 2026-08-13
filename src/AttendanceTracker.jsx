@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
-import { CalendarCheck, ChevronDown, ChevronLeft, ChevronRight, Plus, Search, X, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { CalendarCheck, ChevronDown, ChevronLeft, ChevronRight, Plus, Search, X, AlertCircle, CheckCircle2, Trash2 } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { inputStyle } from './styles'
 
@@ -30,7 +30,6 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
   const [logs, setLogs] = useState([])
   const [selectedSubject, setSelectedSubject] = useState(null)
   
-  // Load minRequired from localStorage (or Capacitor Preferences fallback in webview)
   const [minRequired, setMinRequired] = useState(() => {
     const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('attendanceMinRequired') : null;
     return saved ? Number(saved) : 75;
@@ -40,13 +39,12 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState(todayStr())
   
-  // UI States
   const [showSubjectSheet, setShowSubjectSheet] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [toast, setToast] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null) // session.id pending confirmation
 
-  // Touch tracking for swipe
   const touchStartX = useRef(0);
 
   const triggerHaptic = useCallback(() => {
@@ -115,6 +113,35 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
     }
   }, [selectedSubject, userId, selectedDate, showToast, triggerHaptic])
 
+  // NEW: Promotes the default draft class to a persisted record with chosen status
+  const handleDraftSelect = useCallback(async (status) => {
+    if (!selectedSubject) return
+    triggerHaptic();
+
+    const tempId = `temp-${Date.now()}`
+    const newLog = {
+      id: tempId,
+      subject_id: selectedSubject,
+      user_id: userId,
+      date: selectedDate,
+      status
+    }
+    setLogs(prev => [...prev, newLog])
+
+    try {
+      const { data, error } = await supabase
+        .from('attendance')
+        .insert([{ subject_id: selectedSubject, user_id: userId, date: selectedDate, status }])
+        .select()
+        .single()
+      if (error) throw error
+      setLogs(prev => prev.map(l => l.id === tempId ? data : l))
+    } catch {
+      setLogs(prev => prev.filter(l => l.id !== tempId))
+      showToast('Failed to save class')
+    }
+  }, [selectedSubject, userId, selectedDate, showToast, triggerHaptic])
+
   const handleUpdateStatus = useCallback(async (logId, status) => {
     triggerHaptic();
     const prevLogs = logs
@@ -128,6 +155,28 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
       showToast('Failed to update attendance status')
     }
   }, [logs, showToast, triggerHaptic])
+
+  // NEW: Deletes a single class record with confirmation
+  const handleDeleteClass = useCallback(async () => {
+    if (!deleteTarget) return
+    const targetId = deleteTarget
+    triggerHaptic();
+    const prevLogs = logs
+    setLogs(prev => prev.filter(l => l.id !== targetId))
+    setDeleteTarget(null)
+
+    // Skip Supabase call for temp records (not yet persisted)
+    if (String(targetId).startsWith('temp-')) return
+
+    try {
+      const { error } = await supabase.from('attendance').delete().eq('id', targetId)
+      if (error) throw error
+      showToast('Class removed', 'success')
+    } catch {
+      setLogs(prevLogs)
+      showToast('Failed to delete class')
+    }
+  }, [deleteTarget, logs, showToast, triggerHaptic])
 
   // --- DERIVED DATA & CALCULATIONS (Preserved exact logic) ---
   const subjectLogs = useMemo(() => logs.filter(l => l.subject_id === selectedSubject), [logs, selectedSubject])
@@ -162,6 +211,9 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
   const todaysSessions = useMemo(() => {
     return subjectLogs.filter(l => l.date === selectedDate)
   }, [subjectLogs, selectedDate])
+
+  // NEW: When no classes logged for selected date, we render a "default" draft Class 1
+  const showDefaultDraft = todaysSessions.length === 0
 
   const subjectGraphData = useMemo(() => {
     return subjects.map(sub => {
@@ -211,7 +263,6 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
     }
   };
 
-  // Swipe Handlers
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
   };
@@ -246,12 +297,89 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
     )
   }
 
+  // Compact reusable status badge for the (optional) display side — minimal visual weight
+  const renderStatusBadge = (status) => {
+    const opt = STATUS_OPTIONS.find(o => o.key === status)
+    if (!opt) return null
+    return (
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', gap: '5px',
+        padding: '3px 8px', borderRadius: '12px',
+        background: `${opt.color}22`,
+        color: opt.color, fontSize: '11px', fontWeight: '600'
+      }}>
+        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: opt.color }} />
+        {opt.short}
+      </span>
+    )
+  }
+
+  // Compact class card renderer (shared between logged sessions)
+  const renderClassCard = (session, idx, isDraft = false) => {
+    const isTemp = String(session.id).startsWith('temp-')
+    return (
+      <div style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: '12px',
+        padding: '12px'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text)' }}>Class {idx + 1}</span>
+            {isTemp && <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>Saving…</span>}
+            {isDraft && <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>Tap a status</span>}
+            {!isDraft && !isTemp && renderStatusBadge(session.status)}
+          </div>
+          {!isDraft && (
+            <button
+              onClick={() => { triggerHaptic(); setDeleteTarget(session.id); }}
+              aria-label="Delete class"
+              style={{
+                background: 'transparent', border: 'none', padding: '6px',
+                color: 'var(--text-muted)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                borderRadius: '6px', minHeight: '28px', minWidth: '28px'
+              }}
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '6px' }}>
+          {STATUS_OPTIONS.map(opt => {
+            const isActive = session.status === opt.key
+            return (
+              <button
+                key={opt.key}
+                onClick={() => isDraft ? handleDraftSelect(opt.key) : handleUpdateStatus(session.id, opt.key)}
+                className="att-status-btn"
+                style={{
+                  padding: '7px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: '600',
+                  minHeight: '36px',
+                  border: `1px solid ${isActive ? opt.color : 'var(--border)'}`,
+                  background: isActive ? opt.color : 'var(--surface-2)',
+                  color: isActive ? '#0A0A0F' : 'var(--text)',
+                  textAlign: 'center'
+                }}
+              >
+                {opt.short}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ paddingBottom: '40px', position: 'relative' }}>
       <style>{`
         .att-scroll-y { overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        .att-status-btn { transition: transform 0.1s ease, background 0.2s, border-color 0.2s; min-height: 40px; display: flex; align-items: center; justify-content: center; }
+        .att-status-btn { transition: transform 0.1s ease, background 0.2s, border-color 0.2s; min-height: 36px; display: flex; align-items: center; justify-content: center; }
         .att-status-btn:active { transform: scale(0.95); }
+        .att-trash-btn { transition: background 0.15s, color 0.15s; }
+        .att-trash-btn:active { background: rgba(252, 165, 165, 0.15); color: #FCA5A5; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
@@ -261,12 +389,65 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
         <div style={{
           position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)',
           background: toast.type === 'error' ? '#FCA5A5' : '#6EE7B7', color: '#0A0A0F',
-          padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.2)', zIndex: 1200, display: 'flex', alignItems: 'center', gap: '8px',
+          padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: '600',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)', zIndex: 1300, display: 'flex', alignItems: 'center', gap: '8px',
           animation: 'fadeIn 0.2s ease'
         }}>
           {toast.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
           {toast.message}
+        </div>
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {deleteTarget && (
+        <div
+          onClick={() => setDeleteTarget(null)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+            zIndex: 1250, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '20px', animation: 'fadeIn 0.15s ease'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: '16px', padding: '20px', width: '100%', maxWidth: '320px',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.3)', animation: 'scaleIn 0.2s ease',
+              textAlign: 'center'
+            }}
+          >
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(252, 165, 165, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+              <Trash2 size={18} color="#FCA5A5" />
+            </div>
+            <p style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text)', marginBottom: '4px' }}>Delete this class?</p>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: 1.4 }}>
+              This will permanently remove the record for this date.
+            </p>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setDeleteTarget(null)}
+                style={{
+                  flex: 1, padding: '10px', borderRadius: '10px',
+                  background: 'var(--surface-2)', border: '1px solid var(--border)',
+                  color: 'var(--text)', fontSize: '13px', fontWeight: '600', cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteClass}
+                style={{
+                  flex: 1, padding: '10px', borderRadius: '10px',
+                  background: '#FCA5A5', border: '1px solid #FCA5A5',
+                  color: '#0A0A0F', fontSize: '13px', fontWeight: '700', cursor: 'pointer'
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -343,55 +524,28 @@ const AttendanceTracker = React.memo(function AttendanceTracker({ userId }) {
           {isToday ? "Today's Classes" : "Classes on this date"}
         </p>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {todaysSessions.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '20px', border: '1px dashed var(--border)', borderRadius: '12px', color: 'var(--text-muted)', fontSize: '13px' }}>
-              No classes logged for this date.
-            </div>
-          )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {/* Default Class 1 entry — shown immediately when no classes logged for this date */}
+          {showDefaultDraft && renderClassCard({ id: 'draft', status: '' }, 0, true)}
           
-          {todaysSessions.map((session, idx) => {
-            return (
-              <div key={session.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '14px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text)' }}>Class {idx + 1}</span>
-                  {session.id.toString().startsWith('temp-') && <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Saving...</span>}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '8px' }}>
-                  {STATUS_OPTIONS.map(opt => (
-                    <button
-                      key={opt.key}
-                      onClick={() => handleUpdateStatus(session.id, opt.key)}
-                      className="att-status-btn"
-                      style={{
-                        padding: '8px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
-                        border: `1px solid ${session.status === opt.key ? opt.color : 'var(--border)'}`,
-                        background: session.status === opt.key ? opt.color : 'var(--surface-2)',
-                        color: session.status === opt.key ? '#0A0A0F' : 'var(--text)',
-                        textAlign: 'center'
-                      }}
-                    >
-                      {opt.short}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
+          {todaysSessions.map((session, idx) => renderClassCard(session, idx, false))}
         </div>
 
-        <button 
-          onClick={handleAddClass}
-          style={{
-            marginTop: '16px', width: '100%', padding: '14px', borderRadius: '12px',
-            border: '1px dashed var(--accent)', background: 'transparent', color: 'var(--accent)',
-            fontWeight: '600', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-            cursor: 'pointer', transition: 'background 0.2s'
-          }}
-        >
-          <Plus size={16} />
-          Add another class
-        </button>
+        {/* "Add another class" — only needed once first class exists */}
+        {!showDefaultDraft && (
+          <button 
+            onClick={handleAddClass}
+            style={{
+              marginTop: '12px', width: '100%', padding: '12px', borderRadius: '12px',
+              border: '1px dashed var(--accent)', background: 'transparent', color: 'var(--accent)',
+              fontWeight: '600', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+              cursor: 'pointer', transition: 'background 0.2s'
+            }}
+          >
+            <Plus size={16} />
+            Add another class
+          </button>
+        )}
       </div>
 
       <div style={{ marginBottom: '24px' }}>
@@ -632,13 +786,20 @@ const FloatingCalendar = React.memo(function FloatingCalendar({ selectedDate, ma
   );
 });
 
-// --- SUBJECT-WISE BAR CHART COMPONENT ---
+// --- SUBJECT-WISE BAR CHART COMPONENT (ALIGNMENT BUG FIXED) ---
 const SubjectAttendanceGraph = React.memo(function SubjectAttendanceGraph({ data, minRequired }) {
+  // Clamp threshold to chart scale [0, 100]
+  const safeThreshold = Math.max(0, Math.min(100, minRequired));
+
   return (
     <div style={{ overflowX: 'auto', paddingBottom: '8px', position: 'relative', WebkitOverflowScrolling: 'touch' }}>
       <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', height: '140px', position: 'relative', padding: '0 10px 24px', minWidth: 'min-content' }}>
-        {/* Grid Lines */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: '24px', pointerEvents: 'none' }}>
+        {/* Grid + Threshold — aligned to the BAR AREA only (excludes label strip) */}
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: '24px', /* matches padding-bottom of bar container */
+          pointerEvents: 'none'
+        }}>
           {[100, 75, 50, 25, 0].map(y => (
             <div key={y} style={{ 
               position: 'absolute', 
@@ -649,21 +810,29 @@ const SubjectAttendanceGraph = React.memo(function SubjectAttendanceGraph({ data
               <span style={{ position: 'absolute', left: 0, bottom: '-5px', fontSize: '9px', color: 'var(--text-muted)' }}>{y}</span>
             </div>
           ))}
+          {/* Threshold line — clamped and aligned to bar area */}
           <div style={{ 
             position: 'absolute', 
-            bottom: `${minRequired}%`, 
+            bottom: `${safeThreshold}%`, 
             left: 0, right: 0, 
             borderBottom: '2px solid var(--accent)',
             opacity: 0.8
           }}>
-            <span style={{ position: 'absolute', right: 0, bottom: '-12px', fontSize: '9px', color: 'var(--accent)', fontWeight: '700' }}>{minRequired}% req</span>
+            <span style={{ position: 'absolute', right: 0, bottom: '-12px', fontSize: '9px', color: 'var(--accent)', fontWeight: '700' }}>{safeThreshold}% req</span>
           </div>
         </div>
 
-        {/* Bars */}
+        {/*
+          Bars — FIX: wrapper height was previously `calc(100% - 24px)`, which double-subtracted
+          the 24px label strip (it's already excluded from this flex container's content box via
+          padding-bottom, and the grid/threshold overlay above is sized to that same content box).
+          That extra subtraction made a 100% bar stop ~24px short of the top, so it rendered below
+          the 85% threshold line. Using the full `100%` here makes the bar's scale match the grid's
+          scale exactly, 1:1.
+        */}
         {data.map(sub => (
           <div key={sub.id} style={{ 
-            height: 'calc(100% - 24px)', 
+            height: '100%', 
             width: '40px', 
             flexShrink: 0,
             display: 'flex',
@@ -673,11 +842,12 @@ const SubjectAttendanceGraph = React.memo(function SubjectAttendanceGraph({ data
           }}>
             <div style={{ 
               width: '100%', 
-              height: `${sub.pct}%`, 
+              height: `${Math.max(0, Math.min(100, sub.pct))}%`, 
               background: sub.pct >= minRequired ? '#6EE7B7' : '#FCA5A5',
               borderRadius: '4px 4px 0 0',
               minHeight: '2px',
-              position: 'relative'
+              position: 'relative',
+              transition: 'height 0.3s ease, background 0.3s ease'
             }}>
               <span style={{ 
                 position: 'absolute', 
