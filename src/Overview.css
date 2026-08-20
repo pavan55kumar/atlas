@@ -14,7 +14,11 @@
   background: radial-gradient(circle, rgba(124,92,255,0.16), rgba(124,92,255,0) 70%);
   animation: ov-drift 22s ease-in-out infinite;
   /* UX FIX: Promote to GPU layer to prevent filter:blur from repainting the whole screen on theme switch */
-  transform: translateZ(0); 
+  transform: translateZ(0);
+  /* Kept here (unlike ov-glass below): this element's transform is
+     genuinely animating every frame via ov-drift, so will-change is doing
+     real work — the browser needs the standing hint to keep the layer
+     warm for the life of the animation. */
   will-change: transform;
 }
 .ov-particle-1 { width: 420px; height: 420px; top: -10%; left: -8%; animation-duration: 26s; }
@@ -55,9 +59,9 @@
   /* PERF: overflow:hidden already clips this element's own contents, so
      paint containment costs nothing visually — it just tells the browser
      this subtree's painting can be isolated from the rest of the page,
-     which is exactly what the translateZ(0)/will-change theme-switch fix
-     below is trying to achieve. layout containment is safe here because
-     nothing outside .ov-glass depends on this element's internal layout. */
+     which is exactly what the translateZ(0) theme-switch fix below is
+     trying to achieve. layout containment is safe here because nothing
+     outside .ov-glass depends on this element's internal layout. */
   contain: layout paint;
   background:
     linear-gradient(165deg,
@@ -68,17 +72,37 @@
     0 1px 0 0 rgba(255,255,255,0.05) inset,
     0 22px 44px -20px rgba(38,14,74,0.55),
     0 6px 18px -10px rgba(38,14,74,0.45);
-  /* UX FIX: Promote to independent GPU layer. This prevents the mix-blend-mode 
-     and box-shadow from being recalculated on the CPU during theme switches, 
-     eliminating the Command Center flicker on Android. */
+  /* UX FIX (theme-switch flicker): promote to an independent GPU layer so
+     the browser doesn't have to repaint this card's blend-mode/box-shadow
+     stack against everything behind it every time the theme flips. */
   transform: translateZ(0);
-  will-change: transform;
+  /* PERF FIX: removed `will-change: transform` that used to live here.
+     This element's transform never actually changes (translateZ(0) is a
+     one-time static promotion, not an animation), so will-change bought
+     nothing but told the browser to permanently reserve a composited
+     layer for every single .ov-glass card on the page (7+ of them). On
+     weaker Android GPUs that standing memory/compositing cost is itself
+     a common cause of a dropped frame — i.e. a visible flash — right when
+     something else (like a theme switch) asks the compositor to do work.
+     translateZ(0) alone is enough to get the isolated layer; the
+     always-on hint was pure overhead. */
+
+  /* UX FIX (the actual flicker bug): this transition used to live ONLY
+     inside the `@media (hover: hover) and (pointer: fine)` block below.
+     Touch-only devices — every Android phone, including this Capacitor
+     app — never match that media query, so on-device this rule never
+     existed at all: background/border-color/box-shadow changed instantly
+     with zero interpolation. That's exactly what "flatters"/flashes when
+     you flip data-theme from dark to light or back. Desktops with a mouse
+     happened to get smoothing from the hover rule and never showed it,
+     which is why it looked hover-specific. Moving the transition out here
+     makes it unconditional, so the theme swap itself animates smoothly
+     on every device, and the hover-only block below is left purely for
+     the actual hover interaction (which should stay hover-gated). */
+  transition: background 300ms cubic-bezier(0.22, 1, 0.36, 1), border-color 300ms ease, box-shadow 300ms ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .card.ov-glass {
-    transition: box-shadow 0.35s ease, border-color 0.35s ease;
-  }
   .card.ov-glass:hover {
     border-color: color-mix(in srgb, var(--border) 45%, #7C5CFF 25%);
     box-shadow:
@@ -120,6 +144,18 @@
 .ov-hero-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .ov-hero-ring-value { font-size: 15px; font-weight: 800; line-height: 1; letter-spacing: -0.01em; }
 .ov-hero-ring-sub { font-size: 8px; color: var(--text-muted); opacity: 0.75; letter-spacing: 0.03em; }
+
+/* UX FIX: Quick Actions row inside the Command Center hero, so the 4 most
+   common actions are visible without scrolling past the KPI grid and both
+   two-column sections below. Sized as a 4-up grid that stays comfortable
+   down to the narrowest common phone widths (~360px) without wrapping. */
+.ov-hero-quick-row {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 18px; padding-top: 14px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent 30%);
+}
 
 .ov-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
 
@@ -186,7 +222,40 @@
 }
 .ov-task-chip { font-size: 10px; font-weight: 700; border: 1px solid; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
 
-.ov-quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* ---------- Quick Action button (used both standalone and, via the
+   .ov-quick-action-compact modifier, inside the hero quick row) ---------- */
+.ov-quick-action {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 18px 8px; border-radius: 14px; border: 1px solid var(--border);
+  color: var(--text); font-size: 12px; font-weight: 600;
+  touch-action: manipulation;
+  width: 100%;
+  /* Same theme-switch reasoning as .card.ov-glass above: give this its own
+     transition so background/border-color don't snap when data-theme flips. */
+  transition: background 300ms ease, border-color 300ms ease;
+}
+.ov-quick-icon-wrap {
+  width: 30px; height: 30px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center; color: #fff;
+  flex-shrink: 0;
+}
+.ov-quick-label {
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Compact modifier: fits 4-across inside the narrower hero card without
+   wrapping, even on ~360px wide phones. */
+.ov-quick-action-compact {
+  padding: 10px 4px;
+  border-radius: 12px;
+  gap: 5px;
+}
+.ov-quick-action-compact .ov-quick-icon-wrap {
+  width: 26px; height: 26px; border-radius: 8px;
+}
+.ov-quick-action-compact .ov-quick-label {
+  font-size: 10.5px;
+}
 
 /* =========================================================
    Light theme corrections (unchanged from before)

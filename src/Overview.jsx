@@ -119,30 +119,36 @@ const TrendKpi = memo(function TrendKpi({ icon, accent, label, value, sub, trend
   )
 })
 
-const QuickAction = memo(function QuickAction({ icon, label, color, onClick, isHoverable }) {
+// UX/PERF FIX: inline style objects (border, background, boxShadow, font
+// sizing) were rebuilt from scratch on every render and hard-coded to one
+// fixed size. Moved to CSS classes (.ov-quick-action / .ov-quick-icon-wrap)
+// so the browser can cache the computed style and — critically — so a
+// `transition` on background/border-color actually exists (see Overview.css).
+// Added a `compact` variant so the exact same component/logic can be reused
+// inside the Command Center hero card at a smaller footprint, instead of
+// duplicating the quick-action markup and click handlers a second time.
+const QuickAction = memo(function QuickAction({ icon, label, color, onClick, isHoverable, compact }) {
   return (
     <motion.button
       onClick={onClick}
-      whileHover={isHoverable ? { y: -4, scale: 1.02, boxShadow: '0 12px 28px -8px ' + color + '45' } : undefined}
+      whileHover={isHoverable ? { y: compact ? -3 : -4, scale: 1.02, boxShadow: '0 12px 28px -8px ' + color + '45' } : undefined}
       whileTap={{ scale: 0.96 }}
       transition={springTap}
+      className={'ov-quick-action' + (compact ? ' ov-quick-action-compact' : '')}
       style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-        padding: '18px 8px', borderRadius: '14px', border: '1px solid var(--border)',
-        background: 'color-mix(in srgb, var(--surface-2) 92%, ' + color + ' 5%)',
-        color: 'var(--text)', fontSize: '12px', fontWeight: 600,
-        touchAction: 'manipulation'
+        background: 'color-mix(in srgb, var(--surface-2) 92%, ' + color + ' 5%)'
       }}
     >
-      <div style={{
-        width: '30px', height: '30px', borderRadius: '9px',
-        background: 'linear-gradient(135deg, ' + color + ', var(--accent-hover))',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-        boxShadow: '0 4px 14px ' + color + '50, inset 0 1px 1px rgba(255,255,255,0.35)'
-      }}>
+      <div
+        className={'ov-quick-icon-wrap' + (compact ? ' ov-quick-icon-compact' : '')}
+        style={{
+          background: 'linear-gradient(135deg, ' + color + ', var(--accent-hover))',
+          boxShadow: '0 4px 14px ' + color + '50, inset 0 1px 1px rgba(255,255,255,0.35)'
+        }}
+      >
         {icon}
       </div>
-      {label}
+      <span className="ov-quick-label">{label}</span>
     </motion.button>
   )
 })
@@ -302,7 +308,11 @@ function Overview({ userId, onNavigate }) {
   return (
     <div className="ov-page">
 
-      {/* 1. Entrance Animation: Hero */}
+      {/* 1. Entrance Animation: Hero
+          UX FIX: Quick Actions now lives inside the Command Center card as a
+          compact 4-icon row, so it's visible on first paint on a phone screen
+          without the user having to scroll past the KPI grid and both
+          two-column sections to reach it. */}
       <motion.div
         {...heroFade}
         whileHover={isHoverable ? { y: -2 } : undefined}
@@ -330,6 +340,13 @@ function Overview({ userId, onNavigate }) {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="ov-hero-quick-row">
+          <QuickAction icon={quickTaskIcon} label="Task" color="#6C6CF0" onClick={goToTasks} isHoverable={isHoverable} compact />
+          <QuickAction icon={quickHabitIcon} label="Habit" color="#F0876C" onClick={goToHabits} isHoverable={isHoverable} compact />
+          <QuickAction icon={quickGoalIcon} label="Goal" color="#6CC7F0" onClick={goToGoals} isHoverable={isHoverable} compact />
+          <QuickAction icon={quickEventIcon} label="Event" color="#8CF06C" onClick={goToCalendar} isHoverable={isHoverable} compact />
         </div>
       </motion.div>
 
@@ -367,22 +384,13 @@ function Overview({ userId, onNavigate }) {
         </div>
       </motion.div>
 
-      {/* 4. Entrance Animation: Two Column Row 2 */}
-      <motion.div {...twoColFade2} className="ov-two-col">
-        <div className="card ov-glass">
-          <p className="ov-section-title">Recent Tasks</p>
-          <RecentTasksList tasks={stats.recentTasks} />
-        </div>
-
-        <div className="card ov-glass">
-          <p className="ov-section-title">Quick Actions</p>
-          <div className="ov-quick-grid">
-            <QuickAction icon={quickTaskIcon} label="Task" color="#6C6CF0" onClick={goToTasks} isHoverable={isHoverable} />
-            <QuickAction icon={quickHabitIcon} label="Habit" color="#F0876C" onClick={goToHabits} isHoverable={isHoverable} />
-            <QuickAction icon={quickGoalIcon} label="Goal" color="#6CC7F0" onClick={goToGoals} isHoverable={isHoverable} />
-            <QuickAction icon={quickEventIcon} label="Event" color="#8CF06C" onClick={goToCalendar} isHoverable={isHoverable} />
-          </div>
-        </div>
+      {/* 4. Entrance Animation: Recent Tasks.
+          Quick Actions used to live here as a second column — moved into the
+          hero above, so this section is now a single full-width card instead
+          of a two-column row with a now-redundant panel. */}
+      <motion.div {...twoColFade2} className="card ov-glass">
+        <p className="ov-section-title">Recent Tasks</p>
+        <RecentTasksList tasks={stats.recentTasks} />
       </motion.div>
     </div>
   )
