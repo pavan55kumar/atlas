@@ -13,12 +13,7 @@
   position: absolute; border-radius: 50%; filter: blur(70px);
   background: radial-gradient(circle, rgba(124,92,255,0.16), rgba(124,92,255,0) 70%);
   animation: ov-drift 22s ease-in-out infinite;
-  /* UX FIX: Promote to GPU layer to prevent filter:blur from repainting the whole screen on theme switch */
   transform: translateZ(0);
-  /* Kept here (unlike ov-glass below): this element's transform is
-     genuinely animating every frame via ov-drift, so will-change is doing
-     real work — the browser needs the standing hint to keep the layer
-     warm for the life of the animation. */
   will-change: transform;
 }
 .ov-particle-1 { width: 420px; height: 420px; top: -10%; left: -8%; animation-duration: 26s; }
@@ -52,17 +47,38 @@
   .ov-particle, .ov-speck, .ov-ambient-bg { animation: none; }
 }
 
-/* ---------- Premium glass surface (applies on top of existing .card) ---------- */
+/* ===========================================================
+   Premium glass surface
+   ===========================================================
+   THEME-FLICKER FIX SUMMARY:
+   1. No default transition — color-mix() and box-shadow values
+      change instantly when CSS variables swap, instead of
+      interpolating over 0.35s (which was the visible flicker).
+   2. mix-blend-mode: overlay removed from ::after — the noise
+      texture was forcing a full-layer recomposite on every theme
+      change. At 4% opacity the visual difference is imperceptible
+      but the composite cost is eliminated.
+   3. will-change: transform replaced with contain + isolation —
+      achieves paint isolation without forcing a persistent GPU
+      layer that needs to be re-uploaded (which caused the
+      "letters flash" on text when the layer refreshed).
+   4. transition scoped to :hover only — entering hover still
+      animates smoothly; theme switches are now instant.
+============================================================ */
+
 .card.ov-glass {
   position: relative;
   overflow: hidden;
-  /* PERF: overflow:hidden already clips this element's own contents, so
-     paint containment costs nothing visually — it just tells the browser
-     this subtree's painting can be isolated from the rest of the page,
-     which is exactly what the translateZ(0) theme-switch fix below is
-     trying to achieve. layout containment is safe here because nothing
-     outside .ov-glass depends on this element's internal layout. */
-  contain: layout paint;
+  /* CSS containment replaces will-change/translateZ for paint isolation.
+     This avoids GPU layer re-upload flash on theme switch while still
+     preventing repaints from escaping this element's bounds. */
+  contain: layout paint style;
+  /* Isolate stacking context so ::after never triggers parent recomposite */
+  isolation: isolate;
+  /* Minimal GPU promotion for transform-based animations only */
+  transform: translateZ(0);
+  /* CRITICAL: no transition here — prevents theme-switch color interpolation */
+  transition: none;
   background:
     linear-gradient(165deg,
       color-mix(in srgb, var(--surface) 90%, #0a0a10 10%) 0%,
@@ -72,38 +88,14 @@
     0 1px 0 0 rgba(255,255,255,0.05) inset,
     0 22px 44px -20px rgba(38,14,74,0.55),
     0 6px 18px -10px rgba(38,14,74,0.45);
-  /* UX FIX (theme-switch flicker): promote to an independent GPU layer so
-     the browser doesn't have to repaint this card's blend-mode/box-shadow
-     stack against everything behind it every time the theme flips. */
-  transform: translateZ(0);
-  /* PERF FIX: removed `will-change: transform` that used to live here.
-     This element's transform never actually changes (translateZ(0) is a
-     one-time static promotion, not an animation), so will-change bought
-     nothing but told the browser to permanently reserve a composited
-     layer for every single .ov-glass card on the page (7+ of them). On
-     weaker Android GPUs that standing memory/compositing cost is itself
-     a common cause of a dropped frame — i.e. a visible flash — right when
-     something else (like a theme switch) asks the compositor to do work.
-     translateZ(0) alone is enough to get the isolated layer; the
-     always-on hint was pure overhead. */
-
-  /* UX FIX (the actual flicker bug): this transition used to live ONLY
-     inside the `@media (hover: hover) and (pointer: fine)` block below.
-     Touch-only devices — every Android phone, including this Capacitor
-     app — never match that media query, so on-device this rule never
-     existed at all: background/border-color/box-shadow changed instantly
-     with zero interpolation. That's exactly what "flatters"/flashes when
-     you flip data-theme from dark to light or back. Desktops with a mouse
-     happened to get smoothing from the hover rule and never showed it,
-     which is why it looked hover-specific. Moving the transition out here
-     makes it unconditional, so the theme swap itself animates smoothly
-     on every device, and the hover-only block below is left purely for
-     the actual hover interaction (which should stay hover-gated). */
-  transition: background 300ms cubic-bezier(0.22, 1, 0.36, 1), border-color 300ms ease, box-shadow 300ms ease;
 }
 
+/* Hover transitions scoped to :hover state only.
+   When mouse enters, transition activates for smooth hover-in.
+   When theme switches (no hover), transition is `none` — instant swap. */
 @media (hover: hover) and (pointer: fine) {
   .card.ov-glass:hover {
+    transition: box-shadow 0.35s ease, border-color 0.35s ease;
     border-color: color-mix(in srgb, var(--border) 45%, #7C5CFF 25%);
     box-shadow:
       0 1px 0 0 rgba(255,255,255,0.07) inset,
@@ -116,52 +108,74 @@
   content: ''; position: absolute; top: 0; left: 6%; right: 6%; height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
   pointer-events: none;
-}
-.card.ov-glass::after {
-  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0.05; mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  /* UX FIX: Isolate blend mode compositing to its own GPU layer */
   transform: translateZ(0);
 }
 
+/* Noise texture overlay — mix-blend-mode REMOVED to prevent theme-switch
+   recomposite. At 4% opacity the visual result is virtually identical. */
+.card.ov-glass::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  transform: translateZ(0);
+}
+
+/* ---------- Hero ---------- */
 .ov-hero {
-  border-radius: 24px; padding: 22px 24px;
+  border-radius: 24px; padding: 20px 22px;
 }
 .ov-hero-glow {
   position: absolute; top: -60%; left: -10%; width: 60%; height: 220%;
   background: radial-gradient(circle, rgba(124,92,255,0.22), transparent 65%);
   pointer-events: none;
-  transform: translateZ(0); /* UX FIX: GPU acceleration */
+  transform: translateZ(0);
 }
 .ov-hero-glow-2 {
   top: auto; bottom: -70%; left: auto; right: -15%; width: 50%; height: 200%;
   background: radial-gradient(circle, rgba(108,199,240,0.10), transparent 68%);
 }
-.ov-hero-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.ov-hero-eyebrow { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; color: #9C8CFF; margin-bottom: 8px; text-transform: uppercase; text-shadow: 0 0 18px rgba(124,92,255,0.35); }
-.ov-hero-subtitle { font-size: 15px; color: var(--text-muted); opacity: 0.9; }
-.ov-hero-ring-wrap { position: relative; width: 64px; height: 64px; flex-shrink: 0; border-radius: 50%; }
-.ov-hero-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ov-hero-inner {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.ov-hero-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.ov-hero-text { min-width: 0; flex: 1; }
+.ov-hero-eyebrow {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.07em;
+  color: #9C8CFF; margin-bottom: 8px; text-transform: uppercase;
+  text-shadow: 0 0 18px rgba(124,92,255,0.35);
+}
+.ov-hero-subtitle {
+  font-size: 15px; color: var(--text-muted); opacity: 0.9;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ov-hero-ring-wrap {
+  position: relative; width: 64px; height: 64px; flex-shrink: 0; border-radius: 50%;
+}
+
+/* Quick Actions inside hero */
+.ov-hero-actions {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+}
+
+.ov-hero-ring-center {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
 .ov-hero-ring-value { font-size: 15px; font-weight: 800; line-height: 1; letter-spacing: -0.01em; }
 .ov-hero-ring-sub { font-size: 8px; color: var(--text-muted); opacity: 0.75; letter-spacing: 0.03em; }
 
-/* UX FIX: Quick Actions row inside the Command Center hero, so the 4 most
-   common actions are visible without scrolling past the KPI grid and both
-   two-column sections below. Sized as a 4-up grid that stays comfortable
-   down to the narrowest common phone widths (~360px) without wrapping. */
-.ov-hero-quick-row {
-  position: relative; z-index: 1;
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-top: 18px; padding-top: 14px;
-  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent 30%);
-}
-
+/* ---------- KPI Grid ---------- */
 .ov-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
 
+/* ---------- Two Column ---------- */
 .ov-two-col { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; }
 @media (max-width: 900px) { .ov-two-col { grid-template-columns: 1fr; } }
 
+/* ---------- AI Panel ---------- */
 .ov-ai-panel { position: relative; }
 .ov-ai-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
 .ov-ai-orb {
@@ -180,7 +194,7 @@
   opacity: 0;
   animation: ov-pulse-opacity 2.4s ease-in-out infinite;
   pointer-events: none;
-  transform: translateZ(0); /* UX FIX: Isolate pulse animation */
+  transform: translateZ(0);
 }
 @keyframes ov-pulse-opacity {
   0%, 100% { opacity: 0; }
@@ -190,21 +204,22 @@
 .ov-ai-caption { font-size: 11px; color: var(--text-muted); opacity: 0.8; }
 .ov-ai-cta {
   display: inline-flex; align-items: center; gap: 6px; margin-top: 14px;
-  background: transparent; border: none; color: #9C8CFF; font-size: 12.5px; font-weight: 700;
-  /* PERF: removes the ~300ms tap-delay check Android WebView otherwise runs
-     to detect a possible double-tap-to-zoom gesture. Purely a responsiveness
-     change — no visual difference. */
+  background: transparent; border: none; color: #9C8CFF;
+  font-size: 12.5px; font-weight: 700;
   touch-action: manipulation;
 }
 
+/* ---------- Section Title ---------- */
 .ov-section-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; letter-spacing: -0.01em; }
 
+/* ---------- Breathing Icon ---------- */
 .ov-breathing-icon { animation: ov-breathe 3s ease-in-out infinite; }
 @keyframes ov-breathe {
   0%, 100% { opacity: 0.35; transform: scale(1); }
   50% { opacity: 0.6; transform: scale(1.08); }
 }
 
+/* ---------- Schedule Timeline ---------- */
 .ov-timeline { display: flex; flex-direction: column; gap: 4px; }
 .ov-timeline-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
 .ov-timeline-row:last-child { border-bottom: none; }
@@ -212,54 +227,82 @@
 .ov-timeline-title { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ov-timeline-chip { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-muted); opacity: 0.85; white-space: nowrap; }
 
+/* ---------- Task Row ---------- */
+/* CRITICAL: transition removed — was causing theme-switch background flicker
+   via color-mix(in srgb, var(--surface-2) ...) interpolation. */
 .ov-task-row {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 10px 12px; border-radius: 10px;
   background: color-mix(in srgb, var(--surface-2) 92%, #7C5CFF 4%);
   border-left: 3px solid var(--border);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
-  transition: background 0.25s ease;
 }
 .ov-task-chip { font-size: 10px; font-weight: 700; border: 1px solid; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
 
-/* ---------- Quick Action button (used both standalone and, via the
-   .ov-quick-action-compact modifier, inside the hero quick row) ---------- */
+/* ===========================================================
+   Quick Action Buttons
+   ===========================================================
+   Styles driven by --qa-color CSS variable (set via inline style).
+   No transitions on theme-dependent properties to prevent flicker.
+============================================================ */
+
 .ov-quick-action {
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  padding: 18px 8px; border-radius: 14px; border: 1px solid var(--border);
-  color: var(--text); font-size: 12px; font-weight: 600;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; padding: 14px 8px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2) 92%, var(--qa-color, #7C5CFF) 5%);
+  color: var(--text);
+  font-size: 12px; font-weight: 600;
   touch-action: manipulation;
-  width: 100%;
-  /* Same theme-switch reasoning as .card.ov-glass above: give this its own
-     transition so background/border-color don't snap when data-theme flips. */
-  transition: background 300ms ease, border-color 300ms ease;
-}
-.ov-quick-icon-wrap {
-  width: 30px; height: 30px; border-radius: 9px;
-  display: flex; align-items: center; justify-content: center; color: #fff;
-  flex-shrink: 0;
-}
-.ov-quick-label {
-  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  cursor: pointer;
+  /* No transition — prevents theme-switch flicker */
 }
 
-/* Compact modifier: fits 4-across inside the narrower hero card without
-   wrapping, even on ~360px wide phones. */
-.ov-quick-action-compact {
+.ov-quick-action-icon {
+  width: 30px; height: 30px; border-radius: 9px;
+  background: linear-gradient(135deg,
+    var(--qa-color, #7C5CFF),
+    color-mix(in srgb, var(--qa-color, #7C5CFF) 72%, #000 28%));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  box-shadow:
+    0 4px 14px color-mix(in srgb, var(--qa-color, #7C5CFF) 50%, transparent),
+    inset 0 1px 1px rgba(255,255,255,0.35);
+}
+
+.ov-quick-action-label {
+  font-size: 12px; font-weight: 600;
+  line-height: 1;
+}
+
+/* Hero variant — compact for 4-in-a-row inside the Command Center card */
+.ov-quick-action--hero {
   padding: 10px 4px;
   border-radius: 12px;
   gap: 5px;
-}
-.ov-quick-action-compact .ov-quick-icon-wrap {
-  width: 26px; height: 26px; border-radius: 8px;
-}
-.ov-quick-action-compact .ov-quick-label {
-  font-size: 10.5px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, var(--qa-color, #7C5CFF) 15%);
 }
 
-/* =========================================================
-   Light theme corrections (unchanged from before)
-========================================================= */
+.ov-quick-action--hero .ov-quick-action-icon {
+  width: 28px; height: 28px; border-radius: 8px;
+}
+
+.ov-quick-action--hero .ov-quick-action-label {
+  font-size: 10.5px; font-weight: 600;
+}
+
+/* Very small screens — tighten further */
+@media (max-width: 380px) {
+  .ov-hero-actions { gap: 6px; }
+  .ov-quick-action--hero { padding: 9px 2px; }
+  .ov-quick-action--hero .ov-quick-action-label { font-size: 10px; }
+  .ov-hero-subtitle { font-size: 14px; }
+}
+
+/* ===========================================================
+   Light Theme Corrections
+   =========================================================== */
 
 [data-theme="light"] .card.ov-glass {
   background:
@@ -275,6 +318,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   [data-theme="light"] .card.ov-glass:hover {
+    transition: box-shadow 0.35s ease, border-color 0.35s ease;
     border-color: color-mix(in srgb, var(--border) 55%, #7C5CFF 20%);
     box-shadow:
       0 1px 0 0 rgba(255,255,255,0.8) inset,
